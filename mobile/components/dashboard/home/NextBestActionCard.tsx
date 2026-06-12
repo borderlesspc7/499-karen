@@ -1,40 +1,19 @@
-import { useState } from 'react'
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
 import { Sparkles, Zap } from 'lucide-react-native'
 import { GROWTH_ACTIONS } from '@shared/constants/growth-actions'
 
-const FEATURED_ACTION_ID = 'reactivate-inactive-leads'
-const featuredAction = GROWTH_ACTIONS[FEATURED_ACTION_ID]
+export const FEATURED_ACTION_ID = 'reactivate-inactive-leads'
+export const featuredAction = GROWTH_ACTIONS[FEATURED_ACTION_ID]
 
 type NextBestActionCardProps = {
-  onExecute: (actionId: string) => void
+  onRequestApproval: () => void
 }
 
 function formatRevenue(amount: number): string {
   return amount.toLocaleString('pt-BR')
 }
 
-export function NextBestActionCard({ onExecute }: NextBestActionCardProps) {
-  const [isExecuting, setIsExecuting] = useState(false)
-
-  function handleExecute() {
-    if (isExecuting) {
-      return
-    }
-
-    setIsExecuting(true)
-
-    setTimeout(() => {
-      onExecute(FEATURED_ACTION_ID)
-      setIsExecuting(false)
-
-      Alert.alert(
-        'Execução iniciada',
-        'A IA está reativando os seus leads inativos. Receberá um resumo em instantes.',
-      )
-    }, 1200)
-  }
-
+export function NextBestActionCard({ onRequestApproval }: NextBestActionCardProps) {
   return (
     <View
       className="overflow-hidden rounded-3xl border-2 border-gold/40 bg-white p-6"
@@ -71,9 +50,8 @@ export function NextBestActionCard({ onExecute }: NextBestActionCardProps) {
       </View>
 
       <Pressable
-        onPress={handleExecute}
-        disabled={isExecuting}
-        className="mt-6 flex-row items-center justify-center gap-2 rounded-2xl bg-electricBlue py-4 active:opacity-90 disabled:opacity-70"
+        onPress={onRequestApproval}
+        className="mt-6 flex-row items-center justify-center gap-2 rounded-2xl bg-electricBlue py-4 active:opacity-90"
         style={{
           shadowColor: '#3B82F6',
           shadowOffset: { width: 0, height: 4 },
@@ -82,14 +60,8 @@ export function NextBestActionCard({ onExecute }: NextBestActionCardProps) {
           elevation: 4,
         }}
       >
-        {isExecuting ? (
-          <ActivityIndicator size="small" color="#FFFFFF" />
-        ) : (
-          <Zap size={18} color="#FFFFFF" fill="#FFFFFF" />
-        )}
-        <Text className="text-base font-bold text-white">
-          {isExecuting ? 'Executando...' : 'Executar Agora'}
-        </Text>
+        <Zap size={18} color="#FFFFFF" fill="#FFFFFF" />
+        <Text className="text-base font-bold text-white">Executar Agora</Text>
       </Pressable>
     </View>
   )

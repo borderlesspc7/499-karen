@@ -1,11 +1,45 @@
+import { useState } from 'react'
 import { ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth, useGamification } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
+import { ExecutionModal, type ExecutionModalProps } from '@/components/ExecutionModal'
+import { LINKEDIN_AUTHORITY_OPPORTUNITY } from '@/constants/ai-content-engine'
+import { AuthorityOpportunityCard } from '@/components/dashboard/home/AuthorityOpportunityCard'
 import { GrowthTree } from '@/components/dashboard/home/GrowthTree'
 import { HomeGrowthScoreCard } from '@/components/dashboard/home/HomeGrowthScoreCard'
 import { HomeSmartHeader } from '@/components/dashboard/home/HomeSmartHeader'
-import { NextBestActionCard } from '@/components/dashboard/home/NextBestActionCard'
+import {
+  FEATURED_ACTION_ID,
+  featuredAction,
+  NextBestActionCard,
+} from '@/components/dashboard/home/NextBestActionCard'
+
+type ExecutionFlow = 'leads' | 'linkedin-article'
+
+const LEADS_EXECUTION: Pick<
+  ExecutionModalProps,
+  | 'title'
+  | 'aiSuggestion'
+  | 'impact'
+  | 'previewDetail'
+  | 'contextLabel'
+  | 'loadingMessage'
+  | 'approveLabel'
+  | 'successMessage'
+> = {
+  title: 'Recuperação de Leads',
+  aiSuggestion:
+    'Preparei uma sequência de 3 e-mails focada em gatilhos de escassez para os 12 leads inativos.',
+  impact: `+R$ ${featuredAction.revenueGain.toLocaleString('pt-BR')}`,
+  previewDetail:
+    'E-mail 1: reativação suave com prova social. E-mail 2: urgência com vaga limitada. E-mail 3: última chamada com bónus exclusivo. Envio automático em 48h com pausas inteligentes.',
+  contextLabel: 'AI Workforce',
+  loadingMessage:
+    'A AI Workforce está a analisar os dados e a criar a estratégia...',
+  approveLabel: 'Aprovar e Executar',
+  successMessage: 'Executado com sucesso! A acompanhar os resultados.',
+}
 
 function resolveUserName(email?: string | null): string {
   if (!email) {
@@ -20,11 +54,40 @@ export default function HomeScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const { currentUser } = useAuth()
   const { businessHealth, companyStage, executeAction } = useGamification()
+  const [activeExecutionFlow, setActiveExecutionFlow] = useState<ExecutionFlow | null>(null)
+  const [isAuthorityCardVisible, setIsAuthorityCardVisible] = useState(true)
 
   const userName = resolveUserName(currentUser?.email)
+  const executionConfig =
+    activeExecutionFlow === 'linkedin-article'
+      ? LINKEDIN_AUTHORITY_OPPORTUNITY.modal
+      : LEADS_EXECUTION
+
+  function handleApproveExecution() {
+    if (activeExecutionFlow === 'linkedin-article') {
+      executeAction('publish-linkedin-article')
+      return
+    }
+
+    executeAction(FEATURED_ACTION_ID)
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-[#F8FAFC]" edges={['top']}>
+      <ExecutionModal
+        visible={activeExecutionFlow !== null}
+        title={executionConfig.title}
+        aiSuggestion={executionConfig.aiSuggestion}
+        impact={executionConfig.impact}
+        previewDetail={executionConfig.previewDetail}
+        contextLabel={executionConfig.contextLabel}
+        loadingMessage={executionConfig.loadingMessage}
+        approveLabel={executionConfig.approveLabel}
+        successMessage={executionConfig.successMessage}
+        onClose={() => setActiveExecutionFlow(null)}
+        onApprove={handleApproveExecution}
+      />
+
       <ScrollView
         className="flex-1"
         contentContainerClassName={[
@@ -40,9 +103,16 @@ export default function HomeScreen() {
           companyStage={companyStage}
         />
 
-        <NextBestActionCard onExecute={executeAction} />
+        <NextBestActionCard onRequestApproval={() => setActiveExecutionFlow('leads')} />
 
         <GrowthTree businessHealth={businessHealth} />
+
+        {isAuthorityCardVisible ? (
+          <AuthorityOpportunityCard
+            onGenerateArticle={() => setActiveExecutionFlow('linkedin-article')}
+            onDismiss={() => setIsAuthorityCardVisible(false)}
+          />
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   )

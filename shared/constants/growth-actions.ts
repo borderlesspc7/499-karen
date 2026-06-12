@@ -50,6 +50,12 @@ export const GROWTH_ACTIONS: Record<string, GrowthActionDefinition> = {
     revenueGain: 950,
     impactCategory: 'credibilidade',
   },
+  'publish-linkedin-article': {
+    title: 'Publicar artigo de autoridade no LinkedIn',
+    xpReward: 95,
+    revenueGain: 1500,
+    impactCategory: 'credibilidade',
+  },
 }
 
 export const DEFAULT_GROWTH_ACTION: GrowthActionDefinition = {
