@@ -1,63 +1,42 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import { getAuthBackend } from '../services/auth-backend'
 import { AuthContext, type AuthContextValue } from './auth-context'
-import {
-  getStoredSession,
-  mockResetPassword,
-  mockSignIn,
-  mockSignOut,
-  mockSignUp,
-} from '../services/mock-auth'
-import type { MockUser } from '../types/auth'
+import type { AuthUser } from '../types/auth'
 
 type AuthProviderProps = {
   children: ReactNode
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [currentUser, setCurrentUser] = useState<MockUser | null>(null)
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const [isAuthLoading, setIsAuthLoading] = useState(true)
 
   useEffect(() => {
-    let isMounted = true
+    const authBackend = getAuthBackend()
 
-    async function loadSession() {
-      try {
-        const session = await getStoredSession()
-        if (isMounted) {
-          setCurrentUser(session)
-        }
-      } finally {
-        if (isMounted) {
-          setIsAuthLoading(false)
-        }
-      }
-    }
+    const unsubscribe = authBackend.onAuthStateChanged((user) => {
+      setCurrentUser(user)
+      setIsAuthLoading(false)
+    })
 
-    void loadSession()
-
-    return () => {
-      isMounted = false
-    }
+    return unsubscribe
   }, [])
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const user = await mockSignIn(email, password)
-    setCurrentUser(user)
+    await getAuthBackend().signIn(email, password)
   }, [])
 
   const signUp = useCallback(async (email: string, password: string) => {
-    const user = await mockSignUp(email, password)
-    setCurrentUser(user)
+    await getAuthBackend().signUp(email, password)
   }, [])
 
   const resetPassword = useCallback(async (email: string) => {
-    await mockResetPassword(email)
+    await getAuthBackend().resetPassword(email)
   }, [])
 
   const signOutUser = useCallback(async () => {
-    await mockSignOut()
-    setCurrentUser(null)
+    await getAuthBackend().signOut()
   }, [])
 
   const contextValue = useMemo<AuthContextValue>(

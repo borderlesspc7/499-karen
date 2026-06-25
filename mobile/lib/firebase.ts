@@ -1,16 +1,35 @@
+import { Platform } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app'
-import { initializeAuth, getAuth, type Auth } from 'firebase/auth'
+// Metro resolve `firebase/auth` para o bundle React Native no iOS/Android.
+// @ts-expect-error getReactNativePersistence existe no bundle RN, não nos tipos web.
+import { getAuth, getReactNativePersistence, initializeAuth, type Auth } from 'firebase/auth'
 import { getFirestore, type Firestore } from 'firebase/firestore'
 import { getFirebasePublicConfig } from './env'
-
-// Firebase v12 removeu os tipos RN; a função ainda existe em runtime no bundle Metro.
-// @ts-expect-error getReactNativePersistence não está exportado nos tipos do SDK web.
-import { getReactNativePersistence } from 'firebase/auth'
 
 let firebaseApp: FirebaseApp | null = null
 let firebaseAuth: Auth | null = null
 let firestoreDb: Firestore | null = null
+
+function createFirebaseAuth(app: FirebaseApp): Auth {
+  if (Platform.OS === 'web') {
+    return getAuth(app)
+  }
+
+  try {
+    return initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage),
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+
+    if (message.includes('already been initialized')) {
+      return getAuth(app)
+    }
+
+    throw error
+  }
+}
 
 export function initializeFirebase(): FirebaseApp {
   if (firebaseApp) {
@@ -19,16 +38,12 @@ export function initializeFirebase(): FirebaseApp {
 
   const config = getFirebasePublicConfig()
 
-  firebaseApp = getApps().length > 0 ? getApp() : initializeApp(config)
-
-  try {
-    firebaseAuth = initializeAuth(firebaseApp, {
-      persistence: getReactNativePersistence(AsyncStorage),
-    })
-  } catch {
-    firebaseAuth = getAuth(firebaseApp)
+  if (__DEV__) {
+    console.info('[Firebase] projectId:', config.projectId, '| authDomain:', config.authDomain)
   }
 
+  firebaseApp = getApps().length > 0 ? getApp() : initializeApp(config)
+  firebaseAuth = createFirebaseAuth(firebaseApp)
   firestoreDb = getFirestore(firebaseApp)
 
   return firebaseApp

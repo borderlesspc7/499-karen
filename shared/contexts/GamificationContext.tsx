@@ -1,6 +1,9 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { INITIAL_GAMIFICATION_STATE, mergeGamificationState, toPersistedGamificationState } from '../constants/initial-gamification-state'
+import { getGamificationPersistence } from '../services/gamification-persistence'
 import { GamificationContext, type GamificationContextValue } from './gamification-context'
+import { useAuth } from './useAuth'
 import type {
   BusinessHealthScores,
   MissionImpactCategory,
@@ -13,61 +16,12 @@ import {
 } from '../constants/growth-actions'
 import {
   applyBusinessHealthImpact,
-  calculateTotalScore,
   resolveCompanyTier,
 } from '../utils/gamification-helpers'
 import { generateId } from '../utils/generate-id'
 import type { TimelineActionItem, UserProfile } from '../types/gamification'
 
-const INITIAL_BUSINESS_HEALTH: Omit<BusinessHealthScores, 'totalScore'> = {
-  marketing: 72,
-  vendas: 58,
-  automacao: 45,
-  credibilidade: 80,
-  posicionamento: 65,
-}
-
-const INITIAL_GAMIFICATION_STATE: UserGamificationState = {
-  level: 12,
-  title: 'Growth Builder',
-  streakDays: 14,
-  influencePoints: 2450,
-  completedActions: 32,
-  userProfile: null,
-  companyStage: 'Iniciante',
-  potentialRevenue: 8400,
-  timeline: [],
-  businessHealth: {
-    ...INITIAL_BUSINESS_HEALTH,
-    totalScore: calculateTotalScore(INITIAL_BUSINESS_HEALTH),
-  },
-  companyTier: resolveCompanyTier(calculateTotalScore(INITIAL_BUSINESS_HEALTH)),
-  economy: {
-    currentXp: 3150,
-    nextLevelXp: 5000,
-    coins: 420,
-  },
-  recentActivity: [
-    {
-      id: 'activity-1',
-      date: 'Hoje',
-      action: 'Criou campanha',
-      type: 'marketing',
-    },
-    {
-      id: 'activity-2',
-      date: 'Ontem',
-      action: 'Criou landing page',
-      type: 'posicionamento',
-    },
-    {
-      id: 'activity-3',
-      date: '3 dias atrás',
-      action: 'Configurou CRM',
-      type: 'vendas',
-    },
-  ],
-}
+const PERSIST_DEBOUNCE_MS = 700
 
 type GamificationProviderProps = {
   children: ReactNode
@@ -157,7 +111,77 @@ export function GamificationProvider({
   children,
   initialState = INITIAL_GAMIFICATION_STATE,
 }: GamificationProviderProps) {
+  const { currentUser, isAuthLoading } = useAuth()
+  const userId = currentUser?.id ?? null
+
   const [state, setState] = useState<UserGamificationState>(initialState)
+  const [isHydrated, setIsHydrated] = useState(false)
+  const skipNextPersistRef = useRef(false)
+
+  useEffect(() => {
+    if (isAuthLoading) {
+      return
+    }
+
+    let isCancelled = false
+
+    async function hydrateGamification() {
+      setIsHydrated(false)
+      skipNextPersistRef.current = true
+
+      if (!userId) {
+        if (!isCancelled) {
+          setState(INITIAL_GAMIFICATION_STATE)
+          setIsHydrated(true)
+        }
+        return
+      }
+
+      try {
+        const persisted = await getGamificationPersistence().load(userId)
+        if (!isCancelled) {
+          setState(persisted ? mergeGamificationState(persisted) : INITIAL_GAMIFICATION_STATE)
+        }
+      } catch {
+        if (!isCancelled) {
+          setState(INITIAL_GAMIFICATION_STATE)
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsHydrated(true)
+        }
+      }
+    }
+
+    void hydrateGamification()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [userId, isAuthLoading])
+
+  useEffect(() => {
+    if (!isHydrated || !userId) {
+      return
+    }
+
+    if (skipNextPersistRef.current) {
+      skipNextPersistRef.current = false
+      return
+    }
+
+    const timer = setTimeout(() => {
+      void getGamificationPersistence()
+        .save(userId, toPersistedGamificationState(state), {
+          email: currentUser?.email,
+        })
+        .catch(() => {
+          // Falha de rede não deve quebrar a UI; cache local cobre leitura offline.
+        })
+    }, PERSIST_DEBOUNCE_MS)
+
+    return () => clearTimeout(timer)
+  }, [state, userId, isHydrated, currentUser?.email])
 
   const addXp = useCallback((amount: number) => {
     setState((current) => applyXpReward(current, amount))

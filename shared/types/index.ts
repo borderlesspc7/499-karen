@@ -1,4 +1,4 @@
-export type { MockUser } from './auth'
+export type { AuthUser, MockUser } from './auth'
 export type { Client, ClientStatus } from './client'
 export type {
   CategoryFilter,

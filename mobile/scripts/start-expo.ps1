@@ -21,4 +21,14 @@ Write-Host "  metro: $env:METRO_CACHE"
 Write-Host "  temp:  $env:TEMP"
 
 Set-Location $PSScriptRoot\..
-npx expo start @args
+
+if (-not (Test-Path ".\node_modules\expo\package.json")) {
+  Write-Host "Dependencias do mobile nao encontradas. Executando npm install..." -ForegroundColor Yellow
+  npm install
+  if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+  }
+}
+
+# Usa o CLI local (SDK 54) em vez de baixar expo@latest via npx.
+npm exec -- expo start @args

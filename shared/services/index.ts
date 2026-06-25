@@ -1,8 +1,11 @@
+export { AuthError, MockAuthError, getAuthErrorMessage, isAuthError, mapFirebaseAuthError } from './auth-error'
 export {
-  MockAuthError,
-  getStoredSession,
-  mockResetPassword,
-  mockSignIn,
-  mockSignOut,
-  mockSignUp,
-} from './mock-auth'
+  configureAuthBackend,
+  getAuthBackend,
+  type AuthBackend,
+} from './auth-backend'
+export {
+  configureGamificationPersistence,
+  getGamificationPersistence,
+  type GamificationPersistence,
+} from './gamification-persistence'

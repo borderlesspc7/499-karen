@@ -1,8 +1,8 @@
 import { createContext } from 'react'
-import type { MockUser } from '../types/auth'
+import type { AuthUser } from '../types/auth'
 
 export type AuthContextValue = {
-  currentUser: MockUser | null
+  currentUser: AuthUser | null
   isAuthLoading: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string) => Promise<void>

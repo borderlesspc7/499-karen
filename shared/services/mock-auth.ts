@@ -1,3 +1,4 @@
+/** @deprecated Substituído por Firebase Auth (`mobile/lib/firebase-auth-backend.ts`). */
 import type { MockUser } from '../types/auth'
 import { getStorage } from '../storage'
 import { generateId } from '../utils/generate-id'

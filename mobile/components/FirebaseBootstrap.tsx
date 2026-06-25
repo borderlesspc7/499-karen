@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { getFirebaseConfigError } from '@/lib/env'
 import { initializeFirebase } from '@/lib/firebase'
+import { configureAppServices } from '@/lib/configure-app-services'
 
 type FirebaseBootstrapProps = {
   children: ReactNode
@@ -18,6 +19,7 @@ export function FirebaseBootstrap({ children }: FirebaseBootstrapProps) {
 
     try {
       initializeFirebase()
+      configureAppServices()
       setIsReady(true)
     } catch (error) {
       const message =

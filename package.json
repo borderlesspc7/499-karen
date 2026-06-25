@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "BORDERLESS — CRM comercial 100% React Native (Expo SDK 54)",
   "scripts": {
+    "postinstall": "npm --prefix mobile install",
     "start": "npm --prefix mobile run start",
     "android": "npm --prefix mobile run android",
     "ios": "npm --prefix mobile run ios",

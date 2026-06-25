@@ -1,5 +1,14 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config'
 
+const DEFAULT_FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyAViJL-AqGqr2tfjCQRqkeATE_dPYbjTTI',
+  authDomain: 'karen-eaaf4.firebaseapp.com',
+  projectId: 'karen-eaaf4',
+  storageBucket: 'karen-eaaf4.firebasestorage.app',
+  messagingSenderId: '934369528971',
+  appId: '1:934369528971:web:3bb1467494455a0865d88e',
+} as const
+
 type FirebaseExtraConfig = {
   apiKey: string
   authDomain: string
@@ -10,13 +19,25 @@ type FirebaseExtraConfig = {
 }
 
 function readFirebaseEnv(): FirebaseExtraConfig {
+  const read = (envValue: string | undefined, fallback: string) =>
+    envValue?.trim() || fallback
+
   return {
-    apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY ?? '',
-    authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
-    projectId: process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID ?? '',
-    storageBucket: process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
-    messagingSenderId: process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
-    appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID ?? '',
+    apiKey: read(process.env.EXPO_PUBLIC_FIREBASE_API_KEY, DEFAULT_FIREBASE_CONFIG.apiKey),
+    authDomain: read(
+      process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      DEFAULT_FIREBASE_CONFIG.authDomain,
+    ),
+    projectId: read(process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID, DEFAULT_FIREBASE_CONFIG.projectId),
+    storageBucket: read(
+      process.env.EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      DEFAULT_FIREBASE_CONFIG.storageBucket,
+    ),
+    messagingSenderId: read(
+      process.env.EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      DEFAULT_FIREBASE_CONFIG.messagingSenderId,
+    ),
+    appId: read(process.env.EXPO_PUBLIC_FIREBASE_APP_ID, DEFAULT_FIREBASE_CONFIG.appId),
   }
 }
 

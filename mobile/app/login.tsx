@@ -12,7 +12,7 @@ import {
 import { Redirect } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@shared/contexts'
-import { MockAuthError } from '@shared/services'
+import { getAuthErrorMessage } from '@shared/services'
 import { SummusLogo } from '@/components/ui/SummusLogo'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
@@ -36,25 +36,22 @@ const authModeContent: Record<
   },
   reset: {
     title: 'Recuperar senha',
-    subtitle: 'Simulação local: nenhum e-mail será enviado.',
-    submitLabel: 'Simular recuperação',
+    subtitle: 'Enviaremos um link de redefinição para o seu e-mail.',
+    submitLabel: 'Enviar link de recuperação',
     toggleLabel: 'Voltar para o login',
   },
 }
 
 function mapAuthErrorMessage(error: unknown) {
-  if (error instanceof MockAuthError) {
-    return error.message
-  }
-  return 'Não foi possível concluir a autenticação. Tente novamente.'
+  return getAuthErrorMessage(error)
 }
 
 export default function LoginScreen() {
   const { currentUser, isAuthLoading, signIn, signUp, resetPassword } = useAuth()
   const { isWebDesktop } = useResponsiveLayout()
   const [authMode, setAuthMode] = useState<AuthMode>('signin')
-  const [email, setEmail] = useState('demo@borderless.com')
-  const [password, setPassword] = useState('123456')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -85,7 +82,7 @@ export default function LoginScreen() {
         await signUp(email, password)
       } else {
         await resetPassword(email)
-        setSuccessMessage('Recuperação simulada. Use demo@borderless.com / 123456')
+        setSuccessMessage('Enviamos um link de recuperação para o seu e-mail.')
       }
     } catch (error) {
       setErrorMessage(mapAuthErrorMessage(error))
