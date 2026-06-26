@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react-native'
-import { BrainCircuit, LayoutGrid, MessageSquare } from 'lucide-react-native'
+import { BrainCircuit, Inbox, LayoutGrid, TrendingUp } from 'lucide-react-native'
 
 export type SummusNavItem = {
   href: string
@@ -16,15 +16,21 @@ export const summusNavItems: SummusNavItem[] = [
     match: (path) => path === '/' || path === '/index' || path.endsWith('/(tabs)'),
   },
   {
+    href: '/(tabs)/opportunities',
+    label: 'CRM',
+    icon: TrendingUp,
+    match: (path) => path.includes('opportunities') || path.includes('/crm'),
+  },
+  {
     href: '/(tabs)/workforce',
     label: 'Equipe IA',
     icon: BrainCircuit,
     match: (path) => path.includes('workforce'),
   },
   {
-    href: '/(tabs)/conversations',
-    label: 'Conversas',
-    icon: MessageSquare,
-    match: (path) => path.includes('conversations'),
+    href: '/(tabs)/inbox',
+    label: 'Inbox',
+    icon: Inbox,
+    match: (path) => path.includes('inbox') || path.includes('conversations'),
   },
 ]

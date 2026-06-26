@@ -11,8 +11,22 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import type { KanbanCardWithClient } from '@shared/types'
 import { useGamification } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
-import { GrowthFlowList } from '@/components/opportunities/GrowthFlowList'
-import { buildGrowthFlowLeads } from '@/lib/crm-lead-insights'
+import {
+  GrowthFlowList,
+  LeadDetailModal,
+  OpportunityFilterBar,
+  PipelineValueBanner,
+} from '@/components/opportunities'
+import {
+  buildGrowthFlowLeads,
+  buildWonLeads,
+  computePipelineNegotiationValue,
+  filterGrowthFlowLeads,
+  isForgottenLead,
+  isHotLead,
+  type GrowthFlowLead,
+  type OpportunityQuickFilter,
+} from '@/lib/crm-lead-insights'
 import { loadLinkedCrmSnapshot, seedLinkedDemoData } from '@/lib/crm-client-service'
 
 export default function OpportunitiesScreen() {
@@ -23,6 +37,8 @@ export default function OpportunitiesScreen() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSeeding, setIsSeeding] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [activeFilter, setActiveFilter] = useState<OpportunityQuickFilter>('todos')
+  const [selectedLead, setSelectedLead] = useState<GrowthFlowLead | null>(null)
 
   const loadOpportunities = useCallback(async () => {
     setIsLoading(true)
@@ -63,9 +79,28 @@ export default function OpportunitiesScreen() {
   }
 
   const growthFlowLeads = useMemo(() => buildGrowthFlowLeads(cards), [cards])
-  const totalPipelineImpact = useMemo(
-    () => growthFlowLeads.reduce((sum, lead) => sum + lead.dealImpact, 0),
+  const wonLeads = useMemo(() => buildWonLeads(cards), [cards])
+
+  const filteredLeads = useMemo(
+    () => filterGrowthFlowLeads(growthFlowLeads, wonLeads, activeFilter),
+    [growthFlowLeads, wonLeads, activeFilter],
+  )
+
+  const pipelineValue = useMemo(
+    () => computePipelineNegotiationValue(growthFlowLeads),
     [growthFlowLeads],
+  )
+
+  const filterCounts = useMemo(
+    () => ({
+      todos: growthFlowLeads.length,
+      quentes: growthFlowLeads.filter((lead) => isHotLead(lead, lead.healthScore)).length,
+      esquecidos: growthFlowLeads.filter((lead) =>
+        isForgottenLead(lead, lead.healthScore),
+      ).length,
+      ganhos: wonLeads.length,
+    }),
+    [growthFlowLeads, wonLeads],
   )
 
   if (isLoading && cards.length === 0) {
@@ -100,17 +135,15 @@ export default function OpportunitiesScreen() {
         </View>
 
         {growthFlowLeads.length > 0 ? (
-          <View className="rounded-3xl bg-white p-5 shadow-sm">
-            <Text className="text-xs font-bold uppercase tracking-wider text-slate-400">
-              Pipeline ativo
-            </Text>
-            <Text className="mt-1 text-2xl font-bold text-deepBlue">
-              +R$ {totalPipelineImpact.toLocaleString('pt-BR')}
-            </Text>
-            <Text className="mt-1 text-sm text-slate-500">
-              Impacto potencial se as ações de hoje forem executadas.
-            </Text>
-          </View>
+          <PipelineValueBanner value={pipelineValue} leadCount={growthFlowLeads.length} />
+        ) : null}
+
+        {cards.length > 0 ? (
+          <OpportunityFilterBar
+            activeFilter={activeFilter}
+            onFilterChange={setActiveFilter}
+            counts={filterCounts}
+          />
         ) : null}
 
         {error ? (
@@ -143,13 +176,27 @@ export default function OpportunitiesScreen() {
               </Text>
             </Pressable>
           </View>
+        ) : filteredLeads.length === 0 ? (
+          <View className="rounded-3xl border border-dashed border-slate-200 bg-white p-8">
+            <Text className="text-center text-sm text-slate-500">
+              Nenhuma oportunidade neste filtro.
+            </Text>
+          </View>
         ) : (
           <GrowthFlowList
-            leads={growthFlowLeads}
+            leads={filteredLeads}
+            onLeadPress={setSelectedLead}
             onExecuteLead={() => executeAction('follow-up-leads')}
           />
         )}
       </ScrollView>
+
+      <LeadDetailModal
+        lead={selectedLead}
+        visible={selectedLead !== null}
+        onClose={() => setSelectedLead(null)}
+        onExecute={() => executeAction('follow-up-leads')}
+      />
     </SafeAreaView>
   )
 }

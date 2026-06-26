@@ -46,15 +46,21 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
-          name="conversations"
+          name="inbox"
           options={{
-            title: 'Conversas',
+            title: 'Inbox',
           }}
         />
+        <Tabs.Screen name="conversations" options={{ href: null }} />
 
         <Tabs.Screen name="ai-coach" options={{ href: null }} />
         <Tabs.Screen name="learn" options={{ href: null }} />
-        <Tabs.Screen name="opportunities" options={{ href: null }} />
+        <Tabs.Screen
+          name="opportunities"
+          options={{
+            title: 'CRM',
+          }}
+        />
         <Tabs.Screen name="crm" options={{ href: null }} />
         <Tabs.Screen name="automations" options={{ href: null }} />
         <Tabs.Screen name="treasure-vault" options={{ href: null }} />

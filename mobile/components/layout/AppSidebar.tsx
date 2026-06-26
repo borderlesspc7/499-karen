@@ -4,17 +4,19 @@ import {
   BarChart3,
   Bot,
   Home,
-  MessageSquare,
+  Inbox,
   Settings,
+  TrendingUp,
   Users,
 } from 'lucide-react-native'
 import { useAuth } from '@shared/contexts'
 
 const mainNavItems = [
   { href: '/(tabs)', label: 'Início', icon: Home, match: (path: string) => path === '/' || path === '/index' || path.endsWith('/(tabs)') },
+  { href: '/(tabs)/opportunities', label: 'CRM', icon: TrendingUp, match: (path: string) => path.includes('opportunities') || path.includes('/crm') },
   { href: '/(tabs)/clientes', label: 'Clientes', icon: Users, match: (path: string) => path.includes('clientes') },
   { href: '/(tabs)/workforce', label: 'Equipe IA', icon: Bot, match: (path: string) => path.includes('workforce') },
-  { href: '/(tabs)/conversations', label: 'Conversas', icon: MessageSquare, match: (path: string) => path.includes('conversations') },
+  { href: '/(tabs)/inbox', label: 'Inbox', icon: Inbox, match: (path: string) => path.includes('inbox') || path.includes('conversations') },
   { href: '/(tabs)/settings', label: 'Configurações', icon: Settings, match: (path: string) => path.includes('settings') },
 ] as const
 

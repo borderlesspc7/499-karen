@@ -5,6 +5,7 @@ import { resolveHealthColor } from '@/lib/crm-lead-insights'
 
 type GrowthFlowListProps = {
   leads: GrowthFlowLead[]
+  onLeadPress?: (lead: GrowthFlowLead) => void
   onExecuteLead?: (lead: GrowthFlowLead) => void
 }
 
@@ -16,10 +17,11 @@ type GrowthFlowItemProps = {
   lead: GrowthFlowLead
   rank: number
   isLast: boolean
+  onPress?: () => void
   onExecute?: () => void
 }
 
-function GrowthFlowItem({ lead, rank, isLast, onExecute }: GrowthFlowItemProps) {
+function GrowthFlowItem({ lead, rank, isLast, onPress, onExecute }: GrowthFlowItemProps) {
   const healthColor = resolveHealthColor(lead.healthScore)
 
   return (
@@ -32,8 +34,9 @@ function GrowthFlowItem({ lead, rank, isLast, onExecute }: GrowthFlowItemProps) 
       </View>
 
       <View className={['flex-1', isLast ? 'pb-0' : 'pb-6'].join(' ')}>
-        <View
-          className="rounded-3xl bg-white p-5 shadow-sm"
+        <Pressable
+          onPress={onPress}
+          className="rounded-3xl bg-white p-5 shadow-sm active:opacity-95"
           style={{
             shadowColor: '#0F172A',
             shadowOffset: { width: 0, height: 2 },
@@ -83,13 +86,13 @@ function GrowthFlowItem({ lead, rank, isLast, onExecute }: GrowthFlowItemProps) 
             <Text className="text-sm font-bold text-white">Executar Agora</Text>
             <ArrowRight size={16} color="#FFFFFF" />
           </Pressable>
-        </View>
+        </Pressable>
       </View>
     </View>
   )
 }
 
-export function GrowthFlowList({ leads, onExecuteLead }: GrowthFlowListProps) {
+export function GrowthFlowList({ leads, onLeadPress, onExecuteLead }: GrowthFlowListProps) {
   if (leads.length === 0) {
     return (
       <View className="rounded-3xl border border-dashed border-slate-200 bg-white p-8">
@@ -108,6 +111,7 @@ export function GrowthFlowList({ leads, onExecuteLead }: GrowthFlowListProps) {
           lead={lead}
           rank={index + 1}
           isLast={index === leads.length - 1}
+          onPress={() => onLeadPress?.(lead)}
           onExecute={() => {
             onExecuteLead?.(lead)
             Alert.alert(

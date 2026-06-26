@@ -1,0 +1,57 @@
+import { View } from 'react-native'
+import { Instagram, Mail, MessageCircle, Smartphone } from 'lucide-react-native'
+import type { InboxChannel } from '@/constants/inbox-mock-data'
+
+type ChannelVisual = {
+  Icon: typeof MessageCircle
+  backgroundColor: string
+  iconColor: string
+}
+
+const CHANNEL_VISUALS: Record<InboxChannel, ChannelVisual> = {
+  whatsapp: {
+    Icon: MessageCircle,
+    backgroundColor: '#DCFCE7',
+    iconColor: '#16A34A',
+  },
+  instagram: {
+    Icon: Instagram,
+    backgroundColor: '#FCE7F3',
+    iconColor: '#DB2777',
+  },
+  email: {
+    Icon: Mail,
+    backgroundColor: '#DBEAFE',
+    iconColor: '#2563EB',
+  },
+  sms: {
+    Icon: Smartphone,
+    backgroundColor: '#F1F5F9',
+    iconColor: '#475569',
+  },
+}
+
+type InboxChannelIconProps = {
+  channel: InboxChannel
+  size?: 'sm' | 'md'
+}
+
+export function InboxChannelIcon({ channel, size = 'md' }: InboxChannelIconProps) {
+  const visual = CHANNEL_VISUALS[channel]
+  const Icon = visual.Icon
+  const dimension = size === 'sm' ? 32 : 40
+  const iconSize = size === 'sm' ? 14 : 18
+
+  return (
+    <View
+      className="items-center justify-center rounded-full"
+      style={{
+        width: dimension,
+        height: dimension,
+        backgroundColor: visual.backgroundColor,
+      }}
+    >
+      <Icon size={iconSize} color={visual.iconColor} />
+    </View>
+  )
+}

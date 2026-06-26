@@ -1,9 +1,9 @@
 import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
-import { BrainCircuit, LayoutGrid, MessageSquare } from 'lucide-react-native'
+import { BrainCircuit, Inbox, LayoutGrid, TrendingUp } from 'lucide-react-native'
 
-const VISIBLE_TABS = ['index', 'workforce', 'conversations'] as const
+const VISIBLE_TABS = ['index', 'opportunities', 'workforce', 'inbox'] as const
 
 type VisibleTabName = (typeof VISIBLE_TABS)[number]
 
@@ -12,8 +12,9 @@ const TAB_CONFIG: Record<
   { label: string; Icon: typeof LayoutGrid }
 > = {
   index: { label: 'Home', Icon: LayoutGrid },
+  opportunities: { label: 'CRM', Icon: TrendingUp },
   workforce: { label: 'Equipe IA', Icon: BrainCircuit },
-  conversations: { label: 'Conversas', Icon: MessageSquare },
+  inbox: { label: 'Inbox', Icon: Inbox },
 }
 
 export function SummusBottomTabBar({ state, navigation }: BottomTabBarProps) {
@@ -41,7 +42,7 @@ export function SummusBottomTabBar({ state, navigation }: BottomTabBarProps) {
                   navigation.navigate(tabName)
                 }
               }}
-              className="min-w-[88px] flex-1 items-center gap-1 rounded-2xl py-2 active:opacity-80"
+              className="min-w-[72px] flex-1 items-center gap-1 rounded-2xl py-2 active:opacity-80"
               accessibilityRole="button"
               accessibilityState={{ selected: isFocused }}
             >

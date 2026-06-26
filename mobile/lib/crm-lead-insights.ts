@@ -132,19 +132,62 @@ export function estimateDealImpact(
   return Math.round(base * multiplier * healthFactor)
 }
 
+function enrichCardToGrowthFlowLead(card: KanbanCardWithClient): GrowthFlowLead {
+  const healthScore = computeLeadHealthScore(card)
+
+  return {
+    ...card,
+    healthScore,
+    nextBestAction: resolveNextBestAction(card),
+    dealImpact: estimateDealImpact(card, healthScore),
+  }
+}
+
 export function buildGrowthFlowLeads(cards: KanbanCardWithClient[]): GrowthFlowLead[] {
-  const activeCards = cards.filter((card) => card.columnId !== 'col-fechado')
-
-  return activeCards
-    .map((card) => {
-      const healthScore = computeLeadHealthScore(card)
-
-      return {
-        ...card,
-        healthScore,
-        nextBestAction: resolveNextBestAction(card),
-        dealImpact: estimateDealImpact(card, healthScore),
-      }
-    })
+  return cards
+    .filter((card) => card.columnId !== 'col-fechado')
+    .map(enrichCardToGrowthFlowLead)
     .sort((a, b) => b.dealImpact - a.dealImpact)
+}
+
+export function buildWonLeads(cards: KanbanCardWithClient[]): GrowthFlowLead[] {
+  return cards
+    .filter((card) => card.columnId === 'col-fechado')
+    .map(enrichCardToGrowthFlowLead)
+    .sort((a, b) => b.dealImpact - a.dealImpact)
+}
+
+export type OpportunityQuickFilter = 'todos' | 'quentes' | 'esquecidos' | 'ganhos'
+
+export function isForgottenLead(card: KanbanCardWithClient, healthScore: number): boolean {
+  if (card.columnId === 'col-fechado') {
+    return false
+  }
+
+  return (
+    isColdLead(card, healthScore) ||
+    INACTIVE_COLUMN_IDS.has(card.columnId) ||
+    (card.columnId === 'col-contato' && card.priority === 'baixa')
+  )
+}
+
+export function filterGrowthFlowLeads(
+  activeLeads: GrowthFlowLead[],
+  wonLeads: GrowthFlowLead[],
+  filter: OpportunityQuickFilter,
+): GrowthFlowLead[] {
+  switch (filter) {
+    case 'quentes':
+      return activeLeads.filter((lead) => isHotLead(lead, lead.healthScore))
+    case 'esquecidos':
+      return activeLeads.filter((lead) => isForgottenLead(lead, lead.healthScore))
+    case 'ganhos':
+      return wonLeads
+  }
+
+  return activeLeads
+}
+
+export function computePipelineNegotiationValue(leads: GrowthFlowLead[]): number {
+  return leads.reduce((sum, lead) => sum + lead.dealImpact, 0)
 }
