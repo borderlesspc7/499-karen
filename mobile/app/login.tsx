@@ -11,7 +11,7 @@ import {
 } from 'react-native'
 import { Redirect } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useAuth } from '@shared/contexts'
+import { useAuth, useGamification } from '@shared/contexts'
 import { getAuthErrorMessage } from '@shared/services'
 import { SummusLogo } from '@/components/ui/SummusLogo'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
@@ -48,6 +48,7 @@ function mapAuthErrorMessage(error: unknown) {
 
 export default function LoginScreen() {
   const { currentUser, isAuthLoading, signIn, signUp, resetPassword } = useAuth()
+  const { isHydrated, isOnboardingComplete } = useGamification()
   const { isWebDesktop } = useResponsiveLayout()
   const [authMode, setAuthMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState('')
@@ -67,7 +68,17 @@ export default function LoginScreen() {
   }
 
   if (currentUser) {
-    return <Redirect href="/(tabs)" />
+    if (!isHydrated) {
+      return (
+        <View className="flex-1 items-center justify-center bg-deepBlue">
+          <ActivityIndicator size="large" color="#3B82F6" />
+        </View>
+      )
+    }
+
+    return (
+      <Redirect href={isOnboardingComplete ? '/(tabs)' : '/(tabs)/integrations'} />
+    )
   }
 
   async function handleSubmit() {

@@ -7,9 +7,9 @@ import { SummusBottomTabBar } from '@/components/layout/SummusBottomTabBar'
 
 export default function TabLayout() {
   const { currentUser, isAuthLoading } = useAuth()
-  const { isOnboardingComplete } = useGamification()
+  const { isHydrated, isOnboardingComplete } = useGamification()
 
-  if (isAuthLoading) {
+  if (isAuthLoading || !isHydrated) {
     return (
       <View className="flex-1 items-center justify-center bg-deepBlue">
         <ActivityIndicator size="large" color="#3B82F6" />
@@ -25,6 +25,7 @@ export default function TabLayout() {
     <SummusAppShell>
       <OnboardingModal visible={!isOnboardingComplete} />
       <Tabs
+        initialRouteName={isOnboardingComplete ? 'index' : 'integrations'}
         tabBar={(props) => <SummusBottomTabBar {...props} />}
         screenOptions={{
           headerShown: false,
@@ -43,6 +44,18 @@ export default function TabLayout() {
           name="workforce"
           options={{
             title: 'Equipe IA',
+          }}
+        />
+        <Tabs.Screen
+          name="integrations"
+          options={{
+            title: 'Canais',
+          }}
+        />
+        <Tabs.Screen
+          name="campaign-magic"
+          options={{
+            title: 'Campanhas',
           }}
         />
         <Tabs.Screen

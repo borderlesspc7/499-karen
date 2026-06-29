@@ -329,6 +329,7 @@ export function GamificationProvider({
       maxXp: nextLevelXp,
       xpProgress,
       xpRemaining,
+      isHydrated,
       isOnboardingComplete: state.userProfile !== null,
       addXp,
       completeMission,
@@ -341,6 +342,7 @@ export function GamificationProvider({
     }
   }, [
     state,
+    isHydrated,
     addXp,
     completeMission,
     executeAction,

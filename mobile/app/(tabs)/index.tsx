@@ -6,9 +6,11 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { ExecutionModal, type ExecutionModalProps } from '@/components/ExecutionModal'
 import { LINKEDIN_AUTHORITY_OPPORTUNITY } from '@/constants/ai-content-engine'
 import { AuthorityOpportunityCard } from '@/components/dashboard/home/AuthorityOpportunityCard'
+import { ActiveCampaignCard } from '@/components/dashboard/home/ActiveCampaignCard'
 import { GrowthTree } from '@/components/dashboard/home/GrowthTree'
 import { HomeGrowthScoreCard } from '@/components/dashboard/home/HomeGrowthScoreCard'
 import { HomeSmartHeader } from '@/components/dashboard/home/HomeSmartHeader'
+import { LiveAiActivity } from '@/components/dashboard/home/LiveAiActivity'
 import {
   FEATURED_ACTION_ID,
   featuredAction,
@@ -97,6 +99,10 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <HomeSmartHeader userName={userName} />
+
+        <ActiveCampaignCard />
+
+        <LiveAiActivity />
 
         <HomeGrowthScoreCard
           score={businessHealth.totalScore}

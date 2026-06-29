@@ -12,6 +12,7 @@ export type GamificationContextValue = UserGamificationState & {
   maxXp: number
   xpProgress: number
   xpRemaining: number
+  isHydrated: boolean
   isOnboardingComplete: boolean
   addXp: (amount: number) => void
   completeMission: (
