@@ -20,6 +20,8 @@ import {
 } from '../utils/gamification-helpers'
 import { generateId } from '../utils/generate-id'
 import type { TimelineActionItem, UserProfile } from '../types/gamification'
+import type { BrandIdentity } from '../types/brand-identity'
+import { buildBrandAiContext } from '../utils/brand-identity'
 
 const PERSIST_DEBOUNCE_MS = 700
 
@@ -266,6 +268,13 @@ export function GamificationProvider({
     }))
   }, [])
 
+  const setBrandIdentity = useCallback((identity: BrandIdentity) => {
+    setState((current) => ({
+      ...current,
+      brandIdentity: identity,
+    }))
+  }, [])
+
   const setCompanyStage = useCallback((stage: UserGamificationState['companyStage']) => {
     setState((current) => ({
       ...current,
@@ -322,6 +331,9 @@ export function GamificationProvider({
     const { currentXp, nextLevelXp } = state.economy
     const xpProgress = resolveXpProgress(currentXp, nextLevelXp)
     const xpRemaining = Math.max(0, nextLevelXp - currentXp)
+    const brandAiContext = state.brandIdentity
+      ? buildBrandAiContext(state.brandIdentity, state.userProfile)
+      : null
 
     return {
       ...state,
@@ -330,11 +342,13 @@ export function GamificationProvider({
       xpProgress,
       xpRemaining,
       isHydrated,
-      isOnboardingComplete: state.userProfile !== null,
+      isOnboardingComplete: state.userProfile !== null && state.brandIdentity !== null,
+      brandAiContext,
       addXp,
       completeMission,
       executeAction,
       setUserProfile,
+      setBrandIdentity,
       setCompanyStage,
       incrementCompletedActions,
       incrementInfluencePoints,
@@ -347,6 +361,7 @@ export function GamificationProvider({
     completeMission,
     executeAction,
     setUserProfile,
+    setBrandIdentity,
     setCompanyStage,
     incrementCompletedActions,
     incrementInfluencePoints,

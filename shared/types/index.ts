@@ -1,3 +1,9 @@
+export type {
+  BrandColors,
+  BrandIdentity,
+  BrandIdentityDraft,
+  TargetClientType,
+} from './brand-identity'
 export type { AuthUser, MockUser } from './auth'
 export type { Client, ClientStatus } from './client'
 export type {

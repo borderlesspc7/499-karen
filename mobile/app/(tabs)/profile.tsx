@@ -94,6 +94,7 @@ export default function ProfileScreen() {
     completedActions,
     influencePoints,
     userProfile,
+    brandIdentity,
     companyStage,
     companyTier,
   } = useGamification()
@@ -154,7 +155,9 @@ export default function ProfileScreen() {
             </View>
 
             <View className="flex-1 gap-1">
-              <Text className="text-xl font-bold text-white">{displayName}</Text>
+              <Text className="text-xl font-bold text-white">
+                {brandIdentity?.companyName ?? displayName}
+              </Text>
               <Text className="text-sm text-white/50">{email}</Text>
               <View className="mt-1 flex-row flex-wrap gap-2">
                 <View className="rounded-full bg-gold/15 px-2.5 py-0.5">

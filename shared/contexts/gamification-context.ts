@@ -1,4 +1,5 @@
 import { createContext } from 'react'
+import type { BrandIdentity } from '../types/brand-identity'
 import type {
   CompanyStage,
   MissionImpactCategory,
@@ -23,7 +24,9 @@ export type GamificationContextValue = UserGamificationState & {
   ) => void
   executeAction: (actionId: string) => void
   setUserProfile: (profile: UserProfile) => void
+  setBrandIdentity: (identity: BrandIdentity) => void
   setCompanyStage: (stage: CompanyStage) => void
+  brandAiContext: string | null
   incrementCompletedActions: (amount?: number) => void
   incrementInfluencePoints: (amount: number) => void
   updateStreak: (days: number) => void

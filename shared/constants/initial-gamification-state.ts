@@ -20,6 +20,7 @@ export const INITIAL_GAMIFICATION_STATE: UserGamificationState = {
   influencePoints: 2450,
   completedActions: 32,
   userProfile: null,
+  brandIdentity: null,
   companyStage: 'Iniciante',
   potentialRevenue: 8400,
   timeline: [],
@@ -63,6 +64,7 @@ export type PersistedGamificationState = Pick<
   | 'influencePoints'
   | 'completedActions'
   | 'userProfile'
+  | 'brandIdentity'
   | 'companyStage'
   | 'potentialRevenue'
   | 'businessHealth'
@@ -82,6 +84,7 @@ export function toPersistedGamificationState(
     influencePoints: state.influencePoints,
     completedActions: state.completedActions,
     userProfile: state.userProfile,
+    brandIdentity: state.brandIdentity,
     companyStage: state.companyStage,
     potentialRevenue: state.potentialRevenue,
     businessHealth: state.businessHealth,
@@ -102,6 +105,7 @@ export function mergeGamificationState(
 
   return {
     ...persisted,
+    brandIdentity: persisted.brandIdentity ?? null,
     businessHealth,
     companyTier: resolveCompanyTier(businessHealth.totalScore),
   }

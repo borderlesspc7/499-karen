@@ -8,20 +8,23 @@ import {
   LogOut,
   Mail,
   MessageCircle,
+  Palette,
   Save,
   Shield,
   Users,
 } from 'lucide-react-native'
-import { useAuth } from '@shared/contexts'
+import { useAuth, useGamification } from '@shared/contexts'
 import { AppScreen } from '@/components/layout/AppScreen'
 import { PageScroll } from '@/components/layout/PageScroll'
 import { ScreenHeader } from '@/components/ui/ScreenHeader'
+import { BrandIdentityEditor } from '@/components/brand/BrandIdentityEditor'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
-type SettingsSection = 'geral' | 'seguranca' | 'integracoes' | 'equipe' | 'faturamento'
+type SettingsSection = 'geral' | 'marca' | 'seguranca' | 'integracoes' | 'equipe' | 'faturamento'
 
 const sections: { id: SettingsSection; label: string; icon: typeof Building2 }[] = [
   { id: 'geral', label: 'Geral', icon: Building2 },
+  { id: 'marca', label: 'Identidade', icon: Palette },
   { id: 'seguranca', label: 'Segurança', icon: Shield },
   { id: 'integracoes', label: 'Integrações', icon: Link2 },
   { id: 'equipe', label: 'Equipe', icon: Users },
@@ -42,16 +45,30 @@ const integrations = [
 export default function SettingsScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const { signOutUser } = useAuth()
+  const { brandIdentity, userProfile, setBrandIdentity } = useGamification()
   const [activeSection, setActiveSection] = useState<SettingsSection>('geral')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle')
+  const [brandSaveTrigger, setBrandSaveTrigger] = useState(0)
   const [connected, setConnected] = useState<Record<string, boolean>>({
     whatsapp: true,
     email: false,
   })
 
   function handleSave() {
+    if (activeSection === 'marca') {
+      setBrandSaveTrigger((current) => current + 1)
+      return
+    }
+
     setSaveStatus('saved')
     setTimeout(() => setSaveStatus('idle'), 2000)
+  }
+
+  function handleBrandSaveStatusChange(status: 'idle' | 'saved') {
+    setSaveStatus(status)
+    if (status === 'saved') {
+      setTimeout(() => setSaveStatus('idle'), 2000)
+    }
   }
 
   async function handleSignOut() {
@@ -97,7 +114,9 @@ export default function SettingsScreen() {
           <View>
             <Text className="text-sm font-medium text-slate-700">Nome da empresa</Text>
             <View className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <Text className="text-slate-900">Borderless Solutions</Text>
+              <Text className="text-slate-900">
+                {brandIdentity?.companyName ?? 'Não configurado'}
+              </Text>
             </View>
           </View>
           <View>
@@ -107,6 +126,16 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+      ) : null}
+
+      {activeSection === 'marca' ? (
+        <BrandIdentityEditor
+          initialIdentity={brandIdentity}
+          userProfile={userProfile}
+          onSave={setBrandIdentity}
+          onSaveStatusChange={handleBrandSaveStatusChange}
+          saveTrigger={brandSaveTrigger}
+        />
       ) : null}
 
       {activeSection === 'seguranca' ? (

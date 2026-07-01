@@ -26,6 +26,12 @@ import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { SummusModal, SummusModalCard, SummusSuccessContent } from '@/components/ui/modal'
 import { CAMPAIGN_LAUNCHED_PARAM } from '@/constants/campaign-journey'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
+import { useGamification } from '@shared/contexts'
+import {
+  generateCampaignContent,
+  type CampaignPreviewCard,
+  type GeneratedCampaignContent,
+} from '@shared/utils/generate-campaign-content'
 
 type ScreenPhase = 'input' | 'loading' | 'dashboard'
 type ApprovalTab = 'social' | 'emails' | 'landing'
@@ -40,83 +46,14 @@ const APPROVAL_TABS: { id: ApprovalTab; label: string; icon: typeof Instagram }[
   { id: 'landing', label: 'Landing Page Copy', icon: Globe },
 ]
 
-const MOCK_SOCIAL_POSTS = [
-  {
-    id: 'ig-1',
-    channel: 'Instagram',
-    preview: 'Descubra o segredo para uma harmonização facial natural e rejuvenescida.',
-    detail: 'Carrossel de 4 slides com antes/depois, CTA para agendamento e hashtags locais.',
-  },
-  {
-    id: 'fb-1',
-    channel: 'Facebook',
-    preview: 'Transforme sua autoestima com protocolos personalizados de harmonização.',
-    detail: 'Post com vídeo curto, depoimento de paciente e link direto para WhatsApp.',
-  },
-  {
-    id: 'li-1',
-    channel: 'LinkedIn',
-    preview: 'A ciência por trás da harmonização facial: o que todo profissional precisa saber.',
-    detail: 'Artigo de autoridade com dados de mercado e convite para consulta estratégica.',
-  },
-]
+const FALLBACK_CAMPAIGN = generateCampaignContent({
+  userPrompt: '',
+  brandIdentity: null,
+  brandAiContext: null,
+  userProfile: null,
+})
 
-const MOCK_EMAILS = [
-  {
-    id: 'email-1',
-    subject: 'Bem-vinda à nova era da sua beleza',
-    preview: 'Olá! Preparamos uma jornada exclusiva para você conhecer nosso novo serviço...',
-    detail: 'E-mail de boas-vindas com vídeo de apresentação e oferta de avaliação gratuita.',
-  },
-  {
-    id: 'email-2',
-    subject: 'Últimas vagas para avaliação gratuita',
-    preview: 'Restam poucas vagas esta semana para uma consulta personalizada...',
-    detail: 'Sequência de urgência com prova social e botão de agendamento.',
-  },
-  {
-    id: 'email-3',
-    subject: 'O que nossas pacientes estão dizendo',
-    preview: 'Veja os resultados reais de quem já passou pela harmonização conosco...',
-    detail: 'E-mail de prova social com depoimentos e FAQ sobre o procedimento.',
-  },
-]
-
-const MOCK_LANDING_COPY = [
-  {
-    id: 'lp-1',
-    label: 'Headline',
-    preview: 'Harmonização Facial Premium — Resultados Naturais em 30 Dias',
-    detail: 'Título principal otimizado para conversão e SEO local.',
-  },
-  {
-    id: 'lp-2',
-    label: 'Subheadline',
-    preview: 'Protocolo exclusivo desenvolvido por especialistas para realçar sua beleza.',
-    detail: 'Complemento da headline com proposta de valor clara.',
-  },
-  {
-    id: 'lp-3',
-    label: 'CTA Principal',
-    preview: 'Agende sua Avaliação Gratuita Agora',
-    detail: 'Botão de ação com microcopy de urgência e garantia de satisfação.',
-  },
-]
-
-type PreviewCard = {
-  id: string
-  preview: string
-  detail: string
-  channel?: string
-  subject?: string
-  label?: string
-}
-
-const TAB_CONTENT: Record<ApprovalTab, PreviewCard[]> = {
-  social: MOCK_SOCIAL_POSTS,
-  emails: MOCK_EMAILS,
-  landing: MOCK_LANDING_COPY,
-}
+type PreviewCard = CampaignPreviewCard
 
 function resolveCardMeta(card: PreviewCard, tab: ApprovalTab): string {
   if (tab === 'social' && card.channel) {
@@ -144,11 +81,15 @@ function resolveCardTitle(card: PreviewCard, tab: ApprovalTab): string {
 
 export default function CampaignMagicScreen() {
   const { isWebDesktop } = useResponsiveLayout()
+  const { brandIdentity, brandAiContext, userProfile } = useGamification()
   const insets = useSafeAreaInsets()
   const [phase, setPhase] = useState<ScreenPhase>('input')
   const [prompt, setPrompt] = useState('')
   const [activeTab, setActiveTab] = useState<ApprovalTab>('social')
   const [isSuccessVisible, setIsSuccessVisible] = useState(false)
+  const [generatedCampaign, setGeneratedCampaign] = useState<GeneratedCampaignContent>(
+    FALLBACK_CAMPAIGN,
+  )
 
   const handleLoadingComplete = useCallback(() => {
     setPhase('dashboard')
@@ -160,8 +101,16 @@ export default function CampaignMagicScreen() {
       return
     }
 
+    setGeneratedCampaign(
+      generateCampaignContent({
+        userPrompt: prompt,
+        brandIdentity,
+        brandAiContext,
+        userProfile,
+      }),
+    )
     setPhase('loading')
-  }, [prompt])
+  }, [prompt, brandIdentity, brandAiContext, userProfile])
 
   const handleEdit = useCallback(() => {
     Alert.alert(
@@ -195,7 +144,7 @@ export default function CampaignMagicScreen() {
     navigateToHomeAfterLaunch()
   }, [navigateToHomeAfterLaunch])
 
-  const previewCards = TAB_CONTENT[activeTab]
+  const previewCards = generatedCampaign[activeTab]
 
   return (
     <SafeAreaView className="flex-1 bg-deepBlue" edges={['top']}>
@@ -227,6 +176,18 @@ export default function CampaignMagicScreen() {
               <Text className="text-sm leading-5 text-white/60">
                 Descreva sua ideia e a IA gera posts, e-mails e copy de landing page em segundos.
               </Text>
+              {brandIdentity ? (
+                <View className="mt-2 flex-row items-center gap-2 self-start rounded-full border border-electricBlue/30 bg-electricBlue/10 px-3 py-1.5">
+                  <Sparkles size={12} color="#3B82F6" />
+                  <Text className="text-[11px] font-medium text-electricBlue">
+                    Personalizando para {brandIdentity.companyName}
+                  </Text>
+                </View>
+              ) : (
+                <Text className="mt-1 text-xs text-amber-400/90">
+                  Complete a identidade da marca em Configurações para campanhas personalizadas.
+                </Text>
+              )}
             </Animated.View>
 
             <Animated.View
@@ -241,7 +202,11 @@ export default function CampaignMagicScreen() {
               <TextInput
                 value={prompt}
                 onChangeText={setPrompt}
-                placeholder="Ex: Crie uma campanha para meu novo serviço de harmonização facial..."
+                placeholder={
+                  brandIdentity
+                    ? `Ex: Campanha para divulgar ${brandIdentity.servicesDescription.slice(0, 60)}...`
+                    : 'Ex: Crie uma campanha para meu novo serviço de harmonização facial...'
+                }
                 placeholderTextColor="#64748B"
                 multiline
                 numberOfLines={6}
@@ -290,6 +255,12 @@ export default function CampaignMagicScreen() {
                 <Text className="text-sm text-white/50">
                   Revise e aprove o conteúdo gerado para todos os canais.
                 </Text>
+                {brandIdentity ? (
+                  <Text className="text-xs text-electricBlue/80">
+                    Baseado na identidade de {brandIdentity.companyName}
+                    {prompt.trim() ? ` · tema: "${prompt.trim().slice(0, 50)}${prompt.length > 50 ? '...' : ''}"` : ''}
+                  </Text>
+                ) : null}
               </Animated.View>
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>

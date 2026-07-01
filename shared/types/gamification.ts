@@ -47,6 +47,8 @@ export type GamificationStats = {
   completedActions: number
 }
 
+import type { BrandIdentity } from './brand-identity'
+
 export type UserProfile =
   | 'Clínica'
   | 'Med Spa'
@@ -70,6 +72,7 @@ export type TimelineActionItem = {
 export type UserGamificationState = GamificationLevel &
   GamificationStats & {
     userProfile: UserProfile | null
+    brandIdentity: BrandIdentity | null
     companyStage: CompanyStage
     potentialRevenue: number
     businessHealth: BusinessHealthScores
