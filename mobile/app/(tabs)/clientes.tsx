@@ -7,7 +7,6 @@ import { ResponsiveDialog } from '@/components/layout/ResponsiveDialog'
 import { ScreenHeader } from '@/components/ui/ScreenHeader'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { loadLinkedCrmSnapshot, seedLinkedDemoData } from '@/lib/crm-client-service'
-import { X } from 'lucide-react-native'
 
 const statusStyles = {
   ativo: { label: 'Ativo', bg: 'bg-emerald-100', text: 'text-emerald-700' },
@@ -182,19 +181,15 @@ export default function ClientesScreen() {
         }}
       />
 
-      <ResponsiveDialog visible={selectedClient !== null} onClose={() => setSelectedClient(null)}>
+      <ResponsiveDialog
+        visible={selectedClient !== null}
+        onClose={() => setSelectedClient(null)}
+        badge="Cliente"
+        title={selectedClient?.name}
+      >
         {selectedClient ? (
           <>
-            <View className="mb-4 flex-row items-start justify-between gap-4">
-              <View className="flex-1">
-                <Text className="text-sm font-medium text-violet-600">Cliente</Text>
-                <Text className="mt-1 text-xl font-semibold text-slate-900">{selectedClient.name}</Text>
-                <Text className="mt-1 text-sm text-slate-500">{selectedClient.company}</Text>
-              </View>
-              <Pressable onPress={() => setSelectedClient(null)} className="rounded-xl bg-slate-100 p-2">
-                <X size={18} color="#64748b" />
-              </Pressable>
-            </View>
+            <Text className="mb-4 text-sm text-slate-500">{selectedClient.company}</Text>
             <View className="gap-3">
               <View className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                 <Text className="text-xs font-medium text-slate-500">E-mail</Text>

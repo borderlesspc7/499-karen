@@ -1,5 +1,12 @@
-import { Modal, Pressable, Text, View } from 'react-native'
-import { Bot, Sparkles, X } from 'lucide-react-native'
+import { Bot, Sparkles } from 'lucide-react-native'
+import { Text, View } from 'react-native'
+import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
+import {
+  SummusModal,
+  SummusModalBadge,
+  SummusModalCard,
+  SummusModalCloseButton,
+} from '@/components/ui/modal'
 
 type AskAiModalProps = {
   visible: boolean
@@ -9,48 +16,46 @@ type AskAiModalProps = {
 
 export function AskAiModal({ visible, onClose, onAccept }: AskAiModalProps) {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable className="flex-1 items-center justify-center bg-black/60 px-5" onPress={onClose}>
-        <Pressable
-          className="w-full max-w-md rounded-3xl bg-deepBlue p-6"
-          onPress={(event) => event.stopPropagation()}
+    <SummusModal visible={visible} onClose={onClose}>
+      <SummusModalCard className="p-6">
+        <View className="flex-row items-start justify-between gap-3">
+          <View className="h-12 w-12 items-center justify-center rounded-2xl border border-electricBlue/25 bg-electricBlue/15">
+            <Bot size={24} color="#3B82F6" />
+          </View>
+          <SummusModalCloseButton onPress={onClose} />
+        </View>
+
+        <View className="mt-4">
+          <SummusModalBadge label="CEO Invisível" icon={Sparkles} />
+        </View>
+
+        <Text className="mt-4 text-base leading-7 text-white/90">
+          Notei que a conversão do seu site caiu 12% esta semana. Quer que eu reescreva a headline
+          principal agora para melhorar isso?
+        </Text>
+
+        <AnimatedPressable
+          onPress={onAccept}
+          className="mt-6 rounded-2xl bg-electricBlue py-4"
+          style={{
+            shadowColor: '#3B82F6',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.35,
+            shadowRadius: 12,
+            elevation: 6,
+          }}
         >
-          <View className="flex-row items-start justify-between gap-3">
-            <View className="h-11 w-11 items-center justify-center rounded-2xl bg-electricBlue/20">
-              <Bot size={22} color="#3B82F6" />
-            </View>
-            <Pressable onPress={onClose} className="rounded-full p-1 active:opacity-70">
-              <X size={20} color="#94A3B8" />
-            </Pressable>
-          </View>
+          <Text className="text-center text-sm font-bold text-white">Sim, reescreve agora</Text>
+        </AnimatedPressable>
 
-          <View className="mt-4 flex-row items-center gap-1.5">
-            <Sparkles size={14} color="#F59E0B" />
-            <Text className="text-xs font-bold uppercase tracking-wider text-gold">
-              CEO Invisível
-            </Text>
-          </View>
-
-          <Text className="mt-3 text-base leading-6 text-white">
-            Notei que a conversão do seu site caiu 12% esta semana. Quer que eu reescreva a
-            headline principal agora para melhorar isso?
-          </Text>
-
-          <Pressable
-            onPress={onAccept}
-            className="mt-6 rounded-2xl bg-electricBlue py-3.5 active:opacity-80"
-          >
-            <Text className="text-center text-sm font-bold text-white">Sim, reescreve agora</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={onClose}
-            className="mt-3 rounded-2xl border border-white/20 py-3.5 active:opacity-70"
-          >
-            <Text className="text-center text-sm font-semibold text-white/80">Outro assunto</Text>
-          </Pressable>
-        </Pressable>
-      </Pressable>
-    </Modal>
+        <AnimatedPressable
+          onPress={onClose}
+          haptic={false}
+          className="mt-3 rounded-2xl border border-white/20 bg-white/5 py-4"
+        >
+          <Text className="text-center text-sm font-semibold text-white/75">Outro assunto</Text>
+        </AnimatedPressable>
+      </SummusModalCard>
+    </SummusModal>
   )
 }

@@ -2,13 +2,11 @@ import { useState, type ReactNode } from 'react'
 import {
   Alert,
   Linking,
-  Modal,
   Pressable,
   ScrollView,
   Text,
   View,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   ArrowRight,
   Building2,
@@ -18,8 +16,9 @@ import {
   Phone,
   Sparkles,
   Tag,
-  X,
 } from 'lucide-react-native'
+import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
+import { SummusSheetModal } from '@/components/ui/modal'
 import { categoryLabels, priorityLabels } from '@shared/data'
 import type { GrowthFlowLead } from '@/lib/crm-lead-insights'
 import { isForgottenLead, isHotLead, resolveHealthColor } from '@/lib/crm-lead-insights'
@@ -143,79 +142,61 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
   }
 
   return (
-    <Modal
+    <SummusSheetModal
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
-      onRequestClose={onClose}
+      onClose={onClose}
+      badge="Detalhe do Lead"
+      badgeIcon={Sparkles}
+      title={currentLead.clientName}
+      subtitle={currentLead.title}
     >
-      <SafeAreaView className="flex-1 bg-deepBlue" edges={['top', 'bottom']}>
-        <View className="flex-1 px-5">
-          <View className="flex-row items-start justify-between py-4">
-            <View className="flex-1 pr-4">
-              <View className="flex-row items-center gap-2">
-                <Sparkles size={14} color="#F59E0B" />
-                <Text className="text-xs font-bold uppercase tracking-wider text-gold">
-                  Detalhe do Lead
-                </Text>
-              </View>
-              <Text className="mt-2 text-2xl font-bold text-white">{currentLead.clientName}</Text>
-              <Text className="mt-1 text-sm text-slate-400">{currentLead.title}</Text>
-            </View>
-            <Pressable
-              onPress={onClose}
-              className="rounded-full bg-white/10 p-2 active:opacity-70"
-            >
-              <X size={20} color="#FFFFFF" />
-            </Pressable>
+      <View className="flex-1 px-5">
+        <View className="mb-4 flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <View>
+            <Text className="text-xs font-medium text-white/45">Health Score</Text>
+            <Text className="text-lg font-bold" style={{ color: healthColor }}>
+              {currentLead.healthScore}%
+            </Text>
           </View>
-
-          <View className="mb-4 flex-row items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
-            <View>
-              <Text className="text-xs text-slate-400">Health Score</Text>
-              <Text className="text-lg font-bold" style={{ color: healthColor }}>
-                {currentLead.healthScore}%
-              </Text>
-            </View>
-            <View className="items-end">
-              <Text className="text-xs text-slate-400">Impacto potencial</Text>
-              <Text className="text-lg font-bold text-emerald">
-                +R$ {currentLead.dealImpact.toLocaleString('pt-BR')}
-              </Text>
-            </View>
+          <View className="items-end">
+            <Text className="text-xs font-medium text-white/45">Impacto potencial</Text>
+            <Text className="text-lg font-bold text-emerald">
+              +R$ {currentLead.dealImpact.toLocaleString('pt-BR')}
+            </Text>
           </View>
+        </View>
 
-          <View className="mb-4 flex-row rounded-2xl bg-white/5 p-1">
-            {TAB_OPTIONS.map((tab) => {
-              const isActive = activeTab === tab.id
+        <View className="mb-4 flex-row rounded-2xl border border-white/10 bg-white/5 p-1">
+          {TAB_OPTIONS.map((tab) => {
+            const isActive = activeTab === tab.id
 
-              return (
-                <Pressable
-                  key={tab.id}
-                  onPress={() => setActiveTab(tab.id)}
+            return (
+              <Pressable
+                key={tab.id}
+                onPress={() => setActiveTab(tab.id)}
+                className={[
+                  'flex-1 items-center rounded-xl py-2.5',
+                  isActive ? 'bg-electricBlue' : '',
+                ].join(' ')}
+              >
+                <Text
                   className={[
-                    'flex-1 items-center rounded-xl py-2.5',
-                    isActive ? 'bg-electricBlue' : '',
+                    'text-sm font-semibold',
+                    isActive ? 'text-white' : 'text-white/45',
                   ].join(' ')}
                 >
-                  <Text
-                    className={[
-                      'text-sm font-semibold',
-                      isActive ? 'text-white' : 'text-slate-400',
-                    ].join(' ')}
-                  >
-                    {tab.label}
-                  </Text>
-                </Pressable>
-              )
-            })}
-          </View>
+                  {tab.label}
+                </Text>
+              </Pressable>
+            )
+          })}
+        </View>
 
-          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
             {activeTab === 'perfil' ? (
               <View className="gap-4 pb-6">
-                <View className="rounded-2xl bg-white/5 p-4">
-                  <Text className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <View className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <Text className="text-xs font-bold uppercase tracking-wider text-white/40">
                     Campos customizados
                   </Text>
                   <View className="mt-3 gap-3">
@@ -247,8 +228,8 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
                   </View>
                 </View>
 
-                <View className="rounded-2xl bg-white/5 p-4">
-                  <Text className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <View className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <Text className="text-xs font-bold uppercase tracking-wider text-white/40">
                     Tags
                   </Text>
                   <View className="mt-3 flex-row flex-wrap gap-2">
@@ -265,7 +246,7 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
             {activeTab === 'historico' ? (
               <View className="gap-3 pb-6">
                 {activities.map((item) => (
-                  <View key={item.id} className="rounded-2xl bg-white/5 p-4">
+                  <View key={item.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                     <View className="flex-row items-center justify-between">
                       <Text className="text-xs font-bold uppercase tracking-wider text-electricBlue">
                         {item.type === 'nota' ? 'Nota' : 'Atividade'}
@@ -301,7 +282,7 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
                   disabled={!client?.email}
                 />
 
-                <Pressable
+                <AnimatedPressable
                   onPress={() => {
                     onExecute?.(currentLead)
                     Alert.alert(
@@ -309,17 +290,23 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
                       `A IA vai ${currentLead.nextBestAction.toLowerCase()} para ${currentLead.clientName}.`,
                     )
                   }}
-                  className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl bg-electricBlue py-4 active:opacity-90"
+                  className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl bg-electricBlue py-4"
+                  style={{
+                    shadowColor: '#3B82F6',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.35,
+                    shadowRadius: 12,
+                    elevation: 6,
+                  }}
                 >
                   <Text className="text-sm font-bold text-white">Executar melhor ação (IA)</Text>
                   <ArrowRight size={16} color="#FFFFFF" />
-                </Pressable>
+                </AnimatedPressable>
               </View>
             ) : null}
           </ScrollView>
         </View>
-      </SafeAreaView>
-    </Modal>
+    </SummusSheetModal>
   )
 }
 
@@ -336,7 +323,7 @@ function ProfileField({
     <View className="flex-row items-center gap-3">
       {icon}
       <View className="flex-1">
-        <Text className="text-xs text-slate-500">{label}</Text>
+        <Text className="text-xs text-white/45">{label}</Text>
         <Text className="text-sm font-medium text-white">{value}</Text>
       </View>
     </View>
@@ -361,7 +348,7 @@ function QuickActionButton({
       onPress={onPress}
       disabled={disabled}
       className={[
-        'flex-row items-center gap-4 rounded-2xl bg-white/5 p-4',
+        'flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4',
         disabled ? 'opacity-40' : 'active:bg-white/10',
       ].join(' ')}
     >

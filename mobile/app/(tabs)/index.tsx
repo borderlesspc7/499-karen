@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { ScrollView } from 'react-native'
+import { useLocalSearchParams } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth, useGamification } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { ExecutionModal, type ExecutionModalProps } from '@/components/ExecutionModal'
 import { LINKEDIN_AUTHORITY_OPPORTUNITY } from '@/constants/ai-content-engine'
+import { CAMPAIGN_LAUNCHED_PARAM } from '@/constants/campaign-journey'
 import { AuthorityOpportunityCard } from '@/components/dashboard/home/AuthorityOpportunityCard'
 import { ActiveCampaignCard } from '@/components/dashboard/home/ActiveCampaignCard'
 import { GrowthTree } from '@/components/dashboard/home/GrowthTree'
@@ -56,8 +58,14 @@ export default function HomeScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const { currentUser } = useAuth()
   const { businessHealth, companyStage, executeAction } = useGamification()
+  const searchParams = useLocalSearchParams<Record<string, string | string[]>>()
   const [activeExecutionFlow, setActiveExecutionFlow] = useState<ExecutionFlow | null>(null)
   const [isAuthorityCardVisible, setIsAuthorityCardVisible] = useState(true)
+
+  const campaignLaunchedParam = searchParams[CAMPAIGN_LAUNCHED_PARAM]
+  const isCampaignJustLaunched =
+    campaignLaunchedParam === '1' ||
+    (Array.isArray(campaignLaunchedParam) && campaignLaunchedParam.includes('1'))
 
   const userName = resolveUserName(currentUser?.email)
   const executionConfig =
@@ -100,9 +108,9 @@ export default function HomeScreen() {
       >
         <HomeSmartHeader userName={userName} />
 
-        <ActiveCampaignCard />
+        <ActiveCampaignCard isJustActivated={isCampaignJustLaunched} />
 
-        <LiveAiActivity />
+        <LiveAiActivity isLiveReveal={isCampaignJustLaunched} />
 
         <HomeGrowthScoreCard
           score={businessHealth.totalScore}

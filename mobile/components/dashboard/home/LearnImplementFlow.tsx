@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -11,8 +10,9 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { BarChart3, ChevronRight, Play, Sparkles, Wrench, X } from 'lucide-react-native'
+import { BarChart3, ChevronRight, Play, Sparkles, Wrench } from 'lucide-react-native'
+import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
+import { SummusSheetModal } from '@/components/ui/modal'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
 type BuilderForm = {
@@ -197,35 +197,34 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
         </View>
       </Pressable>
 
-      <Modal visible={isModalOpen} animationType="slide" onRequestClose={closeModal}>
-        <SafeAreaView className="flex-1 bg-deepBlue" edges={['top', 'bottom']}>
-          <KeyboardAvoidingView
-            className="flex-1"
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
-            <View className="flex-row items-center justify-between border-b border-white/10 px-5 py-4">
-              <Text className="text-base font-bold text-white">
-                {flowView === 'builder' ? 'Construtor Mágico' : 'Learn + Implement'}
-              </Text>
-              <Pressable onPress={closeModal} className="rounded-full p-1 active:opacity-70">
-                <X size={22} color="#94A3B8" />
-              </Pressable>
-            </View>
-
-            {flowView === 'loading' ? (
-              <View className="flex-1 items-center justify-center gap-4 px-6">
+      <SummusSheetModal
+        visible={isModalOpen}
+        onClose={closeModal}
+        badge="Growth Flow"
+        badgeIcon={Sparkles}
+        title={flowView === 'builder' ? 'Construtor Mágico' : 'Learn + Implement'}
+      >
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          {flowView === 'loading' ? (
+            <View className="flex-1 items-center justify-center gap-4 px-6 py-10">
+              <View className="relative h-20 w-20 items-center justify-center">
+                <View className="absolute h-20 w-20 rounded-full border border-gold/30 bg-gold/10" />
                 <ActivityIndicator size="large" color="#F59E0B" />
-                <Text className="text-center text-base font-medium text-white/80">
-                  A IA está a construir o seu negócio...
-                </Text>
               </View>
-            ) : flowView === 'builder' ? (
-              <ScrollView
-                className="flex-1"
-                contentContainerClassName="gap-4 px-5 py-6"
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-              >
+              <Text className="text-center text-base font-medium text-white/80">
+                A IA está a construir o seu negócio...
+              </Text>
+            </View>
+          ) : flowView === 'builder' ? (
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="gap-4 px-5 py-6"
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
                 <FormField
                   label="Nome da Empresa"
                   value={form.companyName}
@@ -259,60 +258,66 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
                   multiline
                 />
 
-                <Pressable
-                  onPress={handleCreateMagic}
-                  className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl bg-gold py-4 active:opacity-80"
-                >
-                  <Sparkles size={18} color="#0F172A" />
-                  <Text className="text-base font-bold text-deepBlue">Criar Magia</Text>
-                </Pressable>
-              </ScrollView>
-            ) : (
-              <View className={isWideLayout ? 'flex-1 flex-row' : 'flex-1'}>
-                <View className={isWideLayout ? 'flex-1 border-r border-white/10 p-5' : 'flex-1 p-5'}>
-                  <View className="flex-1 items-center justify-center rounded-3xl bg-black/40">
-                    <View className="h-16 w-16 items-center justify-center rounded-full bg-white/10">
-                      <Play size={28} color="#F59E0B" fill="#F59E0B" />
-                    </View>
-                    <Text className="mt-4 text-center text-lg font-bold text-white">
-                      O que é uma Landing Page?
-                    </Text>
-                    <Text className="mt-2 text-center text-sm text-white/50">
-                      Vídeo da lição · 4 min
-                    </Text>
+              <AnimatedPressable
+                onPress={handleCreateMagic}
+                className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl bg-gold py-4"
+                style={{
+                  shadowColor: '#F59E0B',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 12,
+                  elevation: 6,
+                }}
+              >
+                <Sparkles size={18} color="#0F172A" />
+                <Text className="text-base font-bold text-deepBlue">Criar Magia</Text>
+              </AnimatedPressable>
+            </ScrollView>
+          ) : (
+            <View className={isWideLayout ? 'flex-1 flex-row' : 'flex-1'}>
+              <View className={isWideLayout ? 'flex-1 border-r border-white/10 p-5' : 'flex-1 p-5'}>
+                <View className="flex-1 items-center justify-center rounded-3xl border border-white/10 bg-black/40">
+                  <View className="h-16 w-16 items-center justify-center rounded-full border border-gold/30 bg-gold/15">
+                    <Play size={28} color="#F59E0B" fill="#F59E0B" />
                   </View>
-                </View>
-
-                <View className={isWideLayout ? 'flex-1 p-5' : 'p-5'}>
-                  <View className="flex-1 justify-center rounded-3xl border border-gold/30 bg-gold/5 p-6">
-                    <Text className="text-xl font-bold text-white">Vamos criar a sua agora</Text>
-                    <Text className="mt-2 text-sm leading-5 text-white/60">
-                      Aplique o que aprendeu e deixe a IA gerar a primeira versão em segundos.
-                    </Text>
-
-                    <Pressable
-                      onPress={openBuilder}
-                      className="mt-6 flex-row items-center justify-center gap-2 rounded-2xl bg-gold py-4 active:opacity-80"
-                      style={{
-                        shadowColor: '#F59E0B',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.35,
-                        shadowRadius: 12,
-                        elevation: 6,
-                      }}
-                    >
-                      <Sparkles size={18} color="#0F172A" />
-                      <Text className="text-base font-bold text-deepBlue">
-                        Gerar Estrutura com IA
-                      </Text>
-                    </Pressable>
-                  </View>
+                  <Text className="mt-4 text-center text-lg font-bold text-white">
+                    O que é uma Landing Page?
+                  </Text>
+                  <Text className="mt-2 text-center text-sm text-white/50">
+                    Vídeo da lição · 4 min
+                  </Text>
                 </View>
               </View>
-            )}
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </Modal>
+
+              <View className={isWideLayout ? 'flex-1 p-5' : 'p-5'}>
+                <View className="flex-1 justify-center rounded-3xl border border-gold/30 bg-gold/5 p-6">
+                  <Text className="text-xl font-bold text-white">Vamos criar a sua agora</Text>
+                  <Text className="mt-2 text-sm leading-5 text-white/60">
+                    Aplique o que aprendeu e deixe a IA gerar a primeira versão em segundos.
+                  </Text>
+
+                  <AnimatedPressable
+                    onPress={openBuilder}
+                    className="mt-6 flex-row items-center justify-center gap-2 rounded-2xl bg-gold py-4"
+                    style={{
+                      shadowColor: '#F59E0B',
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.35,
+                      shadowRadius: 12,
+                      elevation: 6,
+                    }}
+                  >
+                    <Sparkles size={18} color="#0F172A" />
+                    <Text className="text-base font-bold text-deepBlue">
+                      Gerar Estrutura com IA
+                    </Text>
+                  </AnimatedPressable>
+                </View>
+              </View>
+            </View>
+          )}
+        </KeyboardAvoidingView>
+      </SummusSheetModal>
     </>
   )
 },

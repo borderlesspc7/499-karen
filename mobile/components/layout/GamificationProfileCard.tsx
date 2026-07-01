@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native'
+import { Pressable, Text, View } from 'react-native'
+import { router } from 'expo-router'
 import { useGamification } from '@shared/contexts'
 
 type GamificationProfileCardProps = {
@@ -23,7 +24,12 @@ export function GamificationProfileCard({
     .toUpperCase()
 
   return (
-    <View className="rounded-3xl border border-white/10 bg-deepBlue p-4">
+    <Pressable
+      onPress={() => router.push('/(tabs)/profile')}
+      className="rounded-3xl border border-white/10 bg-deepBlue p-4 active:opacity-90"
+      accessibilityRole="button"
+      accessibilityLabel="Abrir área do usuário"
+    >
       <View className="flex-row items-center gap-3">
         <View className="h-12 w-12 items-center justify-center rounded-full border-2 border-gold/40 bg-white/10">
           <Text className="text-sm font-bold text-gold">{initials}</Text>
@@ -53,6 +59,6 @@ export function GamificationProfileCard({
           {formatXp(currentXp)} / {formatXp(maxXp)} XP
         </Text>
       </View>
-    </View>
+    </Pressable>
   )
 }

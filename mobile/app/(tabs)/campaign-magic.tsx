@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -11,6 +9,8 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import Animated, { FadeInDown, SlideInRight, SlideInUp } from 'react-native-reanimated'
+import { router } from 'expo-router'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   CheckCircle2,
@@ -21,20 +21,18 @@ import {
   Sparkles,
   Wand2,
 } from 'lucide-react-native'
+import { CampaignMagicLoadingOverlay } from '@/components/campaign-magic/CampaignMagicLoadingOverlay'
+import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
+import { SummusModal, SummusModalCard, SummusSuccessContent } from '@/components/ui/modal'
+import { CAMPAIGN_LAUNCHED_PARAM } from '@/constants/campaign-journey'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
 type ScreenPhase = 'input' | 'loading' | 'dashboard'
 type ApprovalTab = 'social' | 'emails' | 'landing'
 
-const LOADING_MESSAGES = [
-  'Analisando seu tom de voz...',
-  'Criando posts para Instagram...',
-  'Escrevendo sequências de e-mail...',
-  'Pronto!',
-] as const
-
-const LOADING_INTERVAL_MS = 750
-const LOADING_TOTAL_MS = 3000
+const STAGGER_MS = 70
+const ENTER_DURATION_MS = 420
+const SUCCESS_REDIRECT_MS = 2000
 
 const APPROVAL_TABS: { id: ApprovalTab; label: string; icon: typeof Instagram }[] = [
   { id: 'social', label: 'Posts de Social Media', icon: Megaphone },
@@ -149,35 +147,12 @@ export default function CampaignMagicScreen() {
   const insets = useSafeAreaInsets()
   const [phase, setPhase] = useState<ScreenPhase>('input')
   const [prompt, setPrompt] = useState('')
-  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0)
   const [activeTab, setActiveTab] = useState<ApprovalTab>('social')
   const [isSuccessVisible, setIsSuccessVisible] = useState(false)
 
-  useEffect(() => {
-    if (phase !== 'loading') {
-      return
-    }
-
-    setLoadingMessageIndex(0)
-
-    const messageInterval = setInterval(() => {
-      setLoadingMessageIndex((current) => {
-        if (current >= LOADING_MESSAGES.length - 1) {
-          return current
-        }
-        return current + 1
-      })
-    }, LOADING_INTERVAL_MS)
-
-    const completeTimer = setTimeout(() => {
-      setPhase('dashboard')
-    }, LOADING_TOTAL_MS)
-
-    return () => {
-      clearInterval(messageInterval)
-      clearTimeout(completeTimer)
-    }
-  }, [phase])
+  const handleLoadingComplete = useCallback(() => {
+    setPhase('dashboard')
+  }, [])
 
   const handleGenerate = useCallback(() => {
     if (!prompt.trim()) {
@@ -199,12 +174,26 @@ export default function CampaignMagicScreen() {
     setIsSuccessVisible(true)
   }, [])
 
-  const handleCloseSuccess = useCallback(() => {
+  const navigateToHomeAfterLaunch = useCallback(() => {
     setIsSuccessVisible(false)
-    setPhase('input')
-    setPrompt('')
-    setActiveTab('social')
+    router.replace({
+      pathname: '/(tabs)/index',
+      params: { [CAMPAIGN_LAUNCHED_PARAM]: '1' },
+    })
   }, [])
+
+  useEffect(() => {
+    if (!isSuccessVisible) {
+      return
+    }
+
+    const redirectTimer = setTimeout(navigateToHomeAfterLaunch, SUCCESS_REDIRECT_MS)
+    return () => clearTimeout(redirectTimer)
+  }, [isSuccessVisible, navigateToHomeAfterLaunch])
+
+  const handleCloseSuccess = useCallback(() => {
+    navigateToHomeAfterLaunch()
+  }, [navigateToHomeAfterLaunch])
 
   const previewCards = TAB_CONTENT[activeTab]
 
@@ -224,7 +213,10 @@ export default function CampaignMagicScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
-            <View className="gap-2">
+            <Animated.View
+              entering={FadeInDown.duration(ENTER_DURATION_MS)}
+              className="gap-2"
+            >
               <View className="flex-row items-center gap-2 self-start rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5">
                 <Sparkles size={12} color="#F59E0B" />
                 <Text className="text-[11px] font-bold uppercase tracking-wider text-gold">
@@ -235,9 +227,12 @@ export default function CampaignMagicScreen() {
               <Text className="text-sm leading-5 text-white/60">
                 Descreva sua ideia e a IA gera posts, e-mails e copy de landing page em segundos.
               </Text>
-            </View>
+            </Animated.View>
 
-            <View className="gap-4 rounded-3xl border border-white/10 bg-white/5 p-5">
+            <Animated.View
+              entering={FadeInDown.delay(STAGGER_MS).duration(ENTER_DURATION_MS)}
+              className="gap-4 rounded-3xl border border-white/10 bg-white/5 p-5"
+            >
               <View className="flex-row items-center gap-2">
                 <Wand2 size={18} color="#3B82F6" />
                 <Text className="text-sm font-semibold text-white/80">Input Mágico</Text>
@@ -254,9 +249,9 @@ export default function CampaignMagicScreen() {
                 className="min-h-[160px] rounded-2xl border border-white/10 bg-deepBlue/60 px-4 py-4 text-base leading-6 text-white"
               />
 
-              <Pressable
+              <AnimatedPressable
                 onPress={handleGenerate}
-                className="rounded-2xl bg-electricBlue py-4 active:opacity-90"
+                className="rounded-2xl bg-electricBlue py-4"
                 style={{
                   shadowColor: '#3B82F6',
                   shadowOffset: { width: 0, height: 6 },
@@ -268,30 +263,14 @@ export default function CampaignMagicScreen() {
                 <Text className="text-center text-base font-bold text-white">
                   Gerar Campanha Completa
                 </Text>
-              </Pressable>
-            </View>
+              </AnimatedPressable>
+            </Animated.View>
           </ScrollView>
         ) : null}
 
         {phase === 'loading' ? (
-          <View className="flex-1 items-center justify-center px-8">
-            <View className="h-24 w-24 items-center justify-center rounded-full border border-electricBlue/30 bg-electricBlue/10">
-              <ActivityIndicator size="large" color="#3B82F6" />
-            </View>
-            <Text className="mt-8 max-w-sm text-center text-xl font-semibold leading-8 text-white">
-              {LOADING_MESSAGES[loadingMessageIndex]}
-            </Text>
-            <View className="mt-6 flex-row gap-2">
-              {LOADING_MESSAGES.map((_, index) => (
-                <View
-                  key={LOADING_MESSAGES[index]}
-                  className={[
-                    'h-1.5 rounded-full',
-                    index <= loadingMessageIndex ? 'w-8 bg-electricBlue' : 'w-4 bg-white/20',
-                  ].join(' ')}
-                />
-              ))}
-            </View>
+          <View className="flex-1">
+            <CampaignMagicLoadingOverlay onComplete={handleLoadingComplete} />
           </View>
         ) : null}
 
@@ -303,38 +282,47 @@ export default function CampaignMagicScreen() {
                 isWebDesktop ? 'mx-auto w-full max-w-2xl px-8' : 'px-5',
               ].join(' ')}
             >
-              <View className="gap-1">
+              <Animated.View
+                entering={FadeInDown.duration(ENTER_DURATION_MS)}
+                className="gap-1"
+              >
                 <Text className="text-2xl font-bold text-white">Dashboard de Aprovação</Text>
                 <Text className="text-sm text-white/50">
                   Revise e aprove o conteúdo gerado para todos os canais.
                 </Text>
-              </View>
+              </Animated.View>
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <View className="flex-row gap-2">
-                  {APPROVAL_TABS.map((tab) => {
+                  {APPROVAL_TABS.map((tab, index) => {
                     const Icon = tab.icon
                     const isActive = activeTab === tab.id
 
                     return (
-                      <Pressable
+                      <Animated.View
                         key={tab.id}
-                        onPress={() => setActiveTab(tab.id)}
-                        className={[
-                          'flex-row items-center gap-2 rounded-2xl px-4 py-2.5',
-                          isActive ? 'bg-electricBlue' : 'border border-white/10 bg-white/5',
-                        ].join(' ')}
+                        entering={SlideInRight.delay(STAGGER_MS * (index + 1)).duration(
+                          ENTER_DURATION_MS,
+                        )}
                       >
-                        <Icon size={14} color={isActive ? '#FFFFFF' : '#94A3B8'} />
-                        <Text
+                        <Pressable
+                          onPress={() => setActiveTab(tab.id)}
                           className={[
-                            'text-xs font-semibold',
-                            isActive ? 'text-white' : 'text-white/60',
+                            'flex-row items-center gap-2 rounded-2xl px-4 py-2.5',
+                            isActive ? 'bg-electricBlue' : 'border border-white/10 bg-white/5',
                           ].join(' ')}
                         >
-                          {tab.label}
-                        </Text>
-                      </Pressable>
+                          <Icon size={14} color={isActive ? '#FFFFFF' : '#94A3B8'} />
+                          <Text
+                            className={[
+                              'text-xs font-semibold',
+                              isActive ? 'text-white' : 'text-white/60',
+                            ].join(' ')}
+                          >
+                            {tab.label}
+                          </Text>
+                        </Pressable>
+                      </Animated.View>
                     )
                   })}
                 </View>
@@ -349,9 +337,10 @@ export default function CampaignMagicScreen() {
               ].join(' ')}
               showsVerticalScrollIndicator={false}
             >
-              {previewCards.map((card) => (
-                <View
+              {previewCards.map((card, index) => (
+                <Animated.View
                   key={card.id}
+                  entering={SlideInUp.delay(STAGGER_MS * (index + 1)).duration(ENTER_DURATION_MS)}
                   className="rounded-3xl border border-white/10 bg-white/5 p-5"
                 >
                   <View className="mb-3 flex-row items-center gap-2">
@@ -368,11 +357,12 @@ export default function CampaignMagicScreen() {
                     {resolveCardTitle(card, activeTab)}
                   </Text>
                   <Text className="mt-2 text-sm leading-5 text-white/50">{card.detail}</Text>
-                </View>
+                </Animated.View>
               ))}
             </ScrollView>
 
-            <View
+            <Animated.View
+              entering={FadeInDown.delay(STAGGER_MS * 2).duration(ENTER_DURATION_MS)}
               className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-deepBlue/95 px-5 pt-4"
               style={{ paddingBottom: Math.max(insets.bottom, 16) }}
             >
@@ -382,15 +372,16 @@ export default function CampaignMagicScreen() {
                   isWebDesktop ? 'mx-auto w-full max-w-2xl' : '',
                 ].join(' ')}
               >
-                <Pressable
+                <AnimatedPressable
                   onPress={handleEdit}
-                  className="flex-1 rounded-2xl border border-white/25 py-4 active:opacity-80"
+                  haptic={false}
+                  className="flex-1 rounded-2xl border border-white/25 py-4"
                 >
                   <Text className="text-center text-sm font-bold text-white">Editar</Text>
-                </Pressable>
-                <Pressable
+                </AnimatedPressable>
+                <AnimatedPressable
                   onPress={handlePublish}
-                  className="flex-[2] rounded-2xl bg-gold py-4 active:opacity-90"
+                  className="flex-[2] rounded-2xl bg-gold py-4"
                   style={{
                     shadowColor: '#F59E0B',
                     shadowOffset: { width: 0, height: 4 },
@@ -402,39 +393,37 @@ export default function CampaignMagicScreen() {
                   <Text className="text-center text-base font-bold text-deepBlue">
                     Aprovar Tudo & Publicar
                   </Text>
-                </Pressable>
+                </AnimatedPressable>
               </View>
-            </View>
+            </Animated.View>
           </View>
         ) : null}
       </KeyboardAvoidingView>
 
-      <Modal
-        visible={isSuccessVisible}
-        animationType="fade"
-        transparent
-        onRequestClose={handleCloseSuccess}
-      >
-        <View className="flex-1 items-center justify-center bg-black/70 px-8">
-          <View className="w-full max-w-sm rounded-3xl border border-white/10 bg-deepBlue p-8">
-            <View className="items-center">
-              <View className="h-20 w-20 items-center justify-center rounded-full bg-emerald/15">
-                <CheckCircle2 size={44} color="#10B981" strokeWidth={2} />
-              </View>
-              <Text className="mt-6 text-center text-xl font-bold text-white">Campanha no Ar!</Text>
-              <Text className="mt-3 text-center text-sm leading-6 text-white/60">
-                A IA está publicando em todos os seus canais conectados.
-              </Text>
-              <Pressable
+      <SummusModal visible={isSuccessVisible} onClose={handleCloseSuccess} dismissOnBackdrop={false}>
+        <SummusModalCard>
+          <SummusSuccessContent
+            title="Campanha no Ar!"
+            message="A IA está publicando em todos os seus canais conectados."
+            icon={CheckCircle2}
+            action={
+              <AnimatedPressable
                 onPress={handleCloseSuccess}
-                className="mt-8 w-full rounded-2xl bg-electricBlue py-3.5 active:opacity-90"
+                className="rounded-2xl bg-electricBlue py-3.5"
+                style={{
+                  shadowColor: '#3B82F6',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 12,
+                  elevation: 6,
+                }}
               >
                 <Text className="text-center text-sm font-bold text-white">Perfeito!</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+              </AnimatedPressable>
+            }
+          />
+        </SummusModalCard>
+      </SummusModal>
     </SafeAreaView>
   )
 }

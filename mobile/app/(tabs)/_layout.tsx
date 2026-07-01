@@ -84,6 +84,7 @@ export default function TabLayout() {
         <Tabs.Screen name="resources" options={{ href: null }} />
         <Tabs.Screen name="clientes" options={{ href: null }} />
         <Tabs.Screen name="settings" options={{ href: null }} />
+        <Tabs.Screen name="profile" options={{ href: null }} />
       </Tabs>
     </SummusAppShell>
   )
