@@ -8,11 +8,11 @@ export default function Root({ children }: PropsWithChildren) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-        <meta name="theme-color" content="#050A18" />
+        <meta name="theme-color" content="#0A1128" />
         <title>Summus Edge</title>
         <ScrollViewStyleReset />
       </head>
-      <body style={{ backgroundColor: '#050A18' }}>{children}</body>
+      <body style={{ backgroundColor: '#F8F9FB' }}>{children}</body>
     </html>
   )
 }

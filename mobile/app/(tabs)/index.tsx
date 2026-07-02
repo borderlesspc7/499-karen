@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ScrollView } from 'react-native'
 import { useLocalSearchParams } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { ThemedScreen } from '@/components/layout/AppScreen'
 import { useAuth, useGamification } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { ExecutionModal, type ExecutionModalProps } from '@/components/ExecutionModal'
@@ -83,7 +83,7 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC]" edges={['top']}>
+    <ThemedScreen>
       <ExecutionModal
         visible={activeExecutionFlow !== null}
         title={executionConfig.title}
@@ -128,6 +128,6 @@ export default function HomeScreen() {
           />
         ) : null}
       </ScrollView>
-    </SafeAreaView>
+    </ThemedScreen>
   )
 }

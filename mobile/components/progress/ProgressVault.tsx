@@ -1,5 +1,5 @@
 import { ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { ThemedScreen } from '@/components/layout/AppScreen'
 import { Sparkles, TrendingUp } from 'lucide-react-native'
 import { useGamification } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
@@ -12,7 +12,7 @@ export function ProgressVault() {
   const { recentActivity, companyTier, level, economy } = gamification
 
   return (
-    <SafeAreaView className="flex-1 bg-deepBlue" edges={['top']}>
+    <ThemedScreen>
       <ScrollView
         className="flex-1"
         contentContainerClassName={[
@@ -60,6 +60,6 @@ export function ProgressVault() {
 
         <AchievementsGrid gamificationState={gamification} />
       </ScrollView>
-    </SafeAreaView>
+    </ThemedScreen>
   )
 }

@@ -2,6 +2,8 @@ import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BrainCircuit, Inbox, LayoutGrid, Link2, TrendingUp, Wand2 } from 'lucide-react-native'
+import { premiumColors } from '@/constants/premium-theme'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 const VISIBLE_TABS = [
   'index',
@@ -28,10 +30,11 @@ const TAB_CONFIG: Record<
 
 export function SummusBottomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets()
+  const tc = useThemeClasses()
 
   return (
     <View
-      className="border-t border-white/10 bg-deepBlue"
+      className={tc.tabBarClass}
       style={{ paddingBottom: Math.max(insets.bottom, 8) }}
     >
       <View className="flex-row items-center justify-around px-2 pt-2">
@@ -40,8 +43,8 @@ export function SummusBottomTabBar({ state, navigation }: BottomTabBarProps) {
           const isFocused = state.index === routeIndex
           const config = TAB_CONFIG[tabName]
           const Icon = config.Icon
-          const iconColor = isFocused ? '#F59E0B' : '#64748B'
-          const labelColor = isFocused ? 'text-gold' : 'text-slate-500'
+          const iconColor = isFocused ? premiumColors.gold : tc.inactiveTabIcon
+          const labelColor = isFocused ? 'text-gold' : tc.isDark ? 'text-slate-500' : 'text-slate-400'
 
           return (
             <Pressable
@@ -51,19 +54,19 @@ export function SummusBottomTabBar({ state, navigation }: BottomTabBarProps) {
                   navigation.navigate(tabName)
                 }
               }}
-              className="min-w-0 flex-1 items-center gap-1 rounded-2xl py-2 active:opacity-80"
+              className="min-w-0 flex-1 items-center gap-1 rounded-card py-2 active:opacity-80"
               accessibilityRole="button"
               accessibilityState={{ selected: isFocused }}
             >
               <View
                 className={[
-                  'items-center justify-center rounded-2xl px-4 py-1.5',
-                  isFocused ? 'bg-white/10' : 'bg-transparent',
+                  'items-center justify-center rounded-card px-4 py-1.5',
+                  isFocused ? tc.activeTabContainer : 'bg-transparent',
                 ].join(' ')}
               >
-                <Icon size={20} color={iconColor} strokeWidth={isFocused ? 2.25 : 2} />
+                <Icon size={20} color={iconColor} strokeWidth={isFocused ? 2 : 1.5} />
               </View>
-              <Text className={['text-[10px] font-semibold', labelColor].join(' ')}>
+              <Text className={['text-[10px] font-semibold tracking-wide', labelColor].join(' ')}>
                 {config.label}
               </Text>
             </Pressable>

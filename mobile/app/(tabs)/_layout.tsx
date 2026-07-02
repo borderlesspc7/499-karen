@@ -1,18 +1,21 @@
 import { ActivityIndicator, View } from 'react-native'
 import { Redirect, Tabs } from 'expo-router'
-import { useAuth, useGamification } from '@shared/contexts'
+import { useAuth, useGamification, useTheme } from '@shared/contexts'
 import { OnboardingModal } from '@/components/OnboardingModal'
 import { SummusAppShell } from '@/components/layout/SummusAppShell'
 import { SummusBottomTabBar } from '@/components/layout/SummusBottomTabBar'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 export default function TabLayout() {
   const { currentUser, isAuthLoading } = useAuth()
   const { isHydrated, isOnboardingComplete } = useGamification()
+  const { isHydrated: isThemeHydrated } = useTheme()
+  const tc = useThemeClasses()
 
-  if (isAuthLoading || !isHydrated) {
+  if (isAuthLoading || !isHydrated || !isThemeHydrated) {
     return (
-      <View className="flex-1 items-center justify-center bg-deepBlue">
-        <ActivityIndicator size="large" color="#3B82F6" />
+      <View className={['flex-1 items-center justify-center', tc.shell].join(' ')}>
+        <ActivityIndicator size="large" color="#C5A059" />
       </View>
     )
   }
@@ -30,8 +33,8 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           animation: 'fade',
-          sceneStyle: { flex: 1, backgroundColor: '#F8FAFC' },
-          tabBarStyle: { backgroundColor: '#0F172A', borderTopColor: 'rgba(255,255,255,0.1)' },
+          sceneStyle: { flex: 1, backgroundColor: tc.sceneBg },
+          tabBarStyle: { backgroundColor: tc.tabBarBg, borderTopColor: tc.tabBarBorder },
         }}
       >
         <Tabs.Screen

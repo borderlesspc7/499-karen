@@ -7,7 +7,7 @@ import {
   Text,
   View,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { ThemedScreen } from '@/components/layout/AppScreen'
 import type { KanbanCardWithClient } from '@shared/types'
 import { useGamification } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
@@ -28,9 +28,11 @@ import {
   type OpportunityQuickFilter,
 } from '@/lib/crm-lead-insights'
 import { loadLinkedCrmSnapshot, seedLinkedDemoData } from '@/lib/crm-client-service'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 export default function OpportunitiesScreen() {
   const { isWebDesktop } = useResponsiveLayout()
+  const tc = useThemeClasses()
   const { executeAction } = useGamification()
 
   const [cards, setCards] = useState<KanbanCardWithClient[]>([])
@@ -105,17 +107,17 @@ export default function OpportunitiesScreen() {
 
   if (isLoading && cards.length === 0) {
     return (
-      <SafeAreaView className="flex-1 items-center justify-center bg-[#F8FAFC]" edges={['top']}>
+      <ThemedScreen className="items-center justify-center">
         <ActivityIndicator size="large" color="#3B82F6" />
-        <Text className="mt-3 text-sm text-slate-500">
+        <Text className={['mt-3 text-sm', tc.textSecondary].join(' ')}>
           A IA está priorizando as suas oportunidades...
         </Text>
-      </SafeAreaView>
+      </ThemedScreen>
     )
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC]" edges={['top']}>
+    <ThemedScreen>
       <ScrollView
         className="flex-1"
         contentContainerClassName={[
@@ -128,8 +130,10 @@ export default function OpportunitiesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="gap-2">
-          <Text className="text-3xl font-bold tracking-tight text-deepBlue">Oportunidades</Text>
-          <Text className="text-base leading-6 text-slate-500">
+          <Text className={['text-3xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
+            Oportunidades
+          </Text>
+          <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
             Fluxo de Crescimento — cada lead com a próxima ação que mais impacta o seu faturamento.
           </Text>
         </View>
@@ -153,8 +157,8 @@ export default function OpportunitiesScreen() {
         ) : null}
 
         {cards.length === 0 && !isLoading ? (
-          <View className="items-center gap-4 rounded-3xl border border-dashed border-slate-200 bg-white p-8">
-            <Text className="text-center text-base font-medium text-deepBlue">
+          <View className={['items-center gap-4 rounded-3xl p-8', tc.emptyState].join(' ')}>
+            <Text className={['text-center text-base font-medium', tc.textPrimary].join(' ')}>
               Nenhuma oportunidade encontrada ainda
             </Text>
             <Pressable
@@ -169,16 +173,16 @@ export default function OpportunitiesScreen() {
             <Pressable
               onPress={() => void handleSeedDemoData()}
               disabled={isSeeding}
-              className="rounded-2xl border border-slate-200 px-5 py-3 active:opacity-70"
+              className={['rounded-2xl border px-5 py-3 active:opacity-70', tc.isDark ? 'border-white/10' : 'border-slate-200'].join(' ')}
             >
-              <Text className="font-medium text-slate-600">
+              <Text className={['font-medium', tc.textLabel].join(' ')}>
                 {isSeeding ? 'Importando...' : 'Importar dados demo'}
               </Text>
             </Pressable>
           </View>
         ) : filteredLeads.length === 0 ? (
-          <View className="rounded-3xl border border-dashed border-slate-200 bg-white p-8">
-            <Text className="text-center text-sm text-slate-500">
+          <View className={['rounded-3xl p-8', tc.emptyState].join(' ')}>
+            <Text className={['text-center text-sm', tc.textSecondary].join(' ')}>
               Nenhuma oportunidade neste filtro.
             </Text>
           </View>
@@ -197,6 +201,6 @@ export default function OpportunitiesScreen() {
         onClose={() => setSelectedLead(null)}
         onExecute={() => executeAction('follow-up-leads')}
       />
-    </SafeAreaView>
+    </ThemedScreen>
   )
 }

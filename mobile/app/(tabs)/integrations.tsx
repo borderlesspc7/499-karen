@@ -2,10 +2,12 @@ import { useCallback, useMemo, useState } from 'react'
 import { Alert, ScrollView, Switch, Text, View } from 'react-native'
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated'
 import { router } from 'expo-router'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Facebook, Instagram, Linkedin, Sparkles, Store, type LucideIcon } from 'lucide-react-native'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
+import { ThemedScreen } from '@/components/layout/AppScreen'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { triggerLightHaptic } from '@/lib/haptics'
 
 type IntegrationId = 'instagram' | 'facebook' | 'linkedin' | 'google'
@@ -36,6 +38,7 @@ const ENTER_DURATION_MS = 420
 
 export default function IntegrationsScreen() {
   const { isWebDesktop } = useResponsiveLayout()
+  const tc = useThemeClasses()
   const insets = useSafeAreaInsets()
   const [connected, setConnected] = useState(INITIAL_CONNECTION_STATE)
 
@@ -72,7 +75,7 @@ export default function IntegrationsScreen() {
   }, [])
 
   return (
-    <SafeAreaView className="flex-1 bg-deepBlue" edges={['top']}>
+    <ThemedScreen>
       <ScrollView
         className="flex-1"
         contentContainerClassName={[
@@ -86,8 +89,10 @@ export default function IntegrationsScreen() {
           entering={FadeInDown.duration(ENTER_DURATION_MS)}
           className="gap-2"
         >
-          <Text className="text-3xl font-bold text-white">Conecte seu Ecossistema</Text>
-          <Text className="text-sm leading-5 text-white/60">
+          <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>
+            Conecte seu Ecossistema
+          </Text>
+          <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
             Vincule suas contas para permitir que a AI Workforce publique e responda
             automaticamente.
           </Text>
@@ -102,7 +107,7 @@ export default function IntegrationsScreen() {
               <Animated.View
                 key={integration.id}
                 entering={FadeInDown.delay(STAGGER_MS * (index + 1)).duration(ENTER_DURATION_MS)}
-                className="flex-row items-center gap-4 rounded-3xl border border-white/10 bg-white/5 p-4"
+                className={['flex-row items-center gap-4 p-4', tc.cardLg].join(' ')}
               >
                 <View
                   className="h-12 w-12 items-center justify-center rounded-2xl"
@@ -112,7 +117,9 @@ export default function IntegrationsScreen() {
                 </View>
 
                 <View className="flex-1 gap-1">
-                  <Text className="text-base font-semibold text-white">{integration.name}</Text>
+                  <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
+                    {integration.name}
+                  </Text>
                   {isConnected ? (
                     <View className="self-start rounded-full bg-emerald/15 px-2.5 py-0.5">
                       <Text className="text-[11px] font-bold text-emerald">Conectado</Text>
@@ -161,6 +168,6 @@ export default function IntegrationsScreen() {
           </AnimatedPressable>
         </Animated.View>
       ) : null}
-    </SafeAreaView>
+    </ThemedScreen>
   )
 }

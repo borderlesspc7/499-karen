@@ -1,5 +1,7 @@
 import { Pressable, Text, View } from 'react-native'
 import { router } from 'expo-router'
+import { premiumShadows } from '@/constants/premium-theme'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 type HomeSmartHeaderProps = {
   userName: string
@@ -29,28 +31,33 @@ function resolveInitials(userName: string): string {
     .toUpperCase()
 }
 
-export function HomeSmartHeader({ userName, actionCount = 3 }: HomeSmartHeaderProps) {
+export function HomeSmartHeader({ userName }: HomeSmartHeaderProps) {
   const greeting = resolveGreeting()
   const initials = resolveInitials(userName)
+  const tc = useThemeClasses()
 
   return (
-    <View className="flex-row items-start justify-between gap-3">
+    <View className="flex-row items-start justify-between gap-4">
       <View className="flex-1 gap-2">
-        <Text className="text-3xl font-bold tracking-tight text-deepBlue">
+        <Text className={['text-3xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
           {greeting}, {userName}.
         </Text>
-        <Text className="text-base leading-6 text-slate-500">
-          Hoje existem {actionCount} ações que podem acelerar o crescimento da sua empresa.
+        <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
+          Sua empresa está sendo impulsionada pela IA.
         </Text>
       </View>
 
       <Pressable
         onPress={() => router.push('/(tabs)/profile')}
-        className="h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 bg-white active:opacity-80"
+        className={[
+          'h-11 w-11 items-center justify-center rounded-card border active:opacity-80',
+          tc.isDark ? 'border-white/10 bg-white/10' : 'border-premiumBorder bg-white',
+        ].join(' ')}
+        style={premiumShadows.card}
         accessibilityRole="button"
         accessibilityLabel="Abrir área do usuário"
       >
-        <Text className="text-sm font-bold text-deepBlue">{initials}</Text>
+        <Text className={['text-sm font-bold', tc.textPrimary].join(' ')}>{initials}</Text>
       </Pressable>
     </View>
   )

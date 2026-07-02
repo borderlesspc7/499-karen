@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { type Href, router } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import {
   ChevronLeft,
   ChevronRight,
@@ -17,7 +16,11 @@ import {
 } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
+import { ThemedScreen } from '@/components/layout/AppScreen'
+import { ThemeSelector } from '@/components/ui/ThemeSelector'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
+import { premiumColors } from '@/constants/premium-theme'
 import { useAuth, useGamification } from '@shared/contexts'
 
 const STAGGER_MS = 70
@@ -83,6 +86,7 @@ function formatXp(value: number): string {
 
 export default function ProfileScreen() {
   const { isWebDesktop } = useResponsiveLayout()
+  const tc = useThemeClasses()
   const { currentUser, signOutUser } = useAuth()
   const {
     level,
@@ -112,7 +116,7 @@ export default function ProfileScreen() {
   }, [signOutUser])
 
   return (
-    <SafeAreaView className="flex-1 bg-deepBlue" edges={['top']}>
+    <ThemedScreen>
       <ScrollView
         className="flex-1"
         contentContainerClassName={[
@@ -127,38 +131,43 @@ export default function ProfileScreen() {
             haptic={false}
             className="mb-1 flex-row items-center gap-1 self-start"
           >
-            <ChevronLeft size={18} color="#94A3B8" />
-            <Text className="text-sm font-medium text-white/50">Voltar</Text>
+            <ChevronLeft size={18} color={tc.chevron} />
+            <Text className={['text-sm font-medium', tc.backText].join(' ')}>Voltar</Text>
           </AnimatedPressable>
 
           <View className="flex-row items-center gap-2 self-start rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5">
-            <User size={12} color="#F59E0B" />
+            <User size={12} color={premiumColors.gold} />
             <Text className="text-[11px] font-bold uppercase tracking-wider text-gold">
               Minha Conta
             </Text>
           </View>
-          <Text className="text-3xl font-bold text-white">Área do Usuário</Text>
-          <Text className="text-sm leading-5 text-white/60">
+          <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>Área do Usuário</Text>
+          <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
             Gerencie seu perfil, progresso e preferências da plataforma.
           </Text>
         </Animated.View>
 
         <Animated.View
           entering={FadeInDown.delay(STAGGER_MS).duration(ENTER_DURATION_MS)}
-          className="overflow-hidden rounded-3xl border border-white/10 bg-white/5 p-5"
+          className={['overflow-hidden p-5', tc.cardLg].join(' ')}
         >
           <View className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-electricBlue/10" />
 
           <View className="flex-row items-center gap-4">
-            <View className="h-16 w-16 items-center justify-center rounded-2xl border-2 border-gold/40 bg-white/10">
+            <View
+              className={[
+                'h-16 w-16 items-center justify-center rounded-2xl border-2 border-gold/40',
+                tc.isDark ? 'bg-white/10' : 'bg-gold/10',
+              ].join(' ')}
+            >
               <Text className="text-xl font-bold text-gold">{initials}</Text>
             </View>
 
             <View className="flex-1 gap-1">
-              <Text className="text-xl font-bold text-white">
+              <Text className={['text-xl font-bold', tc.textPrimary].join(' ')}>
                 {brandIdentity?.companyName ?? displayName}
               </Text>
-              <Text className="text-sm text-white/50">{email}</Text>
+              <Text className={['text-sm', tc.textMuted].join(' ')}>{email}</Text>
               <View className="mt-1 flex-row flex-wrap gap-2">
                 <View className="rounded-full bg-gold/15 px-2.5 py-0.5">
                   <Text className="text-[10px] font-bold uppercase tracking-wider text-gold">
@@ -178,14 +187,19 @@ export default function ProfileScreen() {
 
           <View className="mt-5 gap-2">
             <View className="flex-row items-center justify-between">
-              <Text className="text-xs font-semibold text-white/70">
+              <Text className={['text-xs font-semibold', tc.textLabel].join(' ')}>
                 Level {level} · {title}
               </Text>
-              <Text className="text-xs font-medium text-white/45">
+              <Text className={['text-xs font-medium', tc.textMuted].join(' ')}>
                 {formatXp(currentXp)} / {formatXp(maxXp)} XP
               </Text>
             </View>
-            <View className="h-2 overflow-hidden rounded-full bg-white/10">
+            <View
+              className={[
+                'h-2 overflow-hidden rounded-full',
+                tc.isDark ? 'bg-white/10' : 'bg-slate-100',
+              ].join(' ')}
+            >
               <View
                 className="h-full rounded-full bg-gold"
                 style={{ width: `${Math.round(xpProgress * 100)}%` }}
@@ -199,48 +213,53 @@ export default function ProfileScreen() {
           className="flex-row gap-3"
         >
           {[
-            { icon: Flame, label: 'Streak', value: `${streakDays}d`, color: '#F59E0B' },
+            { icon: Flame, label: 'Streak', value: `${streakDays}d`, color: premiumColors.gold },
             { icon: Trophy, label: 'Ações', value: String(completedActions), color: '#3B82F6' },
             { icon: Sparkles, label: 'Influência', value: String(influencePoints), color: '#10B981' },
           ].map((stat) => {
             const Icon = stat.icon
 
             return (
-              <View
-                key={stat.label}
-                className="flex-1 rounded-2xl border border-white/10 bg-white/5 px-3 py-4"
-              >
+              <View key={stat.label} className={['flex-1 px-3 py-4', tc.cardSm].join(' ')}>
                 <View
                   className="mb-2 h-8 w-8 items-center justify-center rounded-xl"
                   style={{ backgroundColor: `${stat.color}22` }}
                 >
                   <Icon size={16} color={stat.color} />
                 </View>
-                <Text className="text-lg font-bold text-white">{stat.value}</Text>
-                <Text className="text-[11px] font-medium text-white/45">{stat.label}</Text>
+                <Text className={['text-lg font-bold', tc.textPrimary].join(' ')}>{stat.value}</Text>
+                <Text className={['text-[11px] font-medium', tc.textMuted].join(' ')}>
+                  {stat.label}
+                </Text>
               </View>
             )
           })}
         </Animated.View>
 
-        <Animated.View
-          entering={FadeInDown.delay(STAGGER_MS * 3).duration(ENTER_DURATION_MS)}
-          className="rounded-3xl border border-white/10 bg-white/5 p-4"
-        >
-          <Text className="text-xs font-bold uppercase tracking-wider text-white/40">
-            Empresa
-          </Text>
-          <Text className="mt-2 text-base font-semibold text-white">{companyStage}</Text>
-          <Text className="mt-1 text-sm text-white/50">Tier {companyTier}</Text>
+        <Animated.View entering={FadeInDown.delay(STAGGER_MS * 3).duration(ENTER_DURATION_MS)}>
+          <ThemeSelector />
         </Animated.View>
 
         <Animated.View
           entering={FadeInDown.delay(STAGGER_MS * 4).duration(ENTER_DURATION_MS)}
+          className={['p-4', tc.card].join(' ')}
+        >
+          <Text className={['text-xs font-bold uppercase tracking-wider', tc.textSection].join(' ')}>
+            Empresa
+          </Text>
+          <Text className={['mt-2 text-base font-semibold', tc.textPrimary].join(' ')}>
+            {companyStage}
+          </Text>
+          <Text className={['mt-1 text-sm', tc.textMuted].join(' ')}>Tier {companyTier}</Text>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInDown.delay(STAGGER_MS * 5).duration(ENTER_DURATION_MS)}
           className="gap-2"
         >
-          <Text className="text-sm font-semibold text-white/70">Acesso rápido</Text>
+          <Text className={['text-sm font-semibold', tc.textLabel].join(' ')}>Acesso rápido</Text>
 
-          {ACCOUNT_MENU.map((item, index) => {
+          {ACCOUNT_MENU.map((item) => {
             const Icon = item.icon
 
             return (
@@ -248,8 +267,7 @@ export default function ProfileScreen() {
                 key={item.id}
                 onPress={() => handleNavigate(item.href)}
                 haptic={false}
-                className="flex-row items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4"
-                style={{ marginTop: index === 0 ? 0 : 0 }}
+                className={['flex-row items-center gap-4 p-4', tc.cardSm].join(' ')}
               >
                 <View
                   className="h-11 w-11 items-center justify-center rounded-xl"
@@ -258,16 +276,20 @@ export default function ProfileScreen() {
                   <Icon size={20} color={item.accentColor} />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-base font-semibold text-white">{item.label}</Text>
-                  <Text className="mt-0.5 text-xs text-white/45">{item.description}</Text>
+                  <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
+                    {item.label}
+                  </Text>
+                  <Text className={['mt-0.5 text-xs', tc.textMuted].join(' ')}>
+                    {item.description}
+                  </Text>
                 </View>
-                <ChevronRight size={18} color="#64748B" />
+                <ChevronRight size={18} color={tc.chevron} />
               </AnimatedPressable>
             )
           })}
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(STAGGER_MS * 5).duration(ENTER_DURATION_MS)}>
+        <Animated.View entering={FadeInDown.delay(STAGGER_MS * 6).duration(ENTER_DURATION_MS)}>
           <AnimatedPressable
             onPress={handleSignOut}
             haptic={false}
@@ -278,6 +300,6 @@ export default function ProfileScreen() {
           </AnimatedPressable>
         </Animated.View>
       </ScrollView>
-    </SafeAreaView>
+    </ThemedScreen>
   )
 }

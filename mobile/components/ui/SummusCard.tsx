@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { View } from 'react-native'
+import { premiumShadows } from '@/constants/premium-theme'
 
 type SummusCardProps = {
   children: ReactNode
@@ -9,14 +10,11 @@ type SummusCardProps = {
 export function SummusCard({ children, className = '' }: SummusCardProps) {
   return (
     <View
-      className={['rounded-3xl border border-slate-200/70 bg-white p-6 shadow-sm', className].join(' ')}
-      style={{
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 2,
-      }}
+      className={[
+        'rounded-card border border-premiumBorder bg-white p-6',
+        className,
+      ].join(' ')}
+      style={premiumShadows.card}
     >
       {children}
     </View>
@@ -26,7 +24,11 @@ export function SummusCard({ children, className = '' }: SummusCardProps) {
 export function SummusDarkCard({ children, className = '' }: SummusCardProps) {
   return (
     <View
-      className={['overflow-hidden rounded-3xl border border-summus-700 bg-summus-900 p-6', className].join(' ')}
+      className={[
+        'overflow-hidden rounded-card border border-summus-700 bg-summus-900 p-6',
+        className,
+      ].join(' ')}
+      style={premiumShadows.navy}
     >
       {children}
     </View>

@@ -1,13 +1,15 @@
 import { ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { ThemedScreen } from '@/components/layout/AppScreen'
 import { Sparkles } from 'lucide-react-native'
 import { useGamification } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { AI_WORKFORCE_AGENTS } from '@/constants/ai-workforce'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { AiWorkforceAgentCard } from '@/components/workforce/AiWorkforceAgentCard'
 
 export default function WorkforceScreen() {
   const { isWebDesktop } = useResponsiveLayout()
+  const tc = useThemeClasses()
   const { executeAction } = useGamification()
 
   function handleAssignTask(agentId: string) {
@@ -22,7 +24,7 @@ export default function WorkforceScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-[#F8FAFC]" edges={['top']}>
+    <ThemedScreen>
       <ScrollView
         className="flex-1"
         contentContainerClassName={[
@@ -39,8 +41,10 @@ export default function WorkforceScreen() {
             </Text>
           </View>
 
-          <Text className="text-3xl font-bold tracking-tight text-deepBlue">Equipe IA</Text>
-          <Text className="text-base leading-6 text-slate-500">
+          <Text className={['text-3xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
+            Equipe IA
+          </Text>
+          <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
             Agentes especializados prontos para executar — sem configurar fluxos, apenas atribuir
             tarefas.
           </Text>
@@ -56,6 +60,6 @@ export default function WorkforceScreen() {
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ThemedScreen>
   )
 }

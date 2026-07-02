@@ -9,6 +9,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated'
+import { premiumColors } from '@/constants/premium-theme'
 
 type ActivatedGlowProps = {
   active: boolean
@@ -23,7 +24,7 @@ export function ActivatedGlow({
   children,
   className,
   style,
-  glowColor = '#3B82F6',
+  glowColor = premiumColors.gold,
 }: ActivatedGlowProps) {
   const glowOpacity = useSharedValue(active ? 0.55 : 0)
 
@@ -44,8 +45,10 @@ export function ActivatedGlow({
   }, [active, glowOpacity])
 
   const glowStyle = useAnimatedStyle(() => ({
-    shadowOpacity: active ? 0.12 + glowOpacity.value * 0.28 : 0,
-    borderColor: active ? `rgba(59, 130, 246, ${0.25 + glowOpacity.value * 0.45})` : 'transparent',
+    shadowOpacity: active ? 0.1 + glowOpacity.value * 0.25 : 0,
+    borderColor: active
+      ? `rgba(197, 160, 89, ${0.2 + glowOpacity.value * 0.4})`
+      : 'transparent',
   }))
 
   return (
@@ -55,10 +58,10 @@ export function ActivatedGlow({
         {
           shadowColor: glowColor,
           shadowOffset: { width: 0, height: 0 },
-          shadowRadius: 16,
+          shadowRadius: 18,
           elevation: active ? 6 : 0,
           borderWidth: active ? 1.5 : 0,
-          borderRadius: 24,
+          borderRadius: 12,
         },
         glowStyle,
         style,

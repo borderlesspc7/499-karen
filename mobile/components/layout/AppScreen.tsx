@@ -2,14 +2,17 @@ import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import type { Edge } from 'react-native-safe-area-context'
+import { useTheme } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 type AppScreenProps = {
   children: ReactNode
   className?: string
   edges?: Edge[]
   fullWidth?: boolean
-  variant?: 'light' | 'dark'
+  variant?: 'light' | 'dark' | 'auto'
+  withPadding?: boolean
 }
 
 export function AppScreen({
@@ -17,10 +20,14 @@ export function AppScreen({
   className = '',
   edges = ['top'],
   fullWidth = false,
-  variant = 'light',
+  variant = 'auto',
+  withPadding = true,
 }: AppScreenProps) {
   const { isWebDesktop } = useResponsiveLayout()
-  const bgClass = variant === 'dark' ? 'bg-summus-950' : 'bg-[#F3F6FA]'
+  const { isDark } = useTheme()
+
+  const resolvedIsDark = variant === 'auto' ? isDark : variant === 'dark'
+  const bgClass = resolvedIsDark ? 'bg-navy' : 'bg-surface'
 
   if (isWebDesktop) {
     return (
@@ -39,7 +46,23 @@ export function AppScreen({
 
   return (
     <SafeAreaView className={`flex-1 ${bgClass} ${className}`} edges={edges}>
-      <View className="flex-1 px-4 py-4">{children}</View>
+      <View className={withPadding ? 'flex-1 px-4 py-4' : 'flex-1'}>{children}</View>
+    </SafeAreaView>
+  )
+}
+
+type ThemedScreenProps = {
+  children: ReactNode
+  className?: string
+  edges?: Edge[]
+}
+
+export function ThemedScreen({ children, className = '', edges = ['top'] }: ThemedScreenProps) {
+  const tc = useThemeClasses()
+
+  return (
+    <SafeAreaView className={['flex-1', tc.screen, className].join(' ')} edges={edges}>
+      {children}
     </SafeAreaView>
   )
 }

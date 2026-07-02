@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import type { OpportunityQuickFilter } from '@/lib/crm-lead-insights'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 type FilterOption = {
   id: OpportunityQuickFilter
@@ -24,6 +25,8 @@ export function OpportunityFilterBar({
   onFilterChange,
   counts,
 }: OpportunityFilterBarProps) {
+  const tc = useThemeClasses()
+
   return (
     <ScrollView
       horizontal
@@ -40,13 +43,13 @@ export function OpportunityFilterBar({
             onPress={() => onFilterChange(option.id)}
             className={[
               'flex-row items-center gap-2 rounded-full px-4 py-2.5',
-              isActive ? 'bg-deepBlue' : 'border border-slate-200 bg-white',
+              isActive ? tc.filterActive : tc.filterInactive,
             ].join(' ')}
           >
             <Text
               className={[
                 'text-sm font-semibold',
-                isActive ? 'text-white' : 'text-slate-600',
+                isActive ? tc.filterActiveText : tc.filterInactiveText,
               ].join(' ')}
             >
               {option.label}
@@ -55,13 +58,13 @@ export function OpportunityFilterBar({
               <View
                 className={[
                   'min-w-[22px] items-center rounded-full px-1.5 py-0.5',
-                  isActive ? 'bg-white/20' : 'bg-slate-100',
+                  isActive ? tc.filterBadgeActive : tc.filterBadgeInactive,
                 ].join(' ')}
               >
                 <Text
                   className={[
                     'text-xs font-bold',
-                    isActive ? 'text-white' : 'text-slate-500',
+                    isActive ? tc.filterActiveText : tc.textMuted,
                   ].join(' ')}
                 >
                   {count}

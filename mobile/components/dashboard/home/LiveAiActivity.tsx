@@ -12,6 +12,8 @@ import Animated, {
 import { Bot, Calendar, Facebook, Globe, Instagram, Linkedin, Mail } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { ActivatedGlow } from '@/components/ui/ActivatedGlow'
+import { premiumColors } from '@/constants/premium-theme'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 type AiActivityItem = {
   id: string
@@ -116,23 +118,24 @@ function PulsingStatusDot() {
 
 function ActivityFeedItem({ item, index }: { item: AiActivityItem; index: number }) {
   const Icon = item.icon
+  const tc = useThemeClasses()
 
   return (
     <Animated.View
       entering={SlideInUp.delay(index * 80).duration(400).springify().damping(16)}
-      className="flex-row items-center gap-3 rounded-2xl bg-slate-50 px-3 py-3"
+      className={['flex-row items-center gap-3 px-3 py-3', tc.surfaceInset, 'rounded-card border'].join(' ')}
     >
       <View
-        className="h-9 w-9 items-center justify-center rounded-xl"
-        style={{ backgroundColor: `${item.accentColor}18` }}
+        className="h-9 w-9 items-center justify-center rounded-card"
+        style={{ backgroundColor: `${item.accentColor}14` }}
       >
-        <Icon size={16} color={item.accentColor} />
+        <Icon size={16} color={item.accentColor} strokeWidth={1.5} />
       </View>
       <View className="flex-1">
-        <Text className="text-sm font-medium leading-5 text-deepBlue">{item.message}</Text>
+        <Text className={['text-sm font-medium leading-5', tc.textPrimary].join(' ')}>{item.message}</Text>
         <View className="mt-0.5 flex-row items-center gap-1">
-          <Calendar size={10} color="#94A3B8" />
-          <Text className="text-xs text-slate-400">({item.timeAgo})</Text>
+          <Calendar size={10} color={premiumColors.textMuted} strokeWidth={1.5} />
+          <Text className={['text-xs', tc.textMuted].join(' ')}>({item.timeAgo})</Text>
         </View>
       </View>
     </Animated.View>
@@ -140,6 +143,7 @@ function ActivityFeedItem({ item, index }: { item: AiActivityItem; index: number
 }
 
 export function LiveAiActivity({ isLiveReveal = false }: LiveAiActivityProps) {
+  const tc = useThemeClasses()
   const feed = isLiveReveal ? CAMPAIGN_LAUNCH_FEED : AI_ACTIVITY_FEED
   const [visibleCount, setVisibleCount] = useState(isLiveReveal ? 0 : feed.length)
 
@@ -170,27 +174,26 @@ export function LiveAiActivity({ isLiveReveal = false }: LiveAiActivityProps) {
     <ActivatedGlow active={isLiveReveal}>
       <Animated.View
         entering={isLiveReveal ? FadeIn.duration(500) : undefined}
-        className="rounded-3xl border border-white bg-white p-5 shadow-sm"
-        style={{
-          shadowColor: '#0F172A',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.06,
-          shadowRadius: 12,
-          elevation: 2,
-        }}
+        className={['p-5', tc.card].join(' ')}
+        style={tc.cardShadow}
       >
         <View className="flex-row items-center gap-3">
-          <View className="h-10 w-10 items-center justify-center rounded-2xl bg-deepBlue/5">
-            <Bot size={18} color="#0F172A" />
+          <View
+            className={[
+              'h-10 w-10 items-center justify-center rounded-card border border-gold/15',
+              tc.isDark ? 'bg-gold/10' : 'bg-gold/10',
+            ].join(' ')}
+          >
+            <Bot size={18} color={tc.isDark ? premiumColors.gold : premiumColors.navy} strokeWidth={1.5} />
           </View>
           <View className="flex-1">
-            <Text className="text-base font-bold text-deepBlue">Atividade da IA em Tempo Real</Text>
+            <Text className={['text-base font-bold', tc.textPrimary].join(' ')}>AI Workforce</Text>
             <View className="mt-1 flex-row items-center gap-2">
               <PulsingStatusDot />
               <Text className="text-xs font-semibold text-emerald">
                 {isLiveReveal
-                  ? 'AI Workforce assumiu o controle — publicando agora'
-                  : 'AI Workforce — Respostas Automáticas ATIVAS'}
+                  ? 'Ao vivo — publicando agora'
+                  : 'Ao vivo — Respostas Automáticas ATIVAS'}
               </Text>
             </View>
           </View>
@@ -207,9 +210,9 @@ export function LiveAiActivity({ isLiveReveal = false }: LiveAiActivityProps) {
             ))}
 
             {isLiveReveal && visibleCount < feed.length ? (
-              <View className="flex-row items-center gap-2 rounded-2xl bg-slate-50 px-3 py-3">
-                <View className="h-2 w-2 rounded-full bg-electricBlue/60" />
-                <Text className="text-xs font-medium text-slate-400">
+              <View className={['flex-row items-center gap-2 rounded-card px-3 py-3', tc.surfaceMuted].join(' ')}>
+                <View className="h-2 w-2 rounded-full bg-gold/60" />
+                <Text className={['text-xs font-medium', tc.textMuted].join(' ')}>
                   AI Workforce em ação...
                 </Text>
               </View>

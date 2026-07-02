@@ -9,9 +9,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import 'react-native-reanimated'
 import { configureStorage } from '@shared/storage'
-import { AuthProvider, GamificationProvider } from '@shared/contexts'
+import { AuthProvider, GamificationProvider, ThemeProvider } from '@shared/contexts'
 import { createAsyncStorageAdapter } from '@/lib/async-storage'
 import { FirebaseBootstrap } from '@/components/FirebaseBootstrap'
+import { ThemeSync } from '@/components/ThemeSync'
 
 export { ErrorBoundary } from 'expo-router'
 
@@ -42,23 +43,26 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <FirebaseBootstrap>
-          <AuthProvider>
-            <GamificationProvider>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="login" />
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen
-                  name="reports"
-                  options={{
-                    headerShown: Platform.OS !== 'web',
-                    title: 'Relatórios',
-                    headerStyle: { backgroundColor: '#0B1220' },
-                    headerTintColor: '#00D4FF',
-                  }}
-                />
-              </Stack>
-            </GamificationProvider>
-          </AuthProvider>
+          <ThemeProvider>
+            <ThemeSync />
+            <AuthProvider>
+              <GamificationProvider>
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="login" />
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen
+                    name="reports"
+                    options={{
+                      headerShown: Platform.OS !== 'web',
+                      title: 'Relatórios',
+                      headerStyle: { backgroundColor: '#0B1220' },
+                      headerTintColor: '#00D4FF',
+                    }}
+                  />
+                </Stack>
+              </GamificationProvider>
+            </AuthProvider>
+          </ThemeProvider>
         </FirebaseBootstrap>
       </SafeAreaProvider>
     </GestureHandlerRootView>

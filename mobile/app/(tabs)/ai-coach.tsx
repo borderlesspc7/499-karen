@@ -1,8 +1,9 @@
 import { ScrollView, Text, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import { useGamification } from '@shared/contexts'
-import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { AiCoachMissionCard } from '@/components/dashboard/home/AiCoachMissionCard'
+import { ThemedScreen } from '@/components/layout/AppScreen'
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 const SUGGESTED_MISSIONS = [
   {
@@ -24,10 +25,11 @@ const SUGGESTED_MISSIONS = [
 
 export default function AiCoachScreen() {
   const { isWebDesktop } = useResponsiveLayout()
+  const tc = useThemeClasses()
   const { completeMission } = useGamification()
 
   return (
-    <SafeAreaView className="flex-1 bg-deepBlue" edges={['top']}>
+    <ThemedScreen>
       <ScrollView
         className="flex-1"
         contentContainerClassName={[
@@ -37,8 +39,8 @@ export default function AiCoachScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="gap-2">
-          <Text className="text-3xl font-bold text-white">AI Coach</Text>
-          <Text className="text-sm text-white/60">
+          <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>AI Coach</Text>
+          <Text className={['text-sm', tc.textSecondary].join(' ')}>
             Missões proativas geradas pela IA para acelerar o seu crescimento.
           </Text>
         </View>
@@ -46,18 +48,19 @@ export default function AiCoachScreen() {
         <AiCoachMissionCard onResolveMission={completeMission} />
 
         <View className="gap-3">
-          <Text className="text-lg font-bold text-white">Próximas missões sugeridas</Text>
+          <Text className={['text-lg font-bold', tc.textPrimary].join(' ')}>
+            Próximas missões sugeridas
+          </Text>
           {SUGGESTED_MISSIONS.map((mission) => (
-            <View
-              key={mission.id}
-              className="rounded-3xl border border-white/10 bg-white/5 p-4"
-            >
-              <Text className="text-base font-semibold text-white">{mission.title}</Text>
+            <View key={mission.id} className={['p-4', tc.cardLg].join(' ')}>
+              <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
+                {mission.title}
+              </Text>
               <Text className="mt-1 text-xs font-medium text-gold">{mission.impact}</Text>
             </View>
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ThemedScreen>
   )
 }

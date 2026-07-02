@@ -1,5 +1,7 @@
 import { Text, View } from 'react-native'
 import type { BusinessHealthScores } from '@shared/types/gamification'
+import { premiumColors } from '@/constants/premium-theme'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 type GrowthNodeStatus = 'completed' | 'in_progress' | 'pending'
 
@@ -36,8 +38,8 @@ function resolveNodeStatus(value: number): GrowthNodeStatus {
 
 function resolveStatusColor(status: GrowthNodeStatus): string {
   const colors: Record<GrowthNodeStatus, string> = {
-    completed: '#10B981',
-    in_progress: '#F59E0B',
+    completed: premiumColors.emerald,
+    in_progress: premiumColors.gold,
     pending: '#CBD5E1',
   }
 
@@ -59,19 +61,12 @@ type GrowthTreeProps = {
 }
 
 export function GrowthTree({ businessHealth }: GrowthTreeProps) {
+  const tc = useThemeClasses()
+
   return (
-    <View
-      className="rounded-3xl bg-white p-6 shadow-sm"
-      style={{
-        shadowColor: '#0F172A',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 12,
-        elevation: 2,
-      }}
-    >
-      <Text className="text-base font-semibold text-deepBlue">Árvore de Crescimento</Text>
-      <Text className="mt-1 text-sm text-slate-500">
+    <View className={['p-6', tc.card].join(' ')} style={tc.cardShadow}>
+      <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>Árvore de Crescimento</Text>
+      <Text className={['mt-1 text-sm', tc.textSecondary].join(' ')}>
         O caminho estratégico da sua empresa, do primeiro contato à escala.
       </Text>
 
@@ -89,18 +84,38 @@ export function GrowthTree({ businessHealth }: GrowthTreeProps) {
                   className="h-4 w-4 rounded-full border-2"
                   style={{
                     borderColor: dotColor,
-                    backgroundColor: status === 'pending' ? '#FFFFFF' : `${dotColor}33`,
+                    backgroundColor:
+                      status === 'pending'
+                        ? tc.isDark
+                          ? premiumColors.navy
+                          : '#FFFFFF'
+                        : `${dotColor}22`,
                   }}
                 />
-                {!isLast ? <View className="mt-1 w-0.5 flex-1 bg-slate-200" /> : null}
+                {!isLast ? (
+                  <View className={['mt-1 w-0.5 flex-1', tc.connectorLine].join(' ')} />
+                ) : null}
               </View>
 
-              <View className={['flex-1 flex-row items-start justify-between', isLast ? 'pb-0' : 'pb-5'].join(' ')}>
-                <View className="flex-1">
-                  <Text className="text-base font-semibold text-deepBlue">{node.label}</Text>
-                  <Text className="mt-0.5 text-xs text-slate-400">{resolveStatusLabel(status)}</Text>
+              <View className={['flex-1', isLast ? 'pb-0' : 'pb-5'].join(' ')}>
+                <View className="flex-row items-start justify-between">
+                  <View className="flex-1">
+                    <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
+                      {node.label}
+                    </Text>
+                    <Text className={['mt-0.5 text-xs', tc.textMuted].join(' ')}>
+                      {resolveStatusLabel(status)}
+                    </Text>
+                  </View>
+                  <Text className="text-sm font-bold text-gold">{value}%</Text>
                 </View>
-                <Text className="text-sm font-bold text-slate-400">{value}%</Text>
+
+                <View className={['mt-2 h-1 overflow-hidden rounded-full', tc.progressTrack].join(' ')}>
+                  <View
+                    className="h-full rounded-full"
+                    style={{ width: `${value}%`, backgroundColor: dotColor }}
+                  />
+                </View>
               </View>
             </View>
           )

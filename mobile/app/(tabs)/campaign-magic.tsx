@@ -11,7 +11,9 @@ import {
 } from 'react-native'
 import Animated, { FadeInDown, SlideInRight, SlideInUp } from 'react-native-reanimated'
 import { router } from 'expo-router'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { ThemedScreen } from '@/components/layout/AppScreen'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 import {
   CheckCircle2,
   Globe,
@@ -81,6 +83,7 @@ function resolveCardTitle(card: PreviewCard, tab: ApprovalTab): string {
 
 export default function CampaignMagicScreen() {
   const { isWebDesktop } = useResponsiveLayout()
+  const tc = useThemeClasses()
   const { brandIdentity, brandAiContext, userProfile } = useGamification()
   const insets = useSafeAreaInsets()
   const [phase, setPhase] = useState<ScreenPhase>('input')
@@ -147,7 +150,7 @@ export default function CampaignMagicScreen() {
   const previewCards = generatedCampaign[activeTab]
 
   return (
-    <SafeAreaView className="flex-1 bg-deepBlue" edges={['top']}>
+    <ThemedScreen>
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -172,8 +175,10 @@ export default function CampaignMagicScreen() {
                   Campaign Magic
                 </Text>
               </View>
-              <Text className="text-3xl font-bold text-white">Criador de Campanhas</Text>
-              <Text className="text-sm leading-5 text-white/60">
+              <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>
+                Criador de Campanhas
+              </Text>
+              <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
                 Descreva sua ideia e a IA gera posts, e-mails e copy de landing page em segundos.
               </Text>
               {brandIdentity ? (
@@ -192,11 +197,13 @@ export default function CampaignMagicScreen() {
 
             <Animated.View
               entering={FadeInDown.delay(STAGGER_MS).duration(ENTER_DURATION_MS)}
-              className="gap-4 rounded-3xl border border-white/10 bg-white/5 p-5"
+              className={['gap-4 p-5', tc.cardLg].join(' ')}
             >
               <View className="flex-row items-center gap-2">
                 <Wand2 size={18} color="#3B82F6" />
-                <Text className="text-sm font-semibold text-white/80">Input Mágico</Text>
+                <Text className={['text-sm font-semibold', tc.textLabel].join(' ')}>
+                  Input Mágico
+                </Text>
               </View>
 
               <TextInput
@@ -207,11 +214,11 @@ export default function CampaignMagicScreen() {
                     ? `Ex: Campanha para divulgar ${brandIdentity.servicesDescription.slice(0, 60)}...`
                     : 'Ex: Crie uma campanha para meu novo serviço de harmonização facial...'
                 }
-                placeholderTextColor="#64748B"
+                placeholderTextColor={tc.placeholderColor}
                 multiline
                 numberOfLines={6}
                 textAlignVertical="top"
-                className="min-h-[160px] rounded-2xl border border-white/10 bg-deepBlue/60 px-4 py-4 text-base leading-6 text-white"
+                className={['min-h-[160px]', tc.input].join(' ')}
               />
 
               <AnimatedPressable
@@ -243,7 +250,8 @@ export default function CampaignMagicScreen() {
           <View className="flex-1">
             <View
               className={[
-                'gap-4 border-b border-white/10 pb-4 pt-4',
+                'gap-4 border-b pb-4 pt-4',
+                tc.divider,
                 isWebDesktop ? 'mx-auto w-full max-w-2xl px-8' : 'px-5',
               ].join(' ')}
             >
@@ -251,8 +259,10 @@ export default function CampaignMagicScreen() {
                 entering={FadeInDown.duration(ENTER_DURATION_MS)}
                 className="gap-1"
               >
-                <Text className="text-2xl font-bold text-white">Dashboard de Aprovação</Text>
-                <Text className="text-sm text-white/50">
+                <Text className={['text-2xl font-bold', tc.textPrimary].join(' ')}>
+                  Dashboard de Aprovação
+                </Text>
+                <Text className={['text-sm', tc.textMuted].join(' ')}>
                   Revise e aprove o conteúdo gerado para todos os canais.
                 </Text>
                 {brandIdentity ? (
@@ -280,14 +290,14 @@ export default function CampaignMagicScreen() {
                           onPress={() => setActiveTab(tab.id)}
                           className={[
                             'flex-row items-center gap-2 rounded-2xl px-4 py-2.5',
-                            isActive ? 'bg-electricBlue' : 'border border-white/10 bg-white/5',
+                            isActive ? 'bg-electricBlue' : tc.tabInactive,
                           ].join(' ')}
                         >
                           <Icon size={14} color={isActive ? '#FFFFFF' : '#94A3B8'} />
                           <Text
                             className={[
                               'text-xs font-semibold',
-                              isActive ? 'text-white' : 'text-white/60',
+                              isActive ? 'text-white' : tc.tabInactiveText,
                             ].join(' ')}
                           >
                             {tab.label}
@@ -312,7 +322,7 @@ export default function CampaignMagicScreen() {
                 <Animated.View
                   key={card.id}
                   entering={SlideInUp.delay(STAGGER_MS * (index + 1)).duration(ENTER_DURATION_MS)}
-                  className="rounded-3xl border border-white/10 bg-white/5 p-5"
+                  className={['p-5', tc.cardLg].join(' ')}
                 >
                   <View className="mb-3 flex-row items-center gap-2">
                     {activeTab === 'social' ? (
@@ -320,21 +330,23 @@ export default function CampaignMagicScreen() {
                     ) : null}
                     {activeTab === 'emails' ? <Mail size={14} color="#3B82F6" /> : null}
                     {activeTab === 'landing' ? <Globe size={14} color="#10B981" /> : null}
-                    <Text className="text-xs font-bold uppercase tracking-wider text-white/50">
+                    <Text className={['text-xs font-bold uppercase tracking-wider', tc.textMuted].join(' ')}>
                       {resolveCardMeta(card, activeTab)}
                     </Text>
                   </View>
-                  <Text className="text-base font-semibold leading-6 text-white">
+                  <Text className={['text-base font-semibold leading-6', tc.textPrimary].join(' ')}>
                     {resolveCardTitle(card, activeTab)}
                   </Text>
-                  <Text className="mt-2 text-sm leading-5 text-white/50">{card.detail}</Text>
+                  <Text className={['mt-2 text-sm leading-5', tc.textMuted].join(' ')}>
+                    {card.detail}
+                  </Text>
                 </Animated.View>
               ))}
             </ScrollView>
 
             <Animated.View
               entering={FadeInDown.delay(STAGGER_MS * 2).duration(ENTER_DURATION_MS)}
-              className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-deepBlue/95 px-5 pt-4"
+              className={['absolute bottom-0 left-0 right-0 px-5 pt-4', tc.footerBar].join(' ')}
               style={{ paddingBottom: Math.max(insets.bottom, 16) }}
             >
               <View
@@ -346,9 +358,11 @@ export default function CampaignMagicScreen() {
                 <AnimatedPressable
                   onPress={handleEdit}
                   haptic={false}
-                  className="flex-1 rounded-2xl border border-white/25 py-4"
+                  className={['flex-1 py-4', tc.outlineButton].join(' ')}
                 >
-                  <Text className="text-center text-sm font-bold text-white">Editar</Text>
+                  <Text className={['text-center text-sm font-bold', tc.outlineButtonText].join(' ')}>
+                    Editar
+                  </Text>
                 </AnimatedPressable>
                 <AnimatedPressable
                   onPress={handlePublish}
@@ -395,6 +409,6 @@ export default function CampaignMagicScreen() {
           />
         </SummusModalCard>
       </SummusModal>
-    </SafeAreaView>
+    </ThemedScreen>
   )
 }

@@ -21,6 +21,8 @@ import {
   INBOX_AI_SUGGESTIONS,
   INBOX_QUICK_TEMPLATES,
 } from '@/constants/inbox-mock-data'
+import { premiumColors } from '@/constants/premium-theme'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { InboxChannelIcon } from './InboxChannelIcon'
 
 type InboxChatViewProps = {
@@ -49,7 +51,17 @@ function resolveStatusColor(status: InboxContactStatus): string {
   return colors[status]
 }
 
-function MessageBubble({ message }: { message: InboxMessage }) {
+function MessageBubble({
+  message,
+  incomingBubbleClass,
+  textPrimaryClass,
+  textMutedClass,
+}: {
+  message: InboxMessage
+  incomingBubbleClass: string
+  textPrimaryClass: string
+  textMutedClass: string
+}) {
   const isOutgoing = message.role === 'agent'
   const isAi = message.role === 'ai'
 
@@ -61,19 +73,19 @@ function MessageBubble({ message }: { message: InboxMessage }) {
           ? 'self-end rounded-br-md bg-electricBlue'
           : isAi
             ? 'self-start rounded-bl-md border border-gold/30 bg-gold/10'
-            : 'self-start rounded-bl-md border border-slate-200 bg-white',
+            : ['self-start rounded-bl-md', incomingBubbleClass].join(' '),
       ].join(' ')}
     >
       {isAi ? (
         <View className="mb-1 flex-row items-center gap-1">
-          <Sparkles size={12} color="#F59E0B" />
+          <Sparkles size={12} color={premiumColors.gold} />
           <Text className="text-[10px] font-bold uppercase tracking-wider text-gold">IA</Text>
         </View>
       ) : null}
       <Text
         className={[
           'text-sm leading-5',
-          isOutgoing ? 'text-white' : 'text-deepBlue',
+          isOutgoing ? 'text-white' : textPrimaryClass,
         ].join(' ')}
       >
         {message.text}
@@ -81,7 +93,7 @@ function MessageBubble({ message }: { message: InboxMessage }) {
       <Text
         className={[
           'mt-1 text-[10px]',
-          isOutgoing ? 'text-white/70' : 'text-slate-400',
+          isOutgoing ? 'text-white/70' : textMutedClass,
         ].join(' ')}
       >
         {message.timestamp}
@@ -95,6 +107,7 @@ export function InboxChatView({
   onBack,
   showBackButton = false,
 }: InboxChatViewProps) {
+  const tc = useThemeClasses()
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState(conversation.messages)
   const [isTemplatesOpen, setIsTemplatesOpen] = useState(false)
@@ -138,25 +151,22 @@ export function InboxChatView({
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-[#ECEFF3]"
+      className={['flex-1', tc.chatBg].join(' ')}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
     >
-      <View className="border-b border-slate-200 bg-white px-4 py-3">
+      <View className={['border-b px-4 py-3', tc.toolbar].join(' ')}>
         <View className="flex-row items-center gap-3">
           {showBackButton ? (
-            <Pressable
-              onPress={onBack}
-              className="rounded-full bg-slate-100 p-2 active:opacity-70"
-            >
-              <ArrowLeft size={18} color="#0F172A" />
+            <Pressable onPress={onBack} className={['rounded-full p-2', tc.iconButton].join(' ')}>
+              <ArrowLeft size={18} color={tc.isDark ? '#F8FAFC' : premiumColors.navy} />
             </Pressable>
           ) : null}
 
           <InboxChannelIcon channel={conversation.channel} />
 
           <View className="min-w-0 flex-1">
-            <Text className="text-base font-bold text-deepBlue" numberOfLines={1}>
+            <Text className={['text-base font-bold', tc.textPrimary].join(' ')} numberOfLines={1}>
               {conversation.contactName}
             </Text>
             <View className="mt-0.5 flex-row items-center gap-1.5">
@@ -164,7 +174,7 @@ export function InboxChatView({
                 className="h-2 w-2 rounded-full"
                 style={{ backgroundColor: resolveStatusColor(conversation.status) }}
               />
-              <Text className="text-xs text-slate-500">
+              <Text className={['text-xs', tc.textSecondary].join(' ')}>
                 {resolveStatusLabel(conversation.status)} · {conversation.company}
               </Text>
             </View>
@@ -172,9 +182,9 @@ export function InboxChatView({
 
           <Pressable
             onPress={handleAiAction}
-            className="flex-row items-center gap-1.5 rounded-full bg-deepBlue px-3 py-2 active:opacity-90"
+            className="flex-row items-center gap-1.5 rounded-full bg-navy px-3 py-2 active:opacity-90"
           >
-            <Sparkles size={14} color="#F59E0B" />
+            <Sparkles size={14} color={premiumColors.gold} />
             <Text className="text-xs font-bold text-white">Ações IA</Text>
           </Pressable>
         </View>
@@ -186,11 +196,17 @@ export function InboxChatView({
         showsVerticalScrollIndicator={false}
       >
         {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+          <MessageBubble
+            key={message.id}
+            message={message}
+            incomingBubbleClass={tc.incomingBubble}
+            textPrimaryClass={tc.textPrimary}
+            textMutedClass={tc.textMuted}
+          />
         ))}
       </ScrollView>
 
-      <View className="border-t border-slate-200 bg-white px-4 pb-3 pt-3">
+      <View className={['border-t px-4 pb-3 pt-3', tc.toolbar].join(' ')}>
         {isTemplatesOpen ? (
           <ScrollView
             horizontal
@@ -201,9 +217,9 @@ export function InboxChatView({
               <Pressable
                 key={template}
                 onPress={() => handleSend(template)}
-                className="rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 active:bg-slate-100"
+                className={['rounded-full border px-3.5 py-2', tc.iconButton].join(' ')}
               >
-                <Text className="text-xs font-medium text-slate-600">{template}</Text>
+                <Text className={['text-xs font-medium', tc.textLabel].join(' ')}>{template}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -212,30 +228,30 @@ export function InboxChatView({
         <View className="flex-row items-end gap-2">
           <Pressable
             onPress={() => Alert.alert('Anexo', 'Upload de arquivo simulado para a demo.')}
-            className="rounded-xl border border-slate-200 bg-slate-50 p-3 active:bg-slate-100"
+            className={['rounded-xl p-3', tc.iconButton].join(' ')}
           >
-            <Paperclip size={18} color="#64748B" />
+            <Paperclip size={18} color={tc.chevron} />
           </Pressable>
 
           <Pressable
             onPress={() => setIsTemplatesOpen((current) => !current)}
-            className="rounded-xl border border-slate-200 bg-slate-50 p-3 active:bg-slate-100"
+            className={['rounded-xl p-3', tc.iconButton].join(' ')}
           >
             <ChevronDown
               size={18}
-              color="#64748B"
+              color={tc.chevron}
               style={{ transform: [{ rotate: isTemplatesOpen ? '180deg' : '0deg' }] }}
             />
           </Pressable>
 
-          <View className="min-h-[44px] flex-1 flex-row items-center rounded-2xl border border-slate-200 bg-slate-50 px-4">
+          <View className={['min-h-[44px] flex-1 flex-row items-center', tc.inputInline].join(' ')}>
             <TextInput
               value={input}
               onChangeText={setInput}
               placeholder="Escreva uma mensagem..."
-              placeholderTextColor="#94A3B8"
+              placeholderTextColor={tc.placeholderColor}
               multiline
-              className="max-h-28 flex-1 py-2 text-sm text-deepBlue"
+              className={['max-h-28 flex-1 py-2 text-sm', tc.textPrimary].join(' ')}
               onSubmitEditing={() => handleSend()}
               returnKeyType="send"
             />
