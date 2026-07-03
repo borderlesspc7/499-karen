@@ -33,14 +33,14 @@ const CHANNEL_VISUALS: Record<InboxChannel, ChannelVisual> = {
 
 type InboxChannelIconProps = {
   channel: InboxChannel
-  size?: 'sm' | 'md'
+  size?: 'sm' | 'md' | 'lg'
 }
 
 export function InboxChannelIcon({ channel, size = 'md' }: InboxChannelIconProps) {
   const visual = CHANNEL_VISUALS[channel]
   const Icon = visual.Icon
-  const dimension = size === 'sm' ? 32 : 40
-  const iconSize = size === 'sm' ? 14 : 18
+  const dimension = size === 'sm' ? 32 : size === 'lg' ? 48 : 40
+  const iconSize = size === 'sm' ? 14 : size === 'lg' ? 22 : 18
 
   return (
     <View

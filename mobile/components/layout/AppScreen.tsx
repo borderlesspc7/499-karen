@@ -59,6 +59,15 @@ type ThemedScreenProps = {
 
 export function ThemedScreen({ children, className = '', edges = ['top'] }: ThemedScreenProps) {
   const tc = useThemeClasses()
+  const { isWebDesktop } = useResponsiveLayout()
+
+  if (isWebDesktop) {
+    return (
+      <View className={['min-h-full flex-1', tc.screen, className].join(' ')}>
+        {children}
+      </View>
+    )
+  }
 
   return (
     <SafeAreaView className={['flex-1', tc.screen, className].join(' ')} edges={edges}>

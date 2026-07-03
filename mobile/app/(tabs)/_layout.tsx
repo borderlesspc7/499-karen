@@ -1,9 +1,10 @@
-import { ActivityIndicator, View } from 'react-native'
+import { ActivityIndicator, Platform, View } from 'react-native'
 import { Redirect, Tabs } from 'expo-router'
 import { useAuth, useGamification, useTheme } from '@shared/contexts'
 import { OnboardingModal } from '@/components/OnboardingModal'
 import { SummusAppShell } from '@/components/layout/SummusAppShell'
 import { SummusBottomTabBar } from '@/components/layout/SummusBottomTabBar'
+import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 export default function TabLayout() {
@@ -11,6 +12,8 @@ export default function TabLayout() {
   const { isHydrated, isOnboardingComplete } = useGamification()
   const { isHydrated: isThemeHydrated } = useTheme()
   const tc = useThemeClasses()
+  const { isWebDesktop } = useResponsiveLayout()
+  const hideMobileTabBar = Platform.OS === 'web' && isWebDesktop
 
   if (isAuthLoading || !isHydrated || !isThemeHydrated) {
     return (
@@ -29,7 +32,11 @@ export default function TabLayout() {
       <OnboardingModal visible={!isOnboardingComplete} />
       <Tabs
         initialRouteName={isOnboardingComplete ? 'index' : 'integrations'}
-        tabBar={(props) => <SummusBottomTabBar {...props} />}
+        tabBar={
+          hideMobileTabBar
+            ? () => null
+            : (props) => <SummusBottomTabBar {...props} />
+        }
         screenOptions={{
           headerShown: false,
           animation: 'fade',
@@ -40,13 +47,13 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Home',
+            title: 'Revenue Center',
           }}
         />
         <Tabs.Screen
           name="workforce"
           options={{
-            title: 'Equipe IA',
+            title: 'AI Workforce',
           }}
         />
         <Tabs.Screen
@@ -74,7 +81,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="opportunities"
           options={{
-            title: 'CRM',
+            title: 'Oportunidades',
           }}
         />
         <Tabs.Screen name="crm" options={{ href: null }} />

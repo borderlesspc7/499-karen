@@ -3,85 +3,45 @@ import { ScrollView, Text, View } from 'react-native'
 import Animated, {
   Easing,
   FadeIn,
-  SlideInUp,
+  FadeInLeft,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
   withTiming,
 } from 'react-native-reanimated'
-import { Bot, Calendar, Facebook, Globe, Instagram, Linkedin, Mail } from 'lucide-react-native'
-import type { LucideIcon } from 'lucide-react-native'
+import { Bot } from 'lucide-react-native'
 import { ActivatedGlow } from '@/components/ui/ActivatedGlow'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
-type AiActivityItem = {
+type StrategicActivityItem = {
   id: string
+  timestamp: string
   message: string
-  timeAgo: string
-  icon: LucideIcon
-  accentColor: string
 }
 
-const AI_ACTIVITY_FEED: AiActivityItem[] = [
-  {
-    id: 'activity-1',
-    message: 'IA respondeu a um comentário no Instagram',
-    timeAgo: 'Há 2 min',
-    icon: Instagram,
-    accentColor: '#DB2777',
-  },
-  {
-    id: 'activity-2',
-    message: 'IA qualificou um lead no LinkedIn',
-    timeAgo: 'Há 15 min',
-    icon: Linkedin,
-    accentColor: '#0A66C2',
-  },
-  {
-    id: 'activity-3',
-    message: 'IA agendou uma reunião via E-mail',
-    timeAgo: 'Há 1 hora',
-    icon: Mail,
-    accentColor: '#3B82F6',
-  },
+const STRATEGIC_AI_FEED: StrategicActivityItem[] = [
+  { id: 's1', timestamp: '09:41', message: 'Analisando Meta Ads…' },
+  { id: 's2', timestamp: '09:42', message: 'Encontrou campanha com CPA alto.' },
+  { id: 's3', timestamp: '09:42', message: 'Realocando orçamento.' },
+  { id: 's4', timestamp: '09:43', message: 'Criando novos anúncios.' },
+  { id: 's5', timestamp: '09:43', message: 'Preparando campanha omnichannel…' },
+  { id: 's6', timestamp: '09:44', message: 'Campanha pronta para aprovação.' },
 ]
 
-const CAMPAIGN_LAUNCH_FEED: AiActivityItem[] = [
-  {
-    id: 'launch-1',
-    message: 'IA publicou o carrossel de harmonização no Instagram',
-    timeAgo: 'Agora',
-    icon: Instagram,
-    accentColor: '#DB2777',
-  },
-  {
-    id: 'launch-2',
-    message: 'IA disparou a sequência de e-mails de boas-vindas',
-    timeAgo: 'Agora',
-    icon: Mail,
-    accentColor: '#3B82F6',
-  },
-  {
-    id: 'launch-3',
-    message: 'IA sincronizou a copy da landing page nos canais',
-    timeAgo: 'Agora',
-    icon: Globe,
-    accentColor: '#10B981',
-  },
-  {
-    id: 'launch-4',
-    message: 'IA publicou o post de conversão no Facebook',
-    timeAgo: 'Agora',
-    icon: Facebook,
-    accentColor: '#1877F2',
-  },
+const CAMPAIGN_LAUNCH_FEED: StrategicActivityItem[] = [
+  { id: 'l1', timestamp: 'Agora', message: 'Publicando carrossel no Instagram…' },
+  { id: 'l2', timestamp: 'Agora', message: 'Disparando sequência de e-mails…' },
+  { id: 'l3', timestamp: 'Agora', message: 'Sincronizando landing page nos canais…' },
+  { id: 'l4', timestamp: 'Agora', message: 'Publicando post de conversão no Facebook…' },
+  { id: 'l5', timestamp: 'Agora', message: 'Concluído. Campanha no ar em 5 canais.' },
 ]
 
-const REVEAL_INTERVAL_MS = 1000
+const REVEAL_INTERVAL_MS = 900
 
 type LiveAiActivityProps = {
   isLiveReveal?: boolean
+  embedded?: boolean
 }
 
 function PulsingStatusDot() {
@@ -116,35 +76,43 @@ function PulsingStatusDot() {
   )
 }
 
-function ActivityFeedItem({ item, index }: { item: AiActivityItem; index: number }) {
-  const Icon = item.icon
+function TimelineItem({
+  item,
+  index,
+  isLast,
+}: {
+  item: StrategicActivityItem
+  index: number
+  isLast: boolean
+}) {
   const tc = useThemeClasses()
 
   return (
     <Animated.View
-      entering={SlideInUp.delay(index * 80).duration(400).springify().damping(16)}
-      className={['flex-row items-center gap-3 px-3 py-3', tc.surfaceInset, 'rounded-card border'].join(' ')}
+      entering={FadeInLeft.delay(index * 100).duration(400)}
+      className="flex-row gap-4"
     >
-      <View
-        className="h-9 w-9 items-center justify-center rounded-card"
-        style={{ backgroundColor: `${item.accentColor}14` }}
-      >
-        <Icon size={16} color={item.accentColor} strokeWidth={1.5} />
+      <View className="items-center">
+        <View className="h-2 w-2 rounded-full bg-gold/80" />
+        {!isLast ? (
+          <View className={['mt-1 w-px flex-1 min-h-[28px]', tc.connectorLine].join(' ')} />
+        ) : null}
       </View>
-      <View className="flex-1">
-        <Text className={['text-sm font-medium leading-5', tc.textPrimary].join(' ')}>{item.message}</Text>
-        <View className="mt-0.5 flex-row items-center gap-1">
-          <Calendar size={10} color={premiumColors.textMuted} strokeWidth={1.5} />
-          <Text className={['text-xs', tc.textMuted].join(' ')}>({item.timeAgo})</Text>
-        </View>
+      <View className="min-w-0 flex-1 pb-4">
+        <Text className={['text-[11px] font-medium tabular-nums', tc.textMuted].join(' ')}>
+          {item.timestamp}
+        </Text>
+        <Text className={['mt-0.5 text-sm font-medium leading-5', tc.textPrimary].join(' ')}>
+          {item.message}
+        </Text>
       </View>
     </Animated.View>
   )
 }
 
-export function LiveAiActivity({ isLiveReveal = false }: LiveAiActivityProps) {
+export function LiveAiActivity({ isLiveReveal = false, embedded = false }: LiveAiActivityProps) {
   const tc = useThemeClasses()
-  const feed = isLiveReveal ? CAMPAIGN_LAUNCH_FEED : AI_ACTIVITY_FEED
+  const feed = isLiveReveal ? CAMPAIGN_LAUNCH_FEED : STRATEGIC_AI_FEED
   const [visibleCount, setVisibleCount] = useState(isLiveReveal ? 0 : feed.length)
 
   useEffect(() => {
@@ -170,55 +138,72 @@ export function LiveAiActivity({ isLiveReveal = false }: LiveAiActivityProps) {
 
   const visibleItems = feed.slice(0, visibleCount)
 
-  return (
-    <ActivatedGlow active={isLiveReveal}>
-      <Animated.View
-        entering={isLiveReveal ? FadeIn.duration(500) : undefined}
-        className={['p-5', tc.card].join(' ')}
-        style={tc.cardShadow}
-      >
+  const content = (
+    <>
+      {!embedded ? (
         <View className="flex-row items-center gap-3">
-          <View
-            className={[
-              'h-10 w-10 items-center justify-center rounded-card border border-gold/15',
-              tc.isDark ? 'bg-gold/10' : 'bg-gold/10',
-            ].join(' ')}
-          >
-            <Bot size={18} color={tc.isDark ? premiumColors.gold : premiumColors.navy} strokeWidth={1.5} />
+          <View className="h-10 w-10 items-center justify-center rounded-2xl border border-gold/15 bg-gold/10">
+            <Bot size={18} color={premiumColors.gold} strokeWidth={1.5} />
           </View>
           <View className="flex-1">
             <Text className={['text-base font-bold', tc.textPrimary].join(' ')}>AI Workforce</Text>
             <View className="mt-1 flex-row items-center gap-2">
               <PulsingStatusDot />
               <Text className="text-xs font-semibold text-emerald">
-                {isLiveReveal
-                  ? 'Ao vivo — publicando agora'
-                  : 'Ao vivo — Respostas Automáticas ATIVAS'}
+                {isLiveReveal ? 'Ao vivo — publicando agora' : 'Trabalhando estrategicamente'}
               </Text>
             </View>
           </View>
         </View>
+      ) : (
+        <View className="mb-3 flex-row items-center gap-2 px-2">
+          <PulsingStatusDot />
+          <Text className="text-xs font-semibold text-emerald">
+            {isLiveReveal ? 'Ao vivo — publicando agora' : 'Trabalhando estrategicamente'}
+          </Text>
+        </View>
+      )}
 
-        <ScrollView
-          className="mt-4 max-h-52"
-          nestedScrollEnabled
-          showsVerticalScrollIndicator={false}
-        >
-          <View className="gap-2">
-            {visibleItems.map((item, index) => (
-              <ActivityFeedItem key={item.id} item={item} index={index} />
-            ))}
+      <ScrollView
+        className={embedded ? 'max-h-64' : 'mt-5 max-h-56'}
+        nestedScrollEnabled
+        showsVerticalScrollIndicator={false}
+      >
+        <View>
+          {visibleItems.map((item, index) => (
+            <TimelineItem
+              key={item.id}
+              item={item}
+              index={index}
+              isLast={index === visibleItems.length - 1}
+            />
+          ))}
 
-            {isLiveReveal && visibleCount < feed.length ? (
-              <View className={['flex-row items-center gap-2 rounded-card px-3 py-3', tc.surfaceMuted].join(' ')}>
-                <View className="h-2 w-2 rounded-full bg-gold/60" />
-                <Text className={['text-xs font-medium', tc.textMuted].join(' ')}>
-                  AI Workforce em ação...
-                </Text>
-              </View>
-            ) : null}
-          </View>
-        </ScrollView>
+          {isLiveReveal && visibleCount < feed.length ? (
+            <View className="flex-row items-center gap-2 pl-6">
+              <View className="h-1.5 w-1.5 rounded-full bg-gold/60" />
+              <Text className={['text-xs font-medium', tc.textMuted].join(' ')}>
+                Processando…
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </ScrollView>
+    </>
+  )
+
+  if (embedded) {
+    return <View className="p-4">{content}</View>
+  }
+
+  return (
+    <ActivatedGlow active={isLiveReveal}>
+      <Animated.View
+        entering={isLiveReveal ? FadeIn.duration(500) : undefined}
+        className={['p-6', tc.glassCard].join(' ')}
+        style={tc.cardShadow}
+      >
+        {content}
       </Animated.View>
     </ActivatedGlow>
   )

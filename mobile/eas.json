@@ -12,6 +12,15 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "ios": {
+        "simulator": false
+      }
+    },
+    "preview-testflight": {
+      "distribution": "store",
+      "ios": {
+        "simulator": false
       }
     },
     "production": {
@@ -19,6 +28,7 @@
     }
   },
   "submit": {
+    "preview-testflight": {},
     "production": {}
   }
 }

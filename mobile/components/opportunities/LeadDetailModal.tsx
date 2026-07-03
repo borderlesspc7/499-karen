@@ -149,6 +149,7 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
       badgeIcon={Sparkles}
       title={currentLead.clientName}
       subtitle={currentLead.title}
+      maxWidthClassName="max-w-xl"
     >
       <View className="flex-1 px-5">
         <View className="mb-4 flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">

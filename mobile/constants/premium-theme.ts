@@ -1,4 +1,4 @@
-/** Tokens visuais premium — alinhados ao design SUMMUS EDGE */
+/** Tokens visuais premium — alinhados ao design SUMMUS EDGE (Linear / Stripe style) */
 export const premiumColors = {
   navy: '#0A1128',
   navyLight: '#131F35',
@@ -13,6 +13,39 @@ export const premiumColors = {
   textMuted: '#94A3B8',
   emerald: '#10B981',
   forest: '#1B4332',
+  glassLight: 'rgba(255, 255, 255, 0.80)',
+  glassDark: 'rgba(255, 255, 255, 0.05)',
+} as const
+
+/** Espaçamento generoso — estilo Linear / Apple */
+export const premiumSpacing = {
+  screenX: 20,
+  screenXDesktop: 32,
+  sectionGap: 32,
+  cardGap: 16,
+  cardPadding: 24,
+  heroPadding: 28,
+} as const
+
+/** Hierarquia tipográfica Revenue First */
+export const premiumTypography = {
+  hero: { fontSize: 28, lineHeight: 36, fontWeight: '700' as const },
+  heroMetric: { fontSize: 32, lineHeight: 40, fontWeight: '700' as const },
+  metric: { fontSize: 24, lineHeight: 32, fontWeight: '600' as const },
+  label: { fontSize: 11, lineHeight: 14, fontWeight: '600' as const, letterSpacing: 1.2 },
+  body: { fontSize: 15, lineHeight: 22, fontWeight: '400' as const },
+} as const
+
+/** Superfícies glass para cards premium */
+export const premiumGlass = {
+  light: {
+    backgroundColor: premiumColors.glassLight,
+    borderColor: 'rgba(237, 237, 237, 0.6)',
+  },
+  dark: {
+    backgroundColor: premiumColors.glassDark,
+    borderColor: 'rgba(255, 255, 255, 0.10)',
+  },
 } as const
 
 export const premiumShadows = {

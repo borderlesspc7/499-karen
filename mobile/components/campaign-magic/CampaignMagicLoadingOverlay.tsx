@@ -12,13 +12,14 @@ import Animated, {
 } from 'react-native-reanimated'
 import { Brain } from 'lucide-react-native'
 import { triggerSuccessHaptic } from '@/lib/haptics'
+import { platformEntering } from '@/lib/platform-animation'
 
 const LOADING_MESSAGES = [
-  'Analisando o histórico da sua marca...',
-  'Ajustando o tom de voz emocional...',
-  "O 'Content Director' está criando as copys...",
-  "O 'Design AI' está gerando os criativos...",
-  'Sincronizando com seus canais...',
+  'Analisando concorrência e posicionamento…',
+  'Identificando leads com maior chance de conversão…',
+  'Content Director criando copys de alta conversão…',
+  'Design AI gerando criativos para cada canal…',
+  'Preparando campanha omnichannel…',
 ] as const
 
 const MESSAGE_INTERVAL_MS = 1500
@@ -145,9 +146,9 @@ export function CampaignMagicLoadingOverlay({ onComplete }: CampaignMagicLoading
 
   return (
     <Animated.View
-      entering={FadeIn.duration(300)}
+      entering={platformEntering(FadeIn.duration(300))}
       style={styles.overlay}
-      className="absolute inset-0 z-50 items-center justify-center px-8"
+      className="flex-1 items-center justify-center px-8"
     >
       <PulsingBrainIcon />
 
@@ -172,6 +173,6 @@ export function CampaignMagicLoadingOverlay({ onComplete }: CampaignMagicLoading
 
 const styles = StyleSheet.create({
   overlay: {
-    backgroundColor: 'rgba(15, 23, 42, 0.94)',
+    backgroundColor: 'rgba(4, 18, 44, 0.96)',
   },
 })

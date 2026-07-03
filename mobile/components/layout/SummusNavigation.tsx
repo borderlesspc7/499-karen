@@ -3,7 +3,7 @@ import { Link, usePathname } from 'expo-router'
 import { summusNavItems } from '@/constants/summus-nav-items'
 import { premiumColors } from '@/constants/premium-theme'
 import { SummusLogo } from '@/components/ui/SummusLogo'
-import { GamificationProfileCard } from './GamificationProfileCard'
+import { SidebarUserProfile } from './SidebarUserProfile'
 
 type SummusNavigationProps = {
   onNavigate?: () => void
@@ -14,8 +14,8 @@ export function SummusNavigation({ onNavigate }: SummusNavigationProps) {
 
   return (
     <View className="h-full w-[272px] border-r border-gold/10 bg-navy">
-      <View className="items-center border-b border-gold/10 px-5 py-5">
-        <SummusLogo compact />
+      <View className="items-center border-b border-gold/10 px-4 py-5">
+        <SummusLogo variant="full" compact centered />
       </View>
 
       <ScrollView
@@ -60,7 +60,7 @@ export function SummusNavigation({ onNavigate }: SummusNavigationProps) {
       </ScrollView>
 
       <View className="border-t border-gold/10 p-4">
-        <GamificationProfileCard />
+        <SidebarUserProfile />
       </View>
     </View>
   )

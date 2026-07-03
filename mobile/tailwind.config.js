@@ -48,6 +48,15 @@ module.exports = {
         'card-md': '0 8px 32px rgba(10, 17, 40, 0.08)',
         'card-gold': '0 4px 20px rgba(197, 160, 89, 0.15)',
         premium: '0 4px 20px rgba(0, 0, 0, 0.05)',
+        glass: '0 2px 16px rgba(0, 0, 0, 0.04)',
+        soft: '0 1px 3px rgba(0, 0, 0, 0.06)',
+      },
+      letterSpacing: {
+        label: '1.2px',
+      },
+      fontSize: {
+        hero: ['28px', { lineHeight: '36px', fontWeight: '700' }],
+        'hero-metric': ['32px', { lineHeight: '40px', fontWeight: '700' }],
       },
     },
   },

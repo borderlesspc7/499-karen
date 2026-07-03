@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native'
 import { ThemedScreen } from '@/components/layout/AppScreen'
+import { DesktopContent } from '@/components/layout/DesktopContent'
 import type { KanbanCardWithClient } from '@shared/types'
 import { useGamification } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
@@ -129,6 +130,7 @@ export default function OpportunitiesScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
+        <DesktopContent maxWidth="7xl" className="gap-6">
         <View className="gap-2">
           <Text className={['text-3xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
             Oportunidades
@@ -193,6 +195,7 @@ export default function OpportunitiesScreen() {
             onExecuteLead={() => executeAction('follow-up-leads')}
           />
         )}
+        </DesktopContent>
       </ScrollView>
 
       <LeadDetailModal

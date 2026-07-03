@@ -9,7 +9,7 @@ import {
 import type { LucideIcon } from 'lucide-react-native'
 import { Text, View } from 'react-native'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
-import { SummusModalBadge } from '@/components/ui/modal'
+import { SummusLogo } from '@/components/ui/SummusLogo'
 import type { UserProfile } from '@shared/types/gamification'
 
 export const PROFILE_OPTIONS: Array<{ label: UserProfile; icon: LucideIcon; color: string }> = [
@@ -28,8 +28,8 @@ type ProfileStepProps = {
 export function ProfileStep({ onSelectProfile }: ProfileStepProps) {
   return (
     <>
-      <View className="mb-8 items-center gap-3">
-        <SummusModalBadge label="Summus Edge" icon={Sparkles} />
+      <View className="mb-8 items-center gap-4">
+        <SummusLogo variant="icon" centered />
         <Text className="text-center text-3xl font-bold leading-tight text-white">
           Qual é o seu perfil de negócio?
         </Text>

@@ -11,19 +11,19 @@ export type SummusNavItem = {
 export const summusNavItems: SummusNavItem[] = [
   {
     href: '/(tabs)',
-    label: 'Home',
+    label: 'Revenue Center',
     icon: LayoutGrid,
     match: (path) => path === '/' || path === '/index' || path.endsWith('/(tabs)'),
   },
   {
     href: '/(tabs)/opportunities',
-    label: 'CRM',
+    label: 'Oportunidades',
     icon: TrendingUp,
     match: (path) => path.includes('opportunities') || path.includes('/crm'),
   },
   {
     href: '/(tabs)/workforce',
-    label: 'Equipe IA',
+    label: 'AI Workforce',
     icon: BrainCircuit,
     match: (path) => path.includes('workforce'),
   },

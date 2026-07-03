@@ -91,6 +91,16 @@ export function useThemeClasses() {
       cardShadow: isDark ? premiumShadows.navy : premiumShadows.card,
       rankBadge: isDark ? 'bg-white/10' : 'bg-slate-100',
       connectorLine: isDark ? 'bg-white/10' : 'bg-slate-200',
+      glassCard: isDark
+        ? 'rounded-3xl border border-white/10 bg-white/5'
+        : 'rounded-3xl border border-white/60 bg-white/80',
+      heroCard: isDark
+        ? 'rounded-3xl border border-white/10 bg-white/[0.03]'
+        : 'rounded-3xl border border-premiumBorder/50 bg-white',
+      revenueMetric: isDark ? 'text-gold' : 'text-gold',
+      sectionLabel: isDark
+        ? 'text-[11px] font-semibold uppercase tracking-[1.2px] text-white/40'
+        : 'text-[11px] font-semibold uppercase tracking-[1.2px] text-slate-400',
     }),
     [isDark],
   )

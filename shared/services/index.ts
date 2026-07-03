@@ -9,3 +9,16 @@ export {
   getGamificationPersistence,
   type GamificationPersistence,
 } from './gamification-persistence'
+export {
+  buildRevenueCenterSnapshot,
+  buildRevenueKpis,
+  formatCurrencyBrl,
+  formatCurrencyBrlCompact,
+  OPPORTUNITY_VARIANTS,
+  type OpportunityVariant,
+  type RevenueCenterSnapshot,
+  type RevenueDailyMetrics,
+  type RevenueKpi,
+  type RevenueOpportunity,
+  type RevenueOpportunityType,
+} from './revenue-center'

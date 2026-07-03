@@ -6,8 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Facebook, Instagram, Linkedin, Sparkles, Store, type LucideIcon } from 'lucide-react-native'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { ThemedScreen } from '@/components/layout/AppScreen'
+import { DesktopContent } from '@/components/layout/DesktopContent'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
+import { platformEntering } from '@/lib/platform-animation'
 import { triggerLightHaptic } from '@/lib/haptics'
 
 type IntegrationId = 'instagram' | 'facebook' | 'linkedin' | 'google'
@@ -80,13 +82,14 @@ export default function IntegrationsScreen() {
         className="flex-1"
         contentContainerClassName={[
           'gap-6 pb-10 pt-4',
-          isWebDesktop ? 'mx-auto w-full max-w-2xl px-8' : 'px-5',
+          isWebDesktop ? 'px-8' : 'px-5',
           hasConnectedChannel ? 'pb-28' : '',
         ].join(' ')}
         showsVerticalScrollIndicator={false}
       >
+        <DesktopContent maxWidth="4xl" className="gap-6">
         <Animated.View
-          entering={FadeInDown.duration(ENTER_DURATION_MS)}
+          entering={platformEntering(FadeInDown.duration(ENTER_DURATION_MS))}
           className="gap-2"
         >
           <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>
@@ -98,7 +101,7 @@ export default function IntegrationsScreen() {
           </Text>
         </Animated.View>
 
-        <View className="gap-3">
+        <View className={isWebDesktop ? 'flex-row flex-wrap gap-3' : 'gap-3'}>
           {INTEGRATIONS.map((integration, index) => {
             const Icon = integration.icon
             const isConnected = connected[integration.id]
@@ -106,8 +109,14 @@ export default function IntegrationsScreen() {
             return (
               <Animated.View
                 key={integration.id}
-                entering={FadeInDown.delay(STAGGER_MS * (index + 1)).duration(ENTER_DURATION_MS)}
-                className={['flex-row items-center gap-4 p-4', tc.cardLg].join(' ')}
+                entering={platformEntering(
+                  FadeInDown.delay(STAGGER_MS * (index + 1)).duration(ENTER_DURATION_MS),
+                )}
+                className={[
+                  'flex-row items-center gap-4 p-4',
+                  tc.cardLg,
+                  isWebDesktop ? 'min-w-[calc(50%-6px)] flex-1' : 'w-full',
+                ].join(' ')}
               >
                 <View
                   className="h-12 w-12 items-center justify-center rounded-2xl"
@@ -138,23 +147,19 @@ export default function IntegrationsScreen() {
             )
           })}
         </View>
+        </DesktopContent>
       </ScrollView>
 
       {hasConnectedChannel ? (
         <Animated.View
-          entering={FadeInUp.springify().damping(16).stiffness(140)}
-          className={[
-            'absolute bottom-0 left-0 right-0 px-5',
-            isWebDesktop ? 'items-center' : '',
-          ].join(' ')}
+          entering={platformEntering(FadeInUp.springify().damping(16).stiffness(140))}
+          className={['border-t px-5 pt-4', tc.divider, isWebDesktop ? 'px-8' : ''].join(' ')}
           style={{ paddingBottom: Math.max(insets.bottom, 16) }}
         >
+          <DesktopContent maxWidth="4xl">
           <AnimatedPressable
             onPress={handleAdvanceToCampaign}
-            className={[
-              'flex-row items-center justify-center gap-2 rounded-2xl bg-gold py-4',
-              isWebDesktop ? 'w-full max-w-2xl' : 'w-full',
-            ].join(' ')}
+            className="flex-row items-center justify-center gap-2 rounded-2xl bg-gold py-4"
             style={{
               shadowColor: '#F59E0B',
               shadowOffset: { width: 0, height: 6 },
@@ -166,6 +171,7 @@ export default function IntegrationsScreen() {
             <Text className="text-base font-bold text-deepBlue">Avançar: Criar Campanha</Text>
             <Sparkles size={18} color="#0F172A" />
           </AnimatedPressable>
+          </DesktopContent>
         </Animated.View>
       ) : null}
     </ThemedScreen>

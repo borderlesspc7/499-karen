@@ -88,6 +88,7 @@ export function ExecutionModal({
       badgeTone="gold"
       title={step === 'preview' ? title : undefined}
       showClose={step !== 'loading'}
+      maxWidthClassName="max-w-xl"
     >
       <View className="flex-1 px-5">
         {step === 'loading' ? (

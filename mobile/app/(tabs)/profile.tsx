@@ -17,10 +17,12 @@ import {
 import type { LucideIcon } from 'lucide-react-native'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { ThemedScreen } from '@/components/layout/AppScreen'
+import { DesktopContent } from '@/components/layout/DesktopContent'
 import { ThemeSelector } from '@/components/ui/ThemeSelector'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { premiumColors } from '@/constants/premium-theme'
+import { platformEntering } from '@/lib/platform-animation'
 import { useAuth, useGamification } from '@shared/contexts'
 
 const STAGGER_MS = 70
@@ -121,19 +123,22 @@ export default function ProfileScreen() {
         className="flex-1"
         contentContainerClassName={[
           'gap-6 pb-10 pt-4',
-          isWebDesktop ? 'mx-auto w-full max-w-2xl px-8' : 'px-5',
+          isWebDesktop ? 'px-8' : 'px-5',
         ].join(' ')}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View entering={FadeInDown.duration(ENTER_DURATION_MS)} className="gap-2">
-          <AnimatedPressable
-            onPress={() => router.back()}
-            haptic={false}
-            className="mb-1 flex-row items-center gap-1 self-start"
-          >
-            <ChevronLeft size={18} color={tc.chevron} />
-            <Text className={['text-sm font-medium', tc.backText].join(' ')}>Voltar</Text>
-          </AnimatedPressable>
+        <DesktopContent maxWidth="4xl" className="gap-6">
+        <Animated.View entering={platformEntering(FadeInDown.duration(ENTER_DURATION_MS))} className="gap-2">
+          {!isWebDesktop ? (
+            <AnimatedPressable
+              onPress={() => router.back()}
+              haptic={false}
+              className="mb-1 flex-row items-center gap-1 self-start"
+            >
+              <ChevronLeft size={18} color={tc.chevron} />
+              <Text className={['text-sm font-medium', tc.backText].join(' ')}>Voltar</Text>
+            </AnimatedPressable>
+          ) : null}
 
           <View className="flex-row items-center gap-2 self-start rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5">
             <User size={12} color={premiumColors.gold} />
@@ -148,7 +153,7 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <Animated.View
-          entering={FadeInDown.delay(STAGGER_MS).duration(ENTER_DURATION_MS)}
+          entering={platformEntering(FadeInDown.delay(STAGGER_MS).duration(ENTER_DURATION_MS))}
           className={['overflow-hidden p-5', tc.cardLg].join(' ')}
         >
           <View className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-electricBlue/10" />
@@ -209,7 +214,7 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <Animated.View
-          entering={FadeInDown.delay(STAGGER_MS * 2).duration(ENTER_DURATION_MS)}
+          entering={platformEntering(FadeInDown.delay(STAGGER_MS * 2).duration(ENTER_DURATION_MS))}
           className="flex-row gap-3"
         >
           {[
@@ -236,12 +241,12 @@ export default function ProfileScreen() {
           })}
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(STAGGER_MS * 3).duration(ENTER_DURATION_MS)}>
+        <Animated.View entering={platformEntering(FadeInDown.delay(STAGGER_MS * 3).duration(ENTER_DURATION_MS))}>
           <ThemeSelector />
         </Animated.View>
 
         <Animated.View
-          entering={FadeInDown.delay(STAGGER_MS * 4).duration(ENTER_DURATION_MS)}
+          entering={platformEntering(FadeInDown.delay(STAGGER_MS * 4).duration(ENTER_DURATION_MS))}
           className={['p-4', tc.card].join(' ')}
         >
           <Text className={['text-xs font-bold uppercase tracking-wider', tc.textSection].join(' ')}>
@@ -254,7 +259,7 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <Animated.View
-          entering={FadeInDown.delay(STAGGER_MS * 5).duration(ENTER_DURATION_MS)}
+          entering={platformEntering(FadeInDown.delay(STAGGER_MS * 5).duration(ENTER_DURATION_MS))}
           className="gap-2"
         >
           <Text className={['text-sm font-semibold', tc.textLabel].join(' ')}>Acesso rápido</Text>
@@ -289,7 +294,7 @@ export default function ProfileScreen() {
           })}
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(STAGGER_MS * 6).duration(ENTER_DURATION_MS)}>
+        <Animated.View entering={platformEntering(FadeInDown.delay(STAGGER_MS * 6).duration(ENTER_DURATION_MS))}>
           <AnimatedPressable
             onPress={handleSignOut}
             haptic={false}
@@ -299,6 +304,7 @@ export default function ProfileScreen() {
             <Text className="text-sm font-bold text-red-400">Sair da conta</Text>
           </AnimatedPressable>
         </Animated.View>
+        </DesktopContent>
       </ScrollView>
     </ThemedScreen>
   )

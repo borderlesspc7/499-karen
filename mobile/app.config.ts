@@ -53,7 +53,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: './assets/images/icon.png',
     scheme: 'summus-edge',
     userInterfaceStyle: 'dark',
-    backgroundColor: '#050A18',
+    backgroundColor: '#04122C',
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.borderless.app',
@@ -62,7 +62,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       package: 'com.borderless.app',
       versionCode: 1,
       adaptiveIcon: {
-        backgroundColor: '#050A18',
+        backgroundColor: '#04122C',
         foregroundImage: './assets/images/android-icon-foreground.png',
         monochromeImage: './assets/images/android-icon-monochrome.png',
       },
@@ -77,9 +77,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'expo-splash-screen',
         {
           image: './assets/images/splash-icon.png',
-          imageWidth: 220,
+          imageWidth: 280,
           resizeMode: 'contain',
-          backgroundColor: '#050A18',
+          backgroundColor: '#04122C',
         },
       ],
     ],

@@ -14,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth, useGamification } from '@shared/contexts'
 import { getAuthErrorMessage } from '@shared/services'
 import { SummusLogo } from '@/components/ui/SummusLogo'
+import { summusBrand } from '@/constants/summus-brand'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
 type AuthMode = 'signin' | 'signup' | 'reset'
@@ -24,13 +25,13 @@ const authModeContent: Record<
 > = {
   signin: {
     title: 'Entrar',
-    subtitle: 'Acesse sua plataforma Summus Edge com segurança.',
+    subtitle: 'Seu COO digital com IA está pronto para acelerar sua receita.',
     submitLabel: 'Entrar na plataforma',
     toggleLabel: 'Ainda não tem conta? Cadastre-se',
   },
   signup: {
     title: 'Cadastrar',
-    subtitle: 'Crie sua conta e prepare sua operação para escalar.',
+    subtitle: 'Comece a transformar oportunidades em receita com IA.',
     submitLabel: 'Criar conta',
     toggleLabel: 'Já possui conta? Entrar',
   },
@@ -61,8 +62,11 @@ export default function LoginScreen() {
 
   if (isAuthLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-100">
-        <ActivityIndicator size="large" color="#7c3aed" />
+      <View
+        className="flex-1 items-center justify-center"
+        style={{ backgroundColor: summusBrand.backgroundColor }}
+      >
+        <ActivityIndicator size="large" color="#C5A059" />
       </View>
     )
   }
@@ -70,8 +74,11 @@ export default function LoginScreen() {
   if (currentUser) {
     if (!isHydrated) {
       return (
-        <View className="flex-1 items-center justify-center bg-deepBlue">
-          <ActivityIndicator size="large" color="#3B82F6" />
+        <View
+          className="flex-1 items-center justify-center"
+          style={{ backgroundColor: summusBrand.backgroundColor }}
+        >
+          <ActivityIndicator size="large" color="#C5A059" />
         </View>
       )
     }
@@ -112,12 +119,9 @@ export default function LoginScreen() {
   }
 
   const form = (
-    <View className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-      <View className="mb-6 items-center">
-        <SummusLogo />
-      </View>
-      <Text className="mt-3 text-2xl font-semibold text-slate-900">{content.title}</Text>
-      <Text className="mt-2 text-sm text-slate-500">{content.subtitle}</Text>
+    <View className="rounded-3xl border border-white/10 bg-white p-6 shadow-sm">
+      <Text className="text-2xl font-semibold text-navy">{content.title}</Text>
+      <Text className="mt-2 text-sm leading-5 text-slate-500">{content.subtitle}</Text>
 
       <View className="mt-6 gap-4">
         <View>
@@ -127,8 +131,9 @@ export default function LoginScreen() {
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
-            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
+            className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-navy"
             placeholder="seu@email.com"
+            placeholderTextColor="#94A3B8"
           />
         </View>
 
@@ -139,8 +144,9 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
-              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-navy"
               placeholder="••••••"
+              placeholderTextColor="#94A3B8"
             />
           </View>
         ) : null}
@@ -155,15 +161,15 @@ export default function LoginScreen() {
         <Pressable
           onPress={handleSubmit}
           disabled={isSubmitting}
-          className="rounded-2xl bg-violet-600 py-3.5 active:bg-violet-500 disabled:opacity-70"
+          className="rounded-2xl bg-gold py-3.5 active:opacity-90 disabled:opacity-70"
         >
-          <Text className="text-center text-sm font-semibold text-white">
+          <Text className="text-center text-sm font-bold text-deepBlue">
             {isSubmitting ? 'Processando...' : content.submitLabel}
           </Text>
         </Pressable>
 
         <Pressable onPress={handleModeToggle}>
-          <Text className="text-center text-sm font-medium text-violet-600">
+          <Text className="text-center text-sm font-medium text-gold">
             {content.toggleLabel}
           </Text>
         </Pressable>
@@ -179,17 +185,22 @@ export default function LoginScreen() {
 
   if (isWebDesktop) {
     return (
-      <View className="min-h-full flex-1 flex-row bg-slate-100">
-        <View className="flex-1 justify-center bg-summus-900 px-16">
-          <SummusLogo />
-          <Text className="mt-8 max-w-lg text-4xl font-semibold text-white">
-            Gamificação premium e IA para escalar seu negócio.
-          </Text>
-          <Text className="mt-4 max-w-md text-lg text-slate-400">
-            Funil, coach de IA, automações e analytics em uma experiência Elite.
-          </Text>
+      <View className="min-h-full flex-1 flex-row bg-surface">
+        <View
+          className="flex-1 items-center justify-center px-16"
+          style={{ backgroundColor: summusBrand.backgroundColor }}
+        >
+          <View className="max-w-lg items-center">
+            <SummusLogo centered />
+            <Text className="mt-10 text-center text-4xl font-bold leading-tight text-white">
+              Seu diretor de crescimento com IA, 24 horas por dia.
+            </Text>
+            <Text className="mt-4 text-center text-lg leading-7 text-white/55">
+              Revenue Center, campanhas omnichannel e equipe de IA trabalhando pela sua empresa.
+            </Text>
+          </View>
         </View>
-        <View className="w-[480px] shrink-0 items-center justify-center px-10">
+        <View className="w-[480px] shrink-0 items-center justify-center bg-surface px-10">
           <View className="w-full max-w-md">{form}</View>
         </View>
       </View>
@@ -197,16 +208,20 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-100">
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: summusBrand.backgroundColor }}
+    >
       <KeyboardAvoidingView
         className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
           className="flex-1"
-          contentContainerClassName="flex-grow justify-center p-6"
+          contentContainerClassName="flex-grow justify-center gap-8 p-6"
           keyboardShouldPersistTaps="handled"
         >
+          <SummusLogo centered />
           <View className="mx-auto w-full max-w-md">{form}</View>
         </ScrollView>
       </KeyboardAvoidingView>

@@ -42,7 +42,7 @@ export default function WorkforceScreen() {
           </View>
 
           <Text className={['text-3xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
-            Equipe IA
+            AI Workforce
           </Text>
           <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
             Agentes especializados prontos para executar — sem configurar fluxos, apenas atribuir

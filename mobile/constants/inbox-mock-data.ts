@@ -1,5 +1,7 @@
 export type InboxChannel = 'whatsapp' | 'instagram' | 'email' | 'sms'
 
+export type InboxPriority = 'hot' | 'warm' | 'cold'
+
 export type InboxContactStatus = 'online' | 'away' | 'offline'
 
 export type InboxMessageRole = 'contact' | 'agent' | 'ai'
@@ -21,6 +23,9 @@ export type InboxConversation = {
   unreadCount: number
   updatedAt: string
   messages: InboxMessage[]
+  priority: InboxPriority
+  aiSummary: string
+  estimatedValue: number
 }
 
 export const INBOX_QUICK_TEMPLATES = [
@@ -29,6 +34,29 @@ export const INBOX_QUICK_TEMPLATES = [
   'Podemos agendar uma call esta semana?',
   'Enviei a proposta por e-mail.',
 ] as const
+
+export const INBOX_SMART_REPLIES: Record<string, string[]> = {
+  'conv-1': [
+    'Posso reservar uma vaga esta semana?',
+    'Envio o contrato agora.',
+    'Qual horário funciona para você?',
+  ],
+  'conv-2': [
+    'Sim, integramos com os principais ERPs.',
+    'Posso enviar um case do seu setor.',
+    'Agendamos uma demo de 15 min?',
+  ],
+  'conv-3': [
+    'Fico no aguardo do retorno de vocês.',
+    'Posso ligar amanhã para alinhar?',
+    'Condição especial válida até sexta.',
+  ],
+  'conv-4': [
+    'Ainda faz sentido conversarmos?',
+    'Preparei um diagnóstico gratuito para você.',
+    'Posso retomar na próxima semana?',
+  ],
+}
 
 export const INBOX_AI_SUGGESTIONS: Record<string, string> = {
   'conv-1':
@@ -51,6 +79,9 @@ export const inboxConversations: InboxConversation[] = [
     status: 'online',
     unreadCount: 2,
     updatedAt: '14:32',
+    priority: 'hot',
+    aiSummary: 'Lead interessada em plano Enterprise — alta intenção de fechamento',
+    estimatedValue: 4200,
     messages: [
       {
         id: 'm1',
@@ -87,6 +118,9 @@ export const inboxConversations: InboxConversation[] = [
     status: 'away',
     unreadCount: 1,
     updatedAt: '13:05',
+    priority: 'warm',
+    aiSummary: 'Pergunta sobre integração ERP — enviar case técnico',
+    estimatedValue: 2800,
     messages: [
       {
         id: 'm1',
@@ -117,6 +151,9 @@ export const inboxConversations: InboxConversation[] = [
     status: 'offline',
     unreadCount: 0,
     updatedAt: 'Ontem',
+    priority: 'warm',
+    aiSummary: 'Renovação anual em análise — follow-up sexta-feira',
+    estimatedValue: 3600,
     messages: [
       {
         id: 'm1',
@@ -141,6 +178,9 @@ export const inboxConversations: InboxConversation[] = [
     status: 'offline',
     unreadCount: 0,
     updatedAt: 'Seg',
+    priority: 'cold',
+    aiSummary: 'Lead frio — sugerir diagnóstico gratuito do funil',
+    estimatedValue: 1200,
     messages: [
       {
         id: 'm1',

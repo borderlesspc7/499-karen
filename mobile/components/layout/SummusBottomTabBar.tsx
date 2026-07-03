@@ -20,9 +20,9 @@ const TAB_CONFIG: Record<
   VisibleTabName,
   { label: string; Icon: typeof LayoutGrid }
 > = {
-  index: { label: 'Home', Icon: LayoutGrid },
-  opportunities: { label: 'CRM', Icon: TrendingUp },
-  workforce: { label: 'Equipe IA', Icon: BrainCircuit },
+  index: { label: 'Revenue', Icon: LayoutGrid },
+  opportunities: { label: 'Oportunidades', Icon: TrendingUp },
+  workforce: { label: 'Workforce', Icon: BrainCircuit },
   integrations: { label: 'Canais', Icon: Link2 },
   'campaign-magic': { label: 'Campanhas', Icon: Wand2 },
   inbox: { label: 'Inbox', Icon: Inbox },
