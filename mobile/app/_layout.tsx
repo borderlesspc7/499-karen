@@ -26,16 +26,19 @@ export default function RootLayout() {
   })
 
   useEffect(() => {
-    if (error) throw error
+    if (error) {
+      console.error('[fonts] Falha ao carregar SpaceMono:', error)
+      SplashScreen.hideAsync()
+    }
   }, [error])
 
   useEffect(() => {
-    if (loaded) {
+    if (loaded || error) {
       SplashScreen.hideAsync()
     }
-  }, [loaded])
+  }, [loaded, error])
 
-  if (!loaded) {
+  if (!loaded && !error) {
     return null
   }
 
@@ -48,6 +51,7 @@ export default function RootLayout() {
             <AuthProvider>
               <GamificationProvider>
                 <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Screen name="index" />
                   <Stack.Screen name="login" />
                   <Stack.Screen name="(tabs)" />
                   <Stack.Screen

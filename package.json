@@ -10,6 +10,6 @@
     "ios": "npm --prefix mobile run ios",
     "install:all": "npm --prefix mobile install",
     "eas": "npm --prefix mobile exec eas",
-    "build:apk": "npm --prefix mobile exec eas build --profile preview --platform android"
+    "build:apk": "npm --prefix mobile run build:android:preview"
   }
 }
