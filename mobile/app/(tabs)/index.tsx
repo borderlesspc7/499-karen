@@ -38,8 +38,8 @@ const LEADS_EXECUTION: Pick<
   impact: `+R$ ${GROWTH_ACTIONS['reactivate-inactive-leads'].revenueGain.toLocaleString('pt-BR')}`,
   previewDetail:
     'E-mail 1: reativação suave com prova social. E-mail 2: urgência com vaga limitada. E-mail 3: última chamada com bónus exclusivo.',
-  contextLabel: 'AI Workforce',
-  loadingMessage: 'A AI Workforce está analisando os dados e criando a estratégia…',
+  contextLabel: 'Cognitive Core',
+  loadingMessage: 'O Núcleo Cognitivo está reconstruindo contexto e calculando a decisão…',
   approveLabel: 'Aprovar e Executar',
   successMessage: 'Sequência ativada. Impacto estimado sendo rastreado.',
 }
@@ -61,15 +61,15 @@ const UPSELL_EXECUTION: Pick<
   impact: `+R$ ${GROWTH_ACTIONS['send-proposal'].revenueGain.toLocaleString('pt-BR')}`,
   previewDetail:
     'Cliente A: plano premium (+R$ 4.800). Cliente B: pacote anual (+R$ 4.200). Cliente C: serviço complementar (+R$ 3.300).',
-  contextLabel: 'AI Workforce',
-  loadingMessage: 'Preparando propostas personalizadas…',
+  contextLabel: 'Decision Engine',
+  loadingMessage: 'Decision Engine preparando alternativas e impacto estimado…',
   approveLabel: 'Ver Oportunidades',
   successMessage: 'Propostas prontas para envio.',
 }
 
 function resolveUserName(email?: string | null): string {
-  if (!email) return 'Karen'
-  const localPart = email.split('@')[0] ?? 'Karen'
+  if (!email) return 'você'
+  const localPart = email.split('@')[0] ?? 'você'
   return localPart.charAt(0).toUpperCase() + localPart.slice(1)
 }
 

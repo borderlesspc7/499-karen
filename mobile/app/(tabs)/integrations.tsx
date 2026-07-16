@@ -96,7 +96,8 @@ export default function IntegrationsScreen() {
             Conecte seu Ecossistema
           </Text>
           <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
-            Vincule suas contas para permitir que a AI Workforce publique e responda
+            Vincule suas contas para o Núcleo Cognitivo publicar e responder
+            com Context, Decision e Blind Spot em segundo plano.
             automaticamente.
           </Text>
         </Animated.View>

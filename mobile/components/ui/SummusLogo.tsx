@@ -32,7 +32,7 @@ export function SummusLogo({
     <View className={centered ? 'items-center justify-center' : 'items-start justify-center'}>
       <Image
         source={source}
-        accessibilityLabel="Summus Edge"
+        accessibilityLabel="Summus Edge — Cognitive Operating System"
         resizeMode="contain"
         style={[{ width: dimensions.width, height: dimensions.height }, style]}
       />

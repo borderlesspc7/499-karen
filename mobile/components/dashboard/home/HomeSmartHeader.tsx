@@ -43,7 +43,7 @@ export function HomeSmartHeader({ userName }: HomeSmartHeaderProps) {
           {greeting}, {userName}.
         </Text>
         <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
-          Sua empresa está sendo impulsionada pela IA.
+          Context, Decision e Blind Spot operando em segundo plano.
         </Text>
       </View>
 

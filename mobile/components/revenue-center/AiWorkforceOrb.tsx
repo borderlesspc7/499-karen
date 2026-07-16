@@ -128,11 +128,11 @@ export function AiWorkforceOrb({ compact = false }: AiWorkforceOrbProps) {
 
       <Text
         className={[
-          'mt-6 max-w-[220px] text-center text-sm font-medium leading-5',
+          'mt-6 max-w-[240px] text-center text-sm font-medium leading-5',
           tc.textSecondary,
         ].join(' ')}
       >
-        Sua equipe de IA trabalhando para você 24/7
+        Cognitive Core — motores permanentes em toda interação
       </Text>
     </View>
   )

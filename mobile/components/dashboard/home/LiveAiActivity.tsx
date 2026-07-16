@@ -9,7 +9,7 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated'
-import { Bot } from 'lucide-react-native'
+import { Brain } from 'lucide-react-native'
 import { ActivatedGlow } from '@/components/ui/ActivatedGlow'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -21,20 +21,20 @@ type StrategicActivityItem = {
 }
 
 const STRATEGIC_AI_FEED: StrategicActivityItem[] = [
-  { id: 's1', timestamp: '09:41', message: 'Analisando Meta Ads…' },
-  { id: 's2', timestamp: '09:42', message: 'Encontrou campanha com CPA alto.' },
-  { id: 's3', timestamp: '09:42', message: 'Realocando orçamento.' },
-  { id: 's4', timestamp: '09:43', message: 'Criando novos anúncios.' },
-  { id: 's5', timestamp: '09:43', message: 'Preparando campanha omnichannel…' },
-  { id: 's6', timestamp: '09:44', message: 'Campanha pronta para aprovação.' },
+  { id: 's1', timestamp: '09:41', message: 'Context Engine — reconstruindo histórico e intenção…' },
+  { id: 's2', timestamp: '09:42', message: 'Context Engine — detectou limitações e sinais implícitos.' },
+  { id: 's3', timestamp: '09:42', message: 'Decision Engine — calculando cenários e custo de oportunidade.' },
+  { id: 's4', timestamp: '09:43', message: 'Decision Engine — avaliando riscos e reversibilidade.' },
+  { id: 's5', timestamp: '09:43', message: 'Blind Spot Engine — procurando premissas frágeis…' },
+  { id: 's6', timestamp: '09:44', message: 'Integração — decisão fundamentada pronta.' },
 ]
 
 const CAMPAIGN_LAUNCH_FEED: StrategicActivityItem[] = [
-  { id: 'l1', timestamp: 'Agora', message: 'Publicando carrossel no Instagram…' },
-  { id: 'l2', timestamp: 'Agora', message: 'Disparando sequência de e-mails…' },
-  { id: 'l3', timestamp: 'Agora', message: 'Sincronizando landing page nos canais…' },
-  { id: 'l4', timestamp: 'Agora', message: 'Publicando post de conversão no Facebook…' },
-  { id: 'l5', timestamp: 'Agora', message: 'Concluído. Campanha no ar em 5 canais.' },
+  { id: 'l1', timestamp: 'Agora', message: 'Context Engine — alinhando campanha ao contexto atual…' },
+  { id: 'l2', timestamp: 'Agora', message: 'Decision Engine — priorizando canais por retorno esperado…' },
+  { id: 'l3', timestamp: 'Agora', message: 'Blind Spot Engine — checando contradições na oferta…' },
+  { id: 'l4', timestamp: 'Agora', message: 'Integração — sincronizando execução nos canais…' },
+  { id: 'l5', timestamp: 'Agora', message: 'Resposta — campanha no ar. Núcleo continua em observação.' },
 ]
 
 const REVEAL_INTERVAL_MS = 900
@@ -143,14 +143,18 @@ export function LiveAiActivity({ isLiveReveal = false, embedded = false }: LiveA
       {!embedded ? (
         <View className="flex-row items-center gap-3">
           <View className="h-10 w-10 items-center justify-center rounded-2xl border border-gold/15 bg-gold/10">
-            <Bot size={18} color={premiumColors.gold} strokeWidth={1.5} />
+            <Brain size={18} color={premiumColors.gold} strokeWidth={1.5} />
           </View>
           <View className="flex-1">
-            <Text className={['text-base font-bold', tc.textPrimary].join(' ')}>AI Workforce</Text>
+            <Text className={['text-base font-bold', tc.textPrimary].join(' ')}>
+              Cognitive Core
+            </Text>
             <View className="mt-1 flex-row items-center gap-2">
               <PulsingStatusDot />
               <Text className="text-xs font-semibold text-emerald">
-                {isLiveReveal ? 'Ao vivo — publicando agora' : 'Trabalhando estrategicamente'}
+                {isLiveReveal
+                  ? 'Ao vivo — pipeline em execução'
+                  : '3 motores permanentes ativos'}
               </Text>
             </View>
           </View>
@@ -159,7 +163,9 @@ export function LiveAiActivity({ isLiveReveal = false, embedded = false }: LiveA
         <View className="mb-3 flex-row items-center gap-2 px-2">
           <PulsingStatusDot />
           <Text className="text-xs font-semibold text-emerald">
-            {isLiveReveal ? 'Ao vivo — publicando agora' : 'Trabalhando estrategicamente'}
+            {isLiveReveal
+              ? 'Ao vivo — pipeline em execução'
+              : '3 motores permanentes ativos'}
           </Text>
         </View>
       )}

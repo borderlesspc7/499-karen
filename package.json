@@ -2,7 +2,7 @@
   "name": "borderless",
   "private": true,
   "version": "1.0.0",
-  "description": "BORDERLESS — CRM comercial 100% React Native (Expo SDK 54)",
+  "description": "Summus Edge — Cognitive Operating System (Expo SDK 54)",
   "scripts": {
     "postinstall": "npm --prefix mobile install",
     "start": "npm --prefix mobile run start",

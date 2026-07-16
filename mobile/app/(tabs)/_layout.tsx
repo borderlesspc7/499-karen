@@ -47,13 +47,13 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Revenue Center',
+            title: 'Núcleo Cognitivo',
           }}
         />
         <Tabs.Screen
           name="workforce"
           options={{
-            title: 'AI Workforce',
+            title: 'Motores Cognitivos',
           }}
         />
         <Tabs.Screen

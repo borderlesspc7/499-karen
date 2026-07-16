@@ -4,6 +4,9 @@ export const summusLogoIconImage = require('../assets/images/summus-logo-icon.pn
 export const summusBrand = {
   name: 'Summus Edge',
   shortName: 'Summus',
-  tagline: 'AI Growth Operating System',
+  tagline: 'Cognitive Operating System',
+  taglinePt: 'Sistema Operacional Cognitivo',
+  positioning:
+    'Amplia a capacidade humana de perceber, analisar, decidir e agir.',
   backgroundColor: '#04122C',
 } as const

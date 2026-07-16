@@ -32,7 +32,7 @@ const sections: { id: SettingsSection; label: string; icon: typeof Building2 }[]
 ]
 
 const teamMembers = [
-  { name: 'Karen Silva', role: 'Administradora', status: 'Ativo' },
+  { name: 'Equipe Summus', role: 'Administradora', status: 'Ativo' },
   { name: 'Lucas Ferreira', role: 'Gerente Comercial', status: 'Ativo' },
   { name: 'Marina Costa', role: 'Operações', status: 'Pendente' },
 ]
@@ -213,7 +213,8 @@ export default function SettingsScreen() {
         <View className="gap-4">
           <View className="rounded-3xl bg-violet-600 p-5">
             <Text className="text-sm text-violet-100">Plano atual</Text>
-            <Text className="mt-2 text-2xl font-semibold text-white">Borderless Pro</Text>
+            <Text className="mt-2 text-2xl font-semibold text-white">Summus Edge</Text>
+            <Text className="mt-1 text-sm text-violet-100">Cognitive Operating System</Text>
             <Text className="mt-2 text-sm text-violet-100">R$ 297 / mês</Text>
             <Pressable className="mt-4 rounded-2xl bg-white py-3">
               <Text className="text-center text-sm font-semibold text-violet-700">Upgrade</Text>

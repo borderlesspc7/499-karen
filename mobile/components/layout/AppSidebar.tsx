@@ -15,7 +15,7 @@ const mainNavItems = [
   { href: '/(tabs)', label: 'Início', icon: Home, match: (path: string) => path === '/' || path === '/index' || path.endsWith('/(tabs)') },
   { href: '/(tabs)/opportunities', label: 'CRM', icon: TrendingUp, match: (path: string) => path.includes('opportunities') || path.includes('/crm') },
   { href: '/(tabs)/clientes', label: 'Clientes', icon: Users, match: (path: string) => path.includes('clientes') },
-  { href: '/(tabs)/workforce', label: 'Equipe IA', icon: Bot, match: (path: string) => path.includes('workforce') },
+  { href: '/(tabs)/workforce', label: 'Motores', icon: Bot, match: (path: string) => path.includes('workforce') },
   { href: '/(tabs)/inbox', label: 'Inbox', icon: Inbox, match: (path: string) => path.includes('inbox') || path.includes('conversations') },
   { href: '/(tabs)/settings', label: 'Configurações', icon: Settings, match: (path: string) => path.includes('settings') },
 ] as const
@@ -28,10 +28,12 @@ export function AppSidebar() {
   return (
     <View className="h-full w-64 border-r border-slate-200 bg-white px-4 py-6">
       <View className="mb-8 px-2">
-        <Text className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">
-          Borderless
+        <Text className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">
+          Summus Edge
         </Text>
-        <Text className="mt-1 text-xl font-semibold text-slate-900">CRM Comercial</Text>
+        <Text className="mt-1 text-xl font-semibold text-slate-900">
+          Cognitive Operating System
+        </Text>
         <Text className="mt-1 text-sm text-slate-500">Olá, {userLabel}</Text>
       </View>
 

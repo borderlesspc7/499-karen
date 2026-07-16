@@ -1,4 +1,4 @@
-import { Bot, Sparkles } from 'lucide-react-native'
+import { EyeOff, Sparkles } from 'lucide-react-native'
 import { Text, View } from 'react-native'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import {
@@ -19,19 +19,24 @@ export function AskAiModal({ visible, onClose, onAccept }: AskAiModalProps) {
     <SummusModal visible={visible} onClose={onClose}>
       <SummusModalCard className="p-6">
         <View className="flex-row items-start justify-between gap-3">
-          <View className="h-12 w-12 items-center justify-center rounded-2xl border border-electricBlue/25 bg-electricBlue/15">
-            <Bot size={24} color="#3B82F6" />
+          <View className="h-12 w-12 items-center justify-center rounded-2xl border border-[#EC4899]/25 bg-[#EC4899]/15">
+            <EyeOff size={24} color="#EC4899" />
           </View>
           <SummusModalCloseButton onPress={onClose} />
         </View>
 
         <View className="mt-4">
-          <SummusModalBadge label="CEO Invisível" icon={Sparkles} />
+          <SummusModalBadge label="Blind Spot Engine" icon={Sparkles} />
         </View>
 
+        <Text className="mt-2 text-xs font-semibold uppercase tracking-wider text-[#F9A8D4]">
+          Interrupção do Núcleo Cognitivo
+        </Text>
+
         <Text className="mt-4 text-base leading-7 text-white/90">
-          Notei que a conversão do seu site caiu 12% esta semana. Quer que eu reescreva a headline
-          principal agora para melhorar isso?
+          Detectei algo que quase passou despercebido: a conversão do site caiu 12% esta semana, mas
+          a premissa de que o tráfego é o problema está frágil. O contexto aponta para a headline.
+          Quer que o Decision Engine reescreva agora com base nisso?
         </Text>
 
         <AnimatedPressable
@@ -45,7 +50,9 @@ export function AskAiModal({ visible, onClose, onAccept }: AskAiModalProps) {
             elevation: 6,
           }}
         >
-          <Text className="text-center text-sm font-bold text-white">Sim, reescreve agora</Text>
+          <Text className="text-center text-sm font-bold text-white">
+            Sim — integrar e decidir
+          </Text>
         </AnimatedPressable>
 
         <AnimatedPressable
@@ -53,7 +60,9 @@ export function AskAiModal({ visible, onClose, onAccept }: AskAiModalProps) {
           haptic={false}
           className="mt-3 rounded-2xl border border-white/20 bg-white/5 py-4"
         >
-          <Text className="text-center text-sm font-semibold text-white/75">Outro assunto</Text>
+          <Text className="text-center text-sm font-semibold text-white/75">
+            Manter observação
+          </Text>
         </AnimatedPressable>
       </SummusModalCard>
     </SummusModal>

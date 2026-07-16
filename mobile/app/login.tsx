@@ -25,13 +25,13 @@ const authModeContent: Record<
 > = {
   signin: {
     title: 'Entrar',
-    subtitle: 'Seu COO digital com IA está pronto para acelerar sua receita.',
-    submitLabel: 'Entrar na plataforma',
+    subtitle: 'Seu Sistema Operacional Cognitivo está pronto para ampliar como você decide e age.',
+    submitLabel: 'Entrar no Summus',
     toggleLabel: 'Ainda não tem conta? Cadastre-se',
   },
   signup: {
     title: 'Cadastrar',
-    subtitle: 'Comece a transformar oportunidades em receita com IA.',
+    subtitle: 'Ative o Núcleo Cognitivo — Context, Decision e Blind Spot em toda interação.',
     submitLabel: 'Criar conta',
     toggleLabel: 'Já possui conta? Entrar',
   },
@@ -193,10 +193,10 @@ export default function LoginScreen() {
           <View className="max-w-lg items-center">
             <SummusLogo centered />
             <Text className="mt-10 text-center text-4xl font-bold leading-tight text-white">
-              Seu diretor de crescimento com IA, 24 horas por dia.
+              {summusBrand.taglinePt}.
             </Text>
             <Text className="mt-4 text-center text-lg leading-7 text-white/55">
-              Revenue Center, campanhas omnichannel e equipe de IA trabalhando pela sua empresa.
+              {summusBrand.positioning} Três motores permanentes. Uma única resposta integrada.
             </Text>
           </View>
         </View>

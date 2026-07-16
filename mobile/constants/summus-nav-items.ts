@@ -11,7 +11,7 @@ export type SummusNavItem = {
 export const summusNavItems: SummusNavItem[] = [
   {
     href: '/(tabs)',
-    label: 'Revenue Center',
+    label: 'Núcleo',
     icon: LayoutGrid,
     match: (path) => path === '/' || path === '/index' || path.endsWith('/(tabs)'),
   },
@@ -23,7 +23,7 @@ export const summusNavItems: SummusNavItem[] = [
   },
   {
     href: '/(tabs)/workforce',
-    label: 'AI Workforce',
+    label: 'Motores',
     icon: BrainCircuit,
     match: (path) => path.includes('workforce'),
   },

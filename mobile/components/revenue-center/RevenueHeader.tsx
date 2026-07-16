@@ -49,7 +49,7 @@ export function RevenueHeader({ userName }: RevenueHeaderProps) {
           {greeting}, {userName}.
         </Text>
         <Text className={['mt-1 text-sm', tc.textSecondary].join(' ')}>
-          Sua empresa está crescendo.
+          O Núcleo Cognitivo está ampliando como você decide e age.
         </Text>
       </View>
 

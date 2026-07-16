@@ -7,8 +7,8 @@ type SidebarUserProfileProps = {
 }
 
 function resolveUserName(email?: string | null): string {
-  if (!email) return 'Karen Lee'
-  const localPart = email.split('@')[0] ?? 'Karen'
+  if (!email) return 'Usuário'
+  const localPart = email.split('@')[0] ?? 'Usuário'
   const formatted = localPart.charAt(0).toUpperCase() + localPart.slice(1)
   return formatted.includes(' ') ? formatted : `${formatted} Lee`
 }
@@ -41,7 +41,7 @@ export function SidebarUserProfile({ displayName }: SidebarUserProfileProps) {
         <Text className="text-sm font-semibold text-white" numberOfLines={1}>
           {name}
         </Text>
-        <Text className="text-xs text-white/45">Summus Edge</Text>
+        <Text className="text-xs text-white/45">Cognitive OS</Text>
       </View>
     </Pressable>
   )
