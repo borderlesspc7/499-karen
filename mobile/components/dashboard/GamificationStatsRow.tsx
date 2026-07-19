@@ -1,10 +1,13 @@
 import { Text, View } from 'react-native'
 import { CheckCircle2, Flame, Sparkles } from 'lucide-react-native'
 import { useGamification } from '@shared/contexts'
+import { premiumColors } from '@/constants/premium-theme'
 import { SummusCard } from '@/components/ui/SummusCard'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 export function GamificationStatsRow() {
   const { completedActions, influencePoints, streakDays } = useGamification()
+  const tc = useThemeClasses()
 
   const stats = [
     {
@@ -19,7 +22,7 @@ export function GamificationStatsRow() {
       label: 'Influence Points',
       value: influencePoints.toLocaleString('en-US'),
       icon: Sparkles,
-      color: '#FBBF24',
+      color: premiumColors.gold,
     },
     {
       id: 'streak',
@@ -38,12 +41,14 @@ export function GamificationStatsRow() {
 
           return (
             <View key={stat.id} className="min-w-[100px] flex-1 flex-row items-center gap-3">
-              <View className="rounded-xl bg-slate-50 p-2.5">
+              <View className={['rounded-xl p-2.5', tc.surfaceMuted].join(' ')}>
                 <Icon size={18} color={stat.color} />
               </View>
               <View>
-                <Text className="text-lg font-bold text-slate-900">{stat.value}</Text>
-                <Text className="text-[11px] font-medium text-slate-500">{stat.label}</Text>
+                <Text className={['text-lg font-bold', tc.textPrimary].join(' ')}>{stat.value}</Text>
+                <Text className={['text-[11px] font-medium', tc.textSecondary].join(' ')}>
+                  {stat.label}
+                </Text>
               </View>
             </View>
           )

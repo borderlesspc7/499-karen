@@ -21,7 +21,11 @@ export function NextBestActionCard({ onRequestApproval }: NextBestActionCardProp
   return (
     <View
       className={['overflow-hidden border border-gold/30 p-6', tc.card].join(' ')}
-      style={tc.isDark ? tc.cardShadow : premiumShadows.gold}
+      style={
+        tc.isDark
+          ? tc.cardShadow
+          : { ...premiumShadows.gold, backgroundColor: '#FFFFFF' }
+      }
     >
       <View className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gold/5" />
       <View className="absolute -bottom-6 -left-6 h-20 w-20 rounded-full bg-gold/10" />

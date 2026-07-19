@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import { ArrowRight, Gem } from 'lucide-react-native'
+import { premiumColors } from '@/constants/premium-theme'
 import { SummusDarkCard } from '@/components/ui/SummusCard'
 import { dashboardMockData } from '@/constants/dashboard-mock-data'
 
@@ -11,7 +12,7 @@ export function EliteUnlockCard() {
       <View className="flex-row items-center gap-4">
         <View className="h-20 w-20 items-center justify-center rounded-2xl bg-gold-500/15">
           <View className="h-14 w-14 items-center justify-center rounded-xl bg-gold-400/25">
-            <Gem size={32} color="#FBBF24" />
+            <Gem size={32} color={premiumColors.gold} />
           </View>
         </View>
         <View className="flex-1">

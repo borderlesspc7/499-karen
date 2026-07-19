@@ -11,6 +11,7 @@ import 'react-native-reanimated'
 import { configureStorage } from '@shared/storage'
 import { AuthProvider, GamificationProvider, ThemeProvider } from '@shared/contexts'
 import { createAsyncStorageAdapter } from '@/lib/async-storage'
+import { premiumColors } from '@/constants/premium-theme'
 import { FirebaseBootstrap } from '@/components/FirebaseBootstrap'
 import { ThemeSync } from '@/components/ThemeSync'
 
@@ -59,8 +60,8 @@ export default function RootLayout() {
                     options={{
                       headerShown: Platform.OS !== 'web',
                       title: 'Relatórios',
-                      headerStyle: { backgroundColor: '#0B1220' },
-                      headerTintColor: '#00D4FF',
+                      headerStyle: { backgroundColor: premiumColors.navy },
+                      headerTintColor: premiumColors.gold,
                     }}
                   />
                 </Stack>

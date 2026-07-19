@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import { Bot, ChevronRight, FileText, TrendingDown, Users } from 'lucide-react-native'
+import { premiumColors } from '@/constants/premium-theme'
 import { dashboardMockData } from '@/constants/dashboard-mock-data'
 
 const actionIcons = {
@@ -21,7 +22,7 @@ export function AiCoachCard({ isDesktop }: AiCoachCardProps) {
         'overflow-hidden rounded-3xl border border-summus-700',
         isDesktop ? 'flex-row' : '',
       ].join(' ')}
-      style={{ backgroundColor: '#0B1220' }}
+      style={{ backgroundColor: premiumColors.navy }}
     >
       {/* Glow accent */}
       <View

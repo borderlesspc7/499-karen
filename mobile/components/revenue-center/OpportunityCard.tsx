@@ -62,7 +62,7 @@ export function OpportunityCard({ opportunity, index = 0, onPress }: Opportunity
     >
       <View
         className={[
-          'gap-4 border p-5',
+          'gap-4 overflow-hidden border p-5',
           tc.glassCard,
           styles.border,
           isWebDesktop ? 'h-full' : '',
@@ -76,7 +76,7 @@ export function OpportunityCard({ opportunity, index = 0, onPress }: Opportunity
           </Text>
         </View>
 
-        <Text className={['text-xs leading-5', tc.textMuted].join(' ')} numberOfLines={2}>
+        <Text className={['text-xs leading-5', tc.textSecondary].join(' ')} numberOfLines={2}>
           {opportunity.subtitle}
         </Text>
 

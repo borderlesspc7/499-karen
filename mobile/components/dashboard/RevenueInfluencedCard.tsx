@@ -1,6 +1,7 @@
 import { Text, View } from 'react-native'
 import { TrendingUp } from 'lucide-react-native'
 import Svg, { Polyline } from 'react-native-svg'
+import { premiumColors } from '@/constants/premium-theme'
 import { SummusDarkCard } from '@/components/ui/SummusCard'
 import { dashboardMockData } from '@/constants/dashboard-mock-data'
 
@@ -10,7 +11,7 @@ function MiniSparkline() {
       <Polyline
         points="0,28 12,22 24,24 36,16 48,18 60,10 72,12 80,4"
         fill="none"
-        stroke="#FBBF24"
+        stroke={premiumColors.gold}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"

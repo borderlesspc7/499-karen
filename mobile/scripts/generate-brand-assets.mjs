@@ -7,136 +7,161 @@ const imagesDir = path.join(__dirname, '../assets/images')
 
 const NAVY_LOGO = path.join(__dirname, '../assets/brand/summus-logo-navy.png')
 
-/** Fundo oficial da logo Summus Edge */
+/** Fundo oficial da marca — cor única do ícone */
 const BRAND_BG = '#04122C'
 const BRAND_BG_RGBA = { r: 4, g: 18, b: 44, alpha: 1 }
+const TRANSPARENT = { r: 0, g: 0, b: 0, alpha: 0 }
 
 /**
- * Extrai só o símbolo "S" (topo da arte), remove padding do navy
- * e centraliza em canvas quadrado com fundo da marca.
+ * Isola o símbolo (ouro) do fundo navy da arte por luminância.
+ * O navy da arte tem gradiente/vinheta, então recortar por cor deixa
+ * uma "caixa" visível. Aqui geramos um alpha por brilho: ouro → opaco,
+ * navy → transparente. Assim o S pode ser composto sobre qualquer navy
+ * sólido sem retângulo.
  */
-async function buildCenteredSymbolIcon({
-  size,
-  paddingRatio,
-  transparent = false,
-}) {
-  const meta = await sharp(NAVY_LOGO).metadata()
-  const width = meta.width ?? 1024
-  const height = meta.height ?? 1024
+async function keySymbol(inputBuffer) {
+  const { data, info } = await sharp(inputBuffer)
+    .removeAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
 
-  // S fica na metade superior; evita capturar o wordmark "SUMMUS EDGE"
-  const symbolRegionHeight = Math.round(height * 0.48)
+  const { width, height, channels } = info
+  const alpha = Buffer.alloc(width * height)
 
-  const cropped = await sharp(NAVY_LOGO)
-    .extract({ left: 0, top: 0, width, height: symbolRegionHeight })
+  // rampa de luminância: navy (~17) → transparente, ouro (>=85) → opaco
+  const LOW = 30
+  const HIGH = 85
+  const span = HIGH - LOW
+
+  for (let p = 0, a = 0; a < alpha.length; p += channels, a++) {
+    const lum = 0.2126 * data[p] + 0.7152 * data[p + 1] + 0.0722 * data[p + 2]
+    let v = Math.round(((lum - LOW) * 255) / span)
+    if (v < 0) v = 0
+    else if (v > 255) v = 255
+    alpha[a] = v
+  }
+
+  const keyed = await sharp(data, { raw: { width, height, channels } })
+    .joinChannel(alpha, { raw: { width, height, channels: 1 } })
     .png()
     .toBuffer()
 
-  // Remove faixa vazia do navy ao redor do S
-  const trimmed = await sharp(cropped)
-    .trim({ background: BRAND_BG, threshold: 14 })
-    .png()
-    .toBuffer()
+  // remove sobras totalmente transparentes ao redor do símbolo
+  return sharp(keyed).trim({ threshold: 1 }).png().toBuffer()
+}
 
-  const padding = Math.round(size * paddingRatio)
-  const inner = size - padding * 2
+/** Recolore um símbolo com alpha para branco sólido (ícone monocromático). */
+async function tintWhite(keyedBuffer) {
+  const { data: alphaData, info } = await sharp(keyedBuffer)
+    .ensureAlpha()
+    .extractChannel(3)
+    .raw()
+    .toBuffer({ resolveWithObject: true })
 
-  const symbolResized = await sharp(trimmed)
-    .resize(inner, inner, {
-      fit: 'contain',
-      background: transparent
-        ? { r: 0, g: 0, b: 0, alpha: 0 }
-        : BRAND_BG_RGBA,
+  return sharp({
+    create: { width: info.width, height: info.height, channels: 3, background: '#FFFFFF' },
+  })
+    .joinChannel(alphaData, {
+      raw: { width: info.width, height: info.height, channels: 1 },
     })
+    .png()
+    .toBuffer()
+}
+
+/** Centraliza um símbolo em um canvas quadrado com padding e fundo definidos. */
+async function composeSquare({ size, paddingRatio, background, symbol }) {
+  const inner = size - Math.round(size * paddingRatio) * 2
+
+  const resized = await sharp(symbol)
+    .resize(inner, inner, { fit: 'contain', background: TRANSPARENT })
     .png()
     .toBuffer()
 
   return sharp({
-    create: {
-      width: size,
-      height: size,
-      channels: 4,
-      background: transparent
-        ? { r: 0, g: 0, b: 0, alpha: 0 }
-        : BRAND_BG_RGBA,
-    },
+    create: { width: size, height: size, channels: 4, background },
   })
-    .composite([{ input: symbolResized, gravity: 'centre' }])
+    .composite([{ input: resized, gravity: 'centre' }])
     .png()
     .toBuffer()
 }
 
 async function generateAssets() {
-  const iconSize = 1024
-  // ~16% de padding: S grande e bem legível no centro
-  const iconBuffer = await buildCenteredSymbolIcon({
-    size: iconSize,
+  const meta = await sharp(NAVY_LOGO).metadata()
+  const width = meta.width ?? 1024
+  const height = meta.height ?? 1024
+
+  // Símbolo "S" fica na metade superior; evita capturar o wordmark
+  const symbolRegionHeight = Math.round(height * 0.48)
+  const symbolRegion = await sharp(NAVY_LOGO)
+    .extract({ left: 0, top: 0, width, height: symbolRegionHeight })
+    .png()
+    .toBuffer()
+
+  const symbol = await keySymbol(symbolRegion)
+  const symbolWhite = await tintWhite(symbol)
+  const fullLogo = await keySymbol(await sharp(NAVY_LOGO).png().toBuffer())
+
+  const size = 1024
+
+  // Ícone principal — navy sólido + S centralizado
+  const icon = await composeSquare({
+    size,
     paddingRatio: 0.16,
-    transparent: false,
+    background: BRAND_BG_RGBA,
+    symbol,
   })
+  await sharp(icon).toFile(path.join(imagesDir, 'icon.png'))
 
-  await sharp(iconBuffer).toFile(path.join(imagesDir, 'icon.png'))
-
-  // Android adaptive: foreground transparente, S centralizado com safe zone
-  const androidFg = await buildCenteredSymbolIcon({
-    size: iconSize,
-    paddingRatio: 0.22,
-    transparent: true,
+  // Android adaptive foreground — S limpo, sem caixa, com safe zone
+  const foreground = await composeSquare({
+    size,
+    paddingRatio: 0.24,
+    background: TRANSPARENT,
+    symbol,
   })
+  await sharp(foreground).toFile(path.join(imagesDir, 'android-icon-foreground.png'))
 
-  await sharp(androidFg).toFile(path.join(imagesDir, 'android-icon-foreground.png'))
-  await sharp(androidFg).toFile(path.join(imagesDir, 'android-icon-monochrome.png'))
+  const monochrome = await composeSquare({
+    size,
+    paddingRatio: 0.24,
+    background: TRANSPARENT,
+    symbol: symbolWhite,
+  })
+  await sharp(monochrome).toFile(path.join(imagesDir, 'android-icon-monochrome.png'))
 
+  // Android adaptive background — cor única da marca
   await sharp({
-    create: {
-      width: iconSize,
-      height: iconSize,
-      channels: 4,
-      background: BRAND_BG_RGBA,
-    },
+    create: { width: size, height: size, channels: 4, background: BRAND_BG_RGBA },
   })
     .png()
     .toFile(path.join(imagesDir, 'android-icon-background.png'))
 
-  // Splash — logo completa centralizada
-  const splashWidth = 900
-  const splashLogo = await sharp(NAVY_LOGO)
-    .resize(splashWidth, null, { fit: 'inside' })
-    .png()
-    .toBuffer()
-
-  const splashMeta = await sharp(splashLogo).metadata()
-  const splashH = splashMeta.height ?? 600
-
-  await sharp({
-    create: {
-      width: splashWidth,
-      height: splashH,
-      channels: 4,
-      background: BRAND_BG_RGBA,
-    },
+  // Splash — logo completa sobre navy sólido (sem caixa)
+  const splash = await composeSquare({
+    size,
+    paddingRatio: 0.18,
+    background: BRAND_BG_RGBA,
+    symbol: fullLogo,
   })
-    .composite([{ input: splashLogo, gravity: 'centre' }])
-    .png()
-    .toFile(path.join(imagesDir, 'splash-icon.png'))
+  await sharp(splash).toFile(path.join(imagesDir, 'splash-icon.png'))
 
-  // Logo in-app (wordmark completo)
-  await sharp(NAVY_LOGO)
-    .resize(640, null, { fit: 'inside' })
-    .png()
-    .toFile(path.join(imagesDir, 'summus-logo.png'))
+  // Ícone compacto in-app (S sobre navy sólido)
+  await sharp(icon).resize(256, 256).png().toFile(path.join(imagesDir, 'summus-logo-icon.png'))
 
-  // Ícone compacto in-app (só símbolo S, centrado)
-  await sharp(iconBuffer)
-    .resize(256, 256)
-    .png()
-    .toFile(path.join(imagesDir, 'summus-logo-icon.png'))
+  // Wordmark in-app — logo completa transparente (adapta a telas escuras)
+  const wordmark = await composeSquare({
+    size,
+    paddingRatio: 0.06,
+    background: TRANSPARENT,
+    symbol: fullLogo,
+  })
+  await sharp(wordmark).toFile(path.join(imagesDir, 'summus-logo.png'))
 
   // Favicon web
-  await sharp(iconBuffer).resize(48, 48).png().toFile(path.join(imagesDir, 'favicon.png'))
+  await sharp(icon).resize(48, 48).png().toFile(path.join(imagesDir, 'favicon.png'))
 
-  console.log('Brand assets generated successfully.')
-  console.log(`Icon: S centrado em ${BRAND_BG}, 1024x1024`)
+  console.log('Brand assets gerados com sucesso.')
+  console.log(`Ícone: S sobre ${BRAND_BG} (cor única), 1024x1024`)
 }
 
 generateAssets().catch((error) => {

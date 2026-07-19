@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import { premiumShadows } from '@/constants/premium-theme'
+import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 type SummusCardProps = {
   children: ReactNode
@@ -8,14 +9,10 @@ type SummusCardProps = {
 }
 
 export function SummusCard({ children, className = '' }: SummusCardProps) {
+  const tc = useThemeClasses()
+
   return (
-    <View
-      className={[
-        'rounded-card border border-premiumBorder bg-white p-6',
-        className,
-      ].join(' ')}
-      style={premiumShadows.card}
-    >
+    <View className={[tc.card, 'p-6', className].join(' ')} style={tc.cardShadow}>
       {children}
     </View>
   )
