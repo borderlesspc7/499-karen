@@ -22,3 +22,15 @@ export {
   type RevenueOpportunity,
   type RevenueOpportunityType,
 } from './revenue-center'
+export {
+  AiOrchestrationError,
+  configureAiOrchestration,
+  generateCampaignContent as generateCampaignViaProvider,
+  generateLeadInsight,
+  getAiOrchestrationConfig,
+  type AiOrchestrationErrorCode,
+  type CampaignRequest,
+  type CampaignResponse,
+  type LeadInsightRequest,
+  type LeadInsightResponse,
+} from './ai-orchestration-service'

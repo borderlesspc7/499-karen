@@ -5,7 +5,6 @@ import { getGamificationPersistence } from '../services/gamification-persistence
 import { GamificationContext, type GamificationContextValue } from './gamification-context'
 import { useAuth } from './useAuth'
 import type {
-  BusinessHealthScores,
   MissionImpactCategory,
   RecentActivityItem,
   UserGamificationState,
@@ -119,6 +118,31 @@ export function GamificationProvider({
   const [state, setState] = useState<UserGamificationState>(initialState)
   const [isHydrated, setIsHydrated] = useState(false)
   const skipNextPersistRef = useRef(false)
+  const persistTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const latestStateRef = useRef(state)
+  latestStateRef.current = state
+
+  const flushPersist = useCallback(
+    (nextState: UserGamificationState = latestStateRef.current) => {
+      if (!userId) {
+        return
+      }
+
+      if (persistTimerRef.current) {
+        clearTimeout(persistTimerRef.current)
+        persistTimerRef.current = null
+      }
+
+      void getGamificationPersistence()
+        .save(userId, toPersistedGamificationState(nextState), {
+          email: currentUser?.email,
+        })
+        .catch(() => {
+          // Falha de rede não quebra a UI; cache local cobre leitura offline.
+        })
+    },
+    [userId, currentUser?.email],
+  )
 
   useEffect(() => {
     if (isAuthLoading) {
@@ -140,6 +164,7 @@ export function GamificationProvider({
       }
 
       try {
+        // Firestore (users/{uid}.gamification) → fallback AsyncStorage cache
         const persisted = await getGamificationPersistence().load(userId)
         if (!isCancelled) {
           setState(persisted ? mergeGamificationState(persisted) : INITIAL_GAMIFICATION_STATE)
@@ -172,22 +197,47 @@ export function GamificationProvider({
       return
     }
 
-    const timer = setTimeout(() => {
-      void getGamificationPersistence()
-        .save(userId, toPersistedGamificationState(state), {
-          email: currentUser?.email,
-        })
-        .catch(() => {
-          // Falha de rede não deve quebrar a UI; cache local cobre leitura offline.
-        })
+    // Debounce para edições contínuas (perfil/brand); recompensas fazem flush imediato.
+    if (persistTimerRef.current) {
+      clearTimeout(persistTimerRef.current)
+    }
+
+    persistTimerRef.current = setTimeout(() => {
+      persistTimerRef.current = null
+      flushPersist(state)
     }, PERSIST_DEBOUNCE_MS)
 
-    return () => clearTimeout(timer)
-  }, [state, userId, isHydrated, currentUser?.email])
+    return () => {
+      if (persistTimerRef.current) {
+        clearTimeout(persistTimerRef.current)
+        persistTimerRef.current = null
+      }
+    }
+  }, [state, userId, isHydrated, flushPersist])
 
-  const addXp = useCallback((amount: number) => {
-    setState((current) => applyXpReward(current, amount))
-  }, [])
+  const applyOptimisticUpdate = useCallback(
+    (updater: (current: UserGamificationState) => UserGamificationState, options?: { flush?: boolean }) => {
+      setState((current) => {
+        const next = updater(current)
+        latestStateRef.current = next
+
+        if (options?.flush) {
+          // Optimistic UI: estado já atualizado; sync Firestore em background agora.
+          queueMicrotask(() => flushPersist(next))
+        }
+
+        return next
+      })
+    },
+    [flushPersist],
+  )
+
+  const addXp = useCallback(
+    (amount: number) => {
+      applyOptimisticUpdate((current) => applyXpReward(current, amount), { flush: true })
+    },
+    [applyOptimisticUpdate],
+  )
 
   const completeMission = useCallback(
     (
@@ -200,7 +250,7 @@ export function GamificationProvider({
         return
       }
 
-      setState((current) => {
+      applyOptimisticUpdate((current) => {
         const withXp = applyXpReward(current, xpReward)
         const nextBusinessHealth = applyBusinessHealthImpact(
           withXp.businessHealth,
@@ -223,109 +273,130 @@ export function GamificationProvider({
             ...withXp.recentActivity,
           ].slice(0, 20),
         }
-      })
+      }, { flush: true })
     },
-    [],
+    [applyOptimisticUpdate],
   )
 
-  const incrementCompletedActions = useCallback((amount = 1) => {
-    if (amount <= 0) {
-      return
-    }
-
-    setState((current) => ({
-      ...current,
-      completedActions: current.completedActions + amount,
-    }))
-  }, [])
-
-  const incrementInfluencePoints = useCallback((amount: number) => {
-    if (amount <= 0) {
-      return
-    }
-
-    setState((current) => ({
-      ...current,
-      influencePoints: current.influencePoints + amount,
-    }))
-  }, [])
-
-  const updateStreak = useCallback((days: number) => {
-    if (days < 0) {
-      return
-    }
-
-    setState((current) => ({
-      ...current,
-      streakDays: days,
-    }))
-  }, [])
-
-  const setUserProfile = useCallback((profile: UserProfile) => {
-    setState((current) => ({
-      ...current,
-      userProfile: profile,
-    }))
-  }, [])
-
-  const setBrandIdentity = useCallback((identity: BrandIdentity) => {
-    setState((current) => ({
-      ...current,
-      brandIdentity: identity,
-    }))
-  }, [])
-
-  const setCompanyStage = useCallback((stage: UserGamificationState['companyStage']) => {
-    setState((current) => ({
-      ...current,
-      companyStage: stage,
-    }))
-  }, [])
-
-  const executeAction = useCallback((actionId: string) => {
-    const action = GROWTH_ACTIONS[actionId] ?? {
-      ...DEFAULT_GROWTH_ACTION,
-      title: `${DEFAULT_GROWTH_ACTION.title} (${actionId})`,
-    }
-
-    setState((current) => {
-      const withXp = applyXpReward(current, action.xpReward)
-      const impactValue = Math.round(action.xpReward * 0.08)
-      const nextBusinessHealth = applyBusinessHealthImpact(
-        withXp.businessHealth,
-        action.impactCategory,
-        impactValue,
-      )
-
-      return {
-        ...withXp,
-        businessHealth: nextBusinessHealth,
-        companyTier: resolveCompanyTier(nextBusinessHealth.totalScore),
-        potentialRevenue: withXp.potentialRevenue + action.revenueGain,
-        completedActions: withXp.completedActions + 1,
-        influencePoints: withXp.influencePoints + Math.round(action.xpReward * 0.5),
-        timeline: [
-          createTimelineEntry(
-            actionId,
-            action.title,
-            action.xpReward,
-            action.revenueGain,
-            action.impactCategory,
-          ),
-          ...withXp.timeline,
-        ].slice(0, 30),
-        recentActivity: [
-          {
-            id: generateId(),
-            date: resolveActivityDateLabel(),
-            action: `IA executou: ${action.title} (+R$ ${action.revenueGain.toLocaleString('pt-BR')})`,
-            type: action.impactCategory,
-          },
-          ...withXp.recentActivity,
-        ].slice(0, 20),
+  const incrementCompletedActions = useCallback(
+    (amount = 1) => {
+      if (amount <= 0) {
+        return
       }
-    })
-  }, [])
+
+      applyOptimisticUpdate((current) => ({
+        ...current,
+        completedActions: current.completedActions + amount,
+      }))
+    },
+    [applyOptimisticUpdate],
+  )
+
+  const incrementInfluencePoints = useCallback(
+    (amount: number) => {
+      if (amount <= 0) {
+        return
+      }
+
+      applyOptimisticUpdate((current) => ({
+        ...current,
+        influencePoints: current.influencePoints + amount,
+      }))
+    },
+    [applyOptimisticUpdate],
+  )
+
+  const updateStreak = useCallback(
+    (days: number) => {
+      if (days < 0) {
+        return
+      }
+
+      applyOptimisticUpdate((current) => ({
+        ...current,
+        streakDays: days,
+      }))
+    },
+    [applyOptimisticUpdate],
+  )
+
+  const setUserProfile = useCallback(
+    (profile: UserProfile) => {
+      applyOptimisticUpdate((current) => ({
+        ...current,
+        userProfile: profile,
+      }), { flush: true })
+    },
+    [applyOptimisticUpdate],
+  )
+
+  const setBrandIdentity = useCallback(
+    (identity: BrandIdentity) => {
+      applyOptimisticUpdate((current) => ({
+        ...current,
+        brandIdentity: identity,
+      }), { flush: true })
+    },
+    [applyOptimisticUpdate],
+  )
+
+  const setCompanyStage = useCallback(
+    (stage: UserGamificationState['companyStage']) => {
+      applyOptimisticUpdate((current) => ({
+        ...current,
+        companyStage: stage,
+      }))
+    },
+    [applyOptimisticUpdate],
+  )
+
+  const executeAction = useCallback(
+    (actionId: string) => {
+      const action = GROWTH_ACTIONS[actionId] ?? {
+        ...DEFAULT_GROWTH_ACTION,
+        title: `${DEFAULT_GROWTH_ACTION.title} (${actionId})`,
+      }
+
+      applyOptimisticUpdate((current) => {
+        const withXp = applyXpReward(current, action.xpReward)
+        const impactValue = Math.round(action.xpReward * 0.08)
+        const nextBusinessHealth = applyBusinessHealthImpact(
+          withXp.businessHealth,
+          action.impactCategory,
+          impactValue,
+        )
+
+        return {
+          ...withXp,
+          businessHealth: nextBusinessHealth,
+          companyTier: resolveCompanyTier(nextBusinessHealth.totalScore),
+          potentialRevenue: withXp.potentialRevenue + action.revenueGain,
+          completedActions: withXp.completedActions + 1,
+          influencePoints: withXp.influencePoints + Math.round(action.xpReward * 0.5),
+          timeline: [
+            createTimelineEntry(
+              actionId,
+              action.title,
+              action.xpReward,
+              action.revenueGain,
+              action.impactCategory,
+            ),
+            ...withXp.timeline,
+          ].slice(0, 30),
+          recentActivity: [
+            {
+              id: generateId(),
+              date: resolveActivityDateLabel(),
+              action: `IA executou: ${action.title} (+R$ ${action.revenueGain.toLocaleString('pt-BR')})`,
+              type: action.impactCategory,
+            },
+            ...withXp.recentActivity,
+          ].slice(0, 20),
+        }
+      }, { flush: true })
+    },
+    [applyOptimisticUpdate],
+  )
 
   const contextValue = useMemo<GamificationContextValue>(() => {
     const { currentXp, nextLevelXp } = state.economy

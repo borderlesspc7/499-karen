@@ -1,3 +1,4 @@
+import { memo } from 'react'
 import type { KanbanCardWithClient } from '@shared/types'
 import { categoryLabels, priorityLabels } from '@shared/data'
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
@@ -23,7 +24,7 @@ function resolveCardVisualStyle(isDragging: boolean, isLifted: boolean): ViewSty
   return undefined
 }
 
-export function CrmOpportunityCard({
+function CrmOpportunityCardComponent({
   card,
   onPress,
   onLongPress,
@@ -37,9 +38,10 @@ export function CrmOpportunityCard({
       onLongPress={onLongPress}
       delayLongPress={onLongPress ? 450 : undefined}
       disabled={isDragging && !isLifted}
-      className={['rounded-2xl border border-slate-200 bg-slate-50 p-4 active:border-violet-200', className].join(
-        ' ',
-      )}
+      className={[
+        'rounded-2xl border border-slate-200 bg-slate-50 p-4 active:border-violet-200',
+        className,
+      ].join(' ')}
       style={resolveCardVisualStyle(isDragging, isLifted)}
     >
       <View className="flex-row flex-wrap gap-2">
@@ -61,6 +63,12 @@ export function CrmOpportunityCard({
     </Pressable>
   )
 }
+
+/** Card do Kanban — memoizado para evitar re-render durante drag & drop. */
+export const CrmOpportunityCard = memo(CrmOpportunityCardComponent)
+
+/** Alias semântico pedido na refatoração estrutural. */
+export const CrmCard = CrmOpportunityCard
 
 const cardVisualStyles = StyleSheet.create({
   lifted: {

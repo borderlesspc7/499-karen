@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Perfil + gamificação + brand identity
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /campaigns/{campaignId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    // Campanhas ativas (coleção top-level usada pelo app)
+    match /campaigns/{campaignId} {
+      allow read: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+
+      allow update, delete: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+    }
+
+    // CRM / clientes (já usados pelo app — autenticados)
+    match /clients/{clientId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /opportunities/{opportunityId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /kanban_columns/{columnId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /automations/{automationId} {
+      allow read, write: if isSignedIn();
+    }
+  }
+}

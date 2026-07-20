@@ -27,8 +27,15 @@ export {
   isBrandIdentityComplete,
   TARGET_CLIENT_LABELS,
 } from './utils/brand-identity'
-export { generateCampaignContent } from './utils/generate-campaign-content'
+export {
+  adaptCampaignResponseToGeneratedContent,
+  buildLocalCampaignContent,
+  generateCampaignContent,
+  generateCampaignContentSync,
+  toCampaignRequest,
+} from './utils/generate-campaign-content'
 export type {
   CampaignPreviewCard,
+  GenerateCampaignInput,
   GeneratedCampaignContent,
 } from './utils/generate-campaign-content'

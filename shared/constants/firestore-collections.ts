@@ -4,6 +4,7 @@ export const firestoreCollections = {
   kanbanColumns: 'kanban_columns',
   automations: 'automations',
   users: 'users',
+  campaigns: 'campaigns',
 } as const
 
 export type FirestoreCollection = (typeof firestoreCollections)[keyof typeof firestoreCollections]

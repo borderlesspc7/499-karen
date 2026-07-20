@@ -1,4 +1,11 @@
 export type {
+  CreateSavedCampaignInput,
+  SavedCampaign,
+  SavedCampaignMetrics,
+  SavedCampaignObjective,
+  SavedCampaignStatus,
+} from './campaign'
+export type {
   BrandColors,
   BrandIdentity,
   BrandIdentityDraft,

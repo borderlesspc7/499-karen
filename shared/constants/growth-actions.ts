@@ -56,6 +56,12 @@ export const GROWTH_ACTIONS: Record<string, GrowthActionDefinition> = {
     revenueGain: 1500,
     impactCategory: 'credibilidade',
   },
+  'launch-campaign': {
+    title: 'Publicar campanha omnichannel',
+    xpReward: 180,
+    revenueGain: 6400,
+    impactCategory: 'marketing',
+  },
 }
 
 export const DEFAULT_GROWTH_ACTION: GrowthActionDefinition = {

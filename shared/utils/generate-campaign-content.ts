@@ -1,6 +1,11 @@
 import type { BrandIdentity } from '../types/brand-identity'
 import type { UserProfile } from '../types/gamification'
 import { TARGET_CLIENT_LABELS } from './brand-identity'
+import {
+  generateCampaignContent as generateCampaignViaAi,
+  type CampaignRequest,
+  type CampaignResponse,
+} from '../services/ai-orchestration-service'
 
 export type CampaignPreviewCard = {
   id: string
@@ -17,11 +22,14 @@ export type GeneratedCampaignContent = {
   landing: CampaignPreviewCard[]
 }
 
-type GenerateCampaignInput = {
+export type GenerateCampaignInput = {
   userPrompt: string
   brandIdentity: BrandIdentity | null
   brandAiContext: string | null
   userProfile: UserProfile | null
+  objective?: string
+  audience?: string
+  offer?: string
 }
 
 function resolvePrimaryOffering(brandIdentity: BrandIdentity | null): string {
@@ -52,7 +60,8 @@ function resolveAudienceLabel(brandIdentity: BrandIdentity | null): string {
   return detail ? `${baseLabel} (${detail})` : baseLabel
 }
 
-export function generateCampaignContent(input: GenerateCampaignInput): GeneratedCampaignContent {
+/** Fallback síncrono local (sem provider de IA). */
+export function buildLocalCampaignContent(input: GenerateCampaignInput): GeneratedCampaignContent {
   const { userPrompt, brandIdentity, brandAiContext, userProfile } = input
 
   const companyName = brandIdentity?.companyName ?? 'sua empresa'
@@ -127,5 +136,97 @@ export function generateCampaignContent(input: GenerateCampaignInput): Generated
         detail: `Botão com destaque na cor ${accentColor}, microcopy de urgência e garantia de contato rápido.`,
       },
     ],
+  }
+}
+
+/** @deprecated Use buildLocalCampaignContent — mantido para compatibilidade. */
+export const generateCampaignContentSync = buildLocalCampaignContent
+
+export function toCampaignRequest(input: GenerateCampaignInput): CampaignRequest {
+  return {
+    objective: input.objective || resolveCampaignTheme(input.userPrompt),
+    audience: input.audience || resolveAudienceLabel(input.brandIdentity),
+    offer: input.offer || resolvePrimaryOffering(input.brandIdentity),
+    brandContext: input.brandAiContext,
+    tone: 'premium',
+    language: 'pt-BR',
+  }
+}
+
+/** Adapta a resposta do provider de IA para o formato da UI do Campaign Magic. */
+export function adaptCampaignResponseToGeneratedContent(
+  response: CampaignResponse,
+  input: GenerateCampaignInput,
+): GeneratedCampaignContent {
+  const local = buildLocalCampaignContent(input)
+  const providerNote = `Gerado via ${response.provider}${
+    response.estimatedLeads ? ` · previsão ~${response.estimatedLeads} leads` : ''
+  }.`
+
+  return {
+    social: [
+      {
+        id: 'ig-1',
+        channel: 'Instagram',
+        preview: response.channelCopy.instagram?.split('\n')[0] ?? response.headline,
+        detail: `${response.channelCopy.instagram ?? response.body}\n\n${providerNote}`,
+      },
+      {
+        id: 'fb-1',
+        channel: 'Facebook',
+        preview: response.headline,
+        detail: `${response.body}\n\nCTA: ${response.cta}. ${providerNote}`,
+      },
+      {
+        id: 'li-1',
+        channel: 'LinkedIn',
+        preview: response.channelCopy.linkedin?.slice(0, 120) ?? response.headline,
+        detail: `${response.channelCopy.linkedin ?? response.body}\n\n${providerNote}`,
+      },
+    ],
+    emails: [
+      {
+        id: 'email-1',
+        subject: response.headline,
+        preview: response.channelCopy.email?.split('\n\n')[1] ?? response.body,
+        detail: `${response.channelCopy.email ?? response.body}\n\n${providerNote}`,
+      },
+      ...local.emails.slice(1),
+    ],
+    landing: [
+      {
+        id: 'lp-1',
+        label: 'Headline',
+        preview: response.headline,
+        detail: providerNote,
+      },
+      {
+        id: 'lp-2',
+        label: 'Subheadline',
+        preview: response.body,
+        detail: providerNote,
+      },
+      {
+        id: 'lp-3',
+        label: 'CTA Principal',
+        preview: response.cta,
+        detail: providerNote,
+      },
+    ],
+  }
+}
+
+/**
+ * Entrada única usada pela UI: chama a orquestração de IA e adapta para o dashboard.
+ * Se o provider falhar, usa o builder local como fallback.
+ */
+export async function generateCampaignContent(
+  input: GenerateCampaignInput,
+): Promise<GeneratedCampaignContent> {
+  try {
+    const response = await generateCampaignViaAi(toCampaignRequest(input))
+    return adaptCampaignResponseToGeneratedContent(response, input)
+  } catch {
+    return buildLocalCampaignContent(input)
   }
 }

@@ -84,7 +84,13 @@ export default function TabLayout() {
             title: 'Oportunidades',
           }}
         />
-        <Tabs.Screen name="crm" options={{ href: null }} />
+        <Tabs.Screen
+          name="crm"
+          options={{
+            href: null,
+            title: 'CRM',
+          }}
+        />
         <Tabs.Screen name="automations" options={{ href: null }} />
         <Tabs.Screen name="treasure-vault" options={{ href: null }} />
         <Tabs.Screen name="tasks" options={{ href: null }} />

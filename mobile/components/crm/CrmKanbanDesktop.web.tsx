@@ -1,5 +1,4 @@
 import { useMemo, type CSSProperties } from 'react'
-import { Text, View } from 'react-native'
 import {
   DndContext,
   DragOverlay,
@@ -15,6 +14,7 @@ import {
   type DragStartEvent,
 } from '@dnd-kit/core'
 import type { KanbanCardWithClient, KanbanColumn } from '@shared/types'
+import { CrmColumn } from './CrmColumn'
 import { CrmOpportunityCard } from './CrmOpportunityCard'
 
 type CrmKanbanDesktopProps = {
@@ -27,11 +27,6 @@ type CrmKanbanDesktopProps = {
   onDragEnd: () => void
   overColumnId?: string | null
   onDragOver?: (columnId: string | null) => void
-}
-
-type ColumnGroup = {
-  column: KanbanColumn
-  cards: KanbanCardWithClient[]
 }
 
 function DesktopDraggableCard({
@@ -67,13 +62,13 @@ function DesktopDraggableCard({
   )
 }
 
-function DesktopKanbanColumn({
+function DroppableCrmColumn({
   group,
   onCardPress,
   activeDragCardId,
   isOver,
 }: {
-  group: ColumnGroup
+  group: { column: KanbanColumn; cards: KanbanCardWithClient[] }
   onCardPress: (card: KanbanCardWithClient) => void
   activeDragCardId: string | null
   isOver: boolean
@@ -84,36 +79,20 @@ function DesktopKanbanColumn({
   })
 
   return (
-    <div
-      ref={setNodeRef}
-      className={[
-        'flex w-80 shrink-0 flex-col rounded-3xl border bg-white shadow-sm transition-colors duration-150',
-        isOver ? 'border-violet-400 bg-violet-50/40' : 'border-slate-200',
-      ].join(' ')}
-    >
-      <View className="flex-row items-center gap-3 border-b border-slate-100 px-4 py-4">
-        <View className="h-2.5 w-2.5 rounded-full bg-violet-500" />
-        <Text className="text-base font-semibold text-slate-900">{group.column.title}</Text>
-        <View className="rounded-full bg-slate-100 px-2.5 py-0.5">
-          <Text className="text-xs font-medium text-slate-600">{group.cards.length}</Text>
-        </View>
-      </View>
-      <div className="flex min-h-[420px] flex-col gap-3 p-4">
-        {group.cards.length === 0 ? (
-          <Text className="py-8 text-center text-sm text-slate-400">
-            {isOver ? 'Solte aqui' : 'Nenhuma oportunidade nesta etapa.'}
-          </Text>
-        ) : (
-          group.cards.map((card) => (
-            <DesktopDraggableCard
-              key={card.id}
-              card={card}
-              onPress={() => onCardPress(card)}
-              isGhost={activeDragCardId === card.id}
-            />
-          ))
+    <div ref={setNodeRef}>
+      <CrmColumn
+        group={group}
+        onCardPress={onCardPress}
+        activeDragCardId={activeDragCardId}
+        isOver={isOver}
+        renderCard={(card) => (
+          <DesktopDraggableCard
+            card={card}
+            onPress={() => onCardPress(card)}
+            isGhost={activeDragCardId === card.id}
+          />
         )}
-      </div>
+      />
     </div>
   )
 }
@@ -136,14 +115,16 @@ export function CrmKanbanDesktop({
     useSensor(KeyboardSensor),
   )
 
-  const groupedCards = useMemo<ColumnGroup[]>(() => {
-    return columns.map((column) => ({
-      column,
-      cards: cards
-        .filter((card) => card.columnId === column.id)
-        .sort((left, right) => left.order - right.order),
-    }))
-  }, [columns, cards])
+  const groupedCards = useMemo(
+    () =>
+      columns.map((column) => ({
+        column,
+        cards: cards
+          .filter((card) => card.columnId === column.id)
+          .sort((left, right) => left.order - right.order),
+      })),
+    [columns, cards],
+  )
 
   const activeCard = cards.find((card) => card.id === activeDragCardId) ?? null
 
@@ -197,7 +178,7 @@ export function CrmKanbanDesktop({
       <div className="overflow-x-auto pb-4">
         <div className="flex min-w-max flex-row gap-4">
           {groupedCards.map((group) => (
-            <DesktopKanbanColumn
+            <DroppableCrmColumn
               key={group.column.id}
               group={group}
               onCardPress={onCardPress}

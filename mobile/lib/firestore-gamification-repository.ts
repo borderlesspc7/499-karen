@@ -1,3 +1,15 @@
+/**
+ * Persistência de gamificação no Firestore.
+ *
+ * Documento: `users/{uid}`
+ * Campo: `gamification` (estado serializado)
+ *
+ * Equivale semanticamente a `users/{uid}/gamification` como payload,
+ * mantendo um único documento de usuário (merge) para Auth + XP + brand.
+ *
+ * Fluxo: UI atualiza na hora (optimistic) → repository.save em background
+ * com cache AsyncStorage para leitura offline.
+ */
 import { doc, getDoc, setDoc, type DocumentData, type Firestore } from 'firebase/firestore'
 import { firestoreCollections } from '@shared/constants/firestore-collections'
 import {
