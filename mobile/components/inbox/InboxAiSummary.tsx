@@ -1,6 +1,6 @@
 import { Text, View } from 'react-native'
 import { Sparkles } from 'lucide-react-native'
-import type { InboxPriority } from '@/constants/inbox-mock-data'
+import type { InboxPriority } from '@shared/types'
 import { formatCurrencyBrlCompact } from '@shared/services/revenue-center'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'

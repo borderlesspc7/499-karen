@@ -12,7 +12,7 @@ import { DesktopContent } from '@/components/layout/DesktopContent'
 import { CrmKanbanBoard } from '@/components/crm/CrmKanbanBoard'
 import { LeadDetailModal, PipelineValueBanner } from '@/components/opportunities'
 import type { KanbanCardWithClient, KanbanColumn } from '@shared/types'
-import { useGamification } from '@shared/contexts'
+import { useAuth, useGamification } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import {
@@ -32,6 +32,7 @@ export default function OpportunitiesScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const tc = useThemeClasses()
   const { executeAction } = useGamification()
+  const { currentUser } = useAuth()
 
   const [columns, setColumns] = useState<KanbanColumn[]>([])
   const [cards, setCards] = useState<KanbanCardWithClient[]>([])
@@ -48,7 +49,7 @@ export default function OpportunitiesScreen() {
 
     try {
       // Fonte de verdade: Firestore via firestore-crm-repository (não initial-crm em runtime).
-      const snapshot = await loadLinkedCrmSnapshot()
+      const snapshot = await loadLinkedCrmSnapshot(currentUser?.id)
       setColumns(snapshot.columns)
       setCards(snapshot.cards)
     } catch (loadError) {
@@ -60,7 +61,7 @@ export default function OpportunitiesScreen() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [currentUser?.id])
 
   useEffect(() => {
     void loadOpportunities()
@@ -71,7 +72,7 @@ export default function OpportunitiesScreen() {
     setError(null)
 
     try {
-      const snapshot = await seedLinkedDemoData()
+      const snapshot = await seedLinkedDemoData(currentUser?.id)
       setColumns(snapshot.columns)
       setCards(snapshot.cards)
     } catch (seedError) {

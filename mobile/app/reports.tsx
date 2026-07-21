@@ -1,22 +1,42 @@
-import { Platform, Text, View } from 'react-native'
+import { ActivityIndicator, Platform, Text, View } from 'react-native'
 import { ArrowDownRight, ArrowUpRight, TrendingUp } from 'lucide-react-native'
-import {
-  channelPerformance,
-  growthChartData,
-  lossReasons,
-  reportKpis,
-} from '@shared/data'
 import { AppScreen } from '@/components/layout/AppScreen'
 import { PageScroll } from '@/components/layout/PageScroll'
 import { WebAppShell } from '@/components/layout/WebAppShell'
 import { ScreenHeader } from '@/components/ui/ScreenHeader'
 import { ProgressList } from '@/components/ui/ProgressList'
+import { useAnalyticsData } from '@/hooks/useAnalyticsData'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
 export default function ReportsScreen() {
   const { isWebDesktop } = useResponsiveLayout()
+  const { reports, isLoading, error } = useAnalyticsData()
+
+  if (isLoading) {
+    return (
+      <AppScreen>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#7c3aed" />
+        </View>
+      </AppScreen>
+    )
+  }
+
+  if (error || !reports) {
+    return (
+      <AppScreen>
+        <View className="flex-1 items-center justify-center px-8">
+          <Text className="text-center text-sm text-slate-500">
+            {error ?? 'Não foi possível carregar os relatórios.'}
+          </Text>
+        </View>
+      </AppScreen>
+    )
+  }
+
   const maxValue = Math.max(
-    ...growthChartData.flatMap((item) => [item.oportunidades, item.fechamentos]),
+    ...reports.growthChart.flatMap((item) => [item.oportunidades, item.fechamentos]),
+    1,
   )
 
   const content = (
@@ -29,7 +49,7 @@ export default function ReportsScreen() {
         />
 
         <View className={isWebDesktop ? 'flex-row flex-wrap gap-3' : 'flex-row flex-wrap gap-3'}>
-          {reportKpis.map((kpi) => (
+          {reports.kpis.map((kpi) => (
             <View
               key={kpi.id}
               className={[
@@ -67,7 +87,7 @@ export default function ReportsScreen() {
                 <TrendingUp size={18} color="#7c3aed" />
               </View>
               <View className="gap-3">
-                {growthChartData.map((item) => (
+                {reports.growthChart.map((item) => (
                   <View key={item.month}>
                     <Text className="mb-2 text-sm font-medium text-slate-600">{item.month}</Text>
                     <View className="gap-2">
@@ -97,12 +117,12 @@ export default function ReportsScreen() {
             <ProgressList
               title="Motivos de Perda"
               description="Principais fatores que impediram o fechamento."
-              items={lossReasons}
+              items={reports.lossReasons}
             />
             <ProgressList
               title="Performance por Canal"
               description="Contribuição de cada canal no funil."
-              items={channelPerformance}
+              items={reports.channelPerformance}
             />
           </View>
         </View>

@@ -59,7 +59,7 @@ export function countInactiveLeads(cards: KanbanCardWithClient[]): number {
       (card.columnId === 'col-contato' && card.priority === 'baixa'),
   ).length
 
-  return Math.max(inactiveCount, 12)
+  return Math.max(inactiveCount, 0)
 }
 
 export function partitionLeads(cards: KanbanCardWithClient[]): {

@@ -27,5 +27,6 @@
     "nativewind-env.d.ts",
     "../shared/**/*.ts",
     "../shared/**/*.tsx"
-  ]
+  ],
+  "exclude": ["functions"]
 }

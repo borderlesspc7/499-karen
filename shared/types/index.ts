@@ -40,3 +40,31 @@ export type {
   KanbanCardWithClient,
   LinkedCrmSnapshot,
 } from '../utils/link-crm-clients'
+export type {
+  InboxChannel,
+  InboxContactStatus,
+  InboxConversation,
+  InboxMessage,
+  InboxMessageRole,
+  InboxPriority,
+} from './inbox'
+export type {
+  GrowthDataPoint,
+  ProgressMetric,
+  ReportKpi,
+  ReportsSnapshot,
+} from './reports'
+export type {
+  IntegrationId,
+  TeamMember,
+  UserIntegrations,
+  UserSettings,
+} from './user-settings'
+export { DEFAULT_INTEGRATIONS } from './user-settings'
+export type {
+  ChannelConnection,
+  ChannelConnectionsSnapshot,
+  ChannelConnectionStatus,
+  MessagingChannel,
+} from './channel-connection'
+export { DEFAULT_CHANNEL_CONNECTIONS } from './channel-connection'

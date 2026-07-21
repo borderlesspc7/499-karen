@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { useMemo, useState } from 'react'
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native'
 import {
   Building2,
   Check,
@@ -19,6 +19,7 @@ import { PageScroll } from '@/components/layout/PageScroll'
 import { ScreenHeader } from '@/components/ui/ScreenHeader'
 import { BrandIdentityEditor } from '@/components/brand/BrandIdentityEditor'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
+import { useUserSettings } from '@/hooks/useUserSettings'
 
 type SettingsSection = 'geral' | 'marca' | 'seguranca' | 'integracoes' | 'equipe' | 'faturamento'
 
@@ -31,28 +32,48 @@ const sections: { id: SettingsSection; label: string; icon: typeof Building2 }[]
   { id: 'faturamento', label: 'Faturamento', icon: CreditCard },
 ]
 
-const teamMembers = [
-  { name: 'Equipe Summus', role: 'Administradora', status: 'Ativo' },
-  { name: 'Lucas Ferreira', role: 'Gerente Comercial', status: 'Ativo' },
-  { name: 'Marina Costa', role: 'Operações', status: 'Pendente' },
-]
-
-const integrations = [
-  { id: 'whatsapp', name: 'WhatsApp Business', icon: MessageCircle, connected: true },
-  { id: 'email', name: 'E-mail Marketing', icon: Mail, connected: false },
+const SETTINGS_INTEGRATIONS = [
+  { id: 'whatsapp' as const, name: 'WhatsApp Business', icon: MessageCircle },
+  { id: 'email' as const, name: 'E-mail Marketing', icon: Mail },
 ]
 
 export default function SettingsScreen() {
   const { isWebDesktop } = useResponsiveLayout()
-  const { signOutUser } = useAuth()
+  const { currentUser, signOutUser } = useAuth()
   const { brandIdentity, userProfile, setBrandIdentity } = useGamification()
+  const { settings, isLoading, updateIntegrations } = useUserSettings()
   const [activeSection, setActiveSection] = useState<SettingsSection>('geral')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle')
   const [brandSaveTrigger, setBrandSaveTrigger] = useState(0)
-  const [connected, setConnected] = useState<Record<string, boolean>>({
-    whatsapp: true,
+
+  const connected = settings?.integrations ?? {
+    instagram: false,
+    facebook: false,
+    linkedin: false,
+    google: false,
+    whatsapp: false,
     email: false,
-  })
+  }
+
+  const teamMembers = useMemo(() => {
+    if (settings?.teamMembers && settings.teamMembers.length > 0) {
+      return settings.teamMembers
+    }
+
+    if (!currentUser?.email) {
+      return []
+    }
+
+    return [
+      {
+        id: currentUser.id,
+        name: currentUser.email.split('@')[0] ?? 'Administrador',
+        role: 'Administrador',
+        status: 'Ativo' as const,
+        email: currentUser.email,
+      },
+    ]
+  }, [currentUser?.email, currentUser?.id, settings?.teamMembers])
 
   function handleSave() {
     if (activeSection === 'marca') {
@@ -154,7 +175,7 @@ export default function SettingsScreen() {
       {activeSection === 'integracoes' ? (
         <View className="gap-3">
           <Text className="text-lg font-semibold text-slate-900">Integrações</Text>
-          {integrations.map((integration) => {
+          {SETTINGS_INTEGRATIONS.map((integration) => {
             const Icon = integration.icon
             const isConnected = connected[integration.id]
 
@@ -171,10 +192,10 @@ export default function SettingsScreen() {
                 </View>
                 <Pressable
                   onPress={() =>
-                    setConnected((current) => ({
-                      ...current,
-                      [integration.id]: !current[integration.id],
-                    }))
+                    void updateIntegrations({
+                      ...connected,
+                      [integration.id]: !connected[integration.id],
+                    })
                   }
                   className={[
                     'rounded-2xl px-3 py-2',
@@ -199,8 +220,11 @@ export default function SettingsScreen() {
       {activeSection === 'equipe' ? (
         <View className="gap-3">
           <Text className="text-lg font-semibold text-slate-900">Equipe</Text>
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#7c3aed" />
+          ) : null}
           {teamMembers.map((member) => (
-            <View key={member.name} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <View key={member.id} className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
               <Text className="font-semibold text-slate-900">{member.name}</Text>
               <Text className="mt-1 text-sm text-slate-500">{member.role}</Text>
               <Text className="mt-2 text-xs font-medium text-emerald-700">{member.status}</Text>

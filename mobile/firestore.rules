@@ -10,7 +10,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Perfil + gamificação + brand identity
     match /users/{userId} {
       allow read, write: if isOwner(userId);
 
@@ -19,7 +18,6 @@ service cloud.firestore {
       }
     }
 
-    // Campanhas ativas (coleção top-level usada pelo app)
     match /campaigns/{campaignId} {
       allow read: if isSignedIn()
         && resource.data.userId == request.auth.uid;
@@ -32,7 +30,6 @@ service cloud.firestore {
         && request.resource.data.userId == request.auth.uid;
     }
 
-    // CRM / clientes (já usados pelo app — autenticados)
     match /clients/{clientId} {
       allow read, write: if isSignedIn();
     }
@@ -47,6 +44,40 @@ service cloud.firestore {
 
     match /automations/{automationId} {
       allow read, write: if isSignedIn();
+    }
+
+    // Tokens OAuth — somente Cloud Functions (Admin SDK)
+    match /integration_secrets/{userId}/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Status público das conexões (sem tokens)
+    match /channel_connections/{userId}/channels/{channelId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
+    match /conversations/{conversationId} {
+      allow read: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid;
+
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['unreadCount', 'status', 'preview', 'updatedAt']);
+
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isSignedIn()
+          && get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid;
+
+        allow write: if false;
+      }
     }
   }
 }

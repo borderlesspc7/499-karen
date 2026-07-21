@@ -8,6 +8,7 @@ import {
   type LinkedCrmSnapshot,
 } from '@shared/utils/link-crm-clients'
 import { moveCardBetweenColumns, normalizeColumnOrders } from './crm-move-card'
+import { syncInboxFromClients } from './inbox-service'
 import { getClientRepository, getCrmRepository } from './repositories'
 
 function syncCardClientName(card: KanbanCard, clients: Client[]): KanbanCard {
@@ -62,7 +63,19 @@ async function syncClientOpportunities(clients: Client[], cards: KanbanCard[]): 
   await Promise.all(persistOperations)
 }
 
-export async function loadLinkedCrmSnapshot(): Promise<LinkedCrmSnapshot> {
+async function maybeSyncInbox(userId: string | undefined, clients: Client[]): Promise<void> {
+  if (!userId || clients.length === 0) {
+    return
+  }
+
+  try {
+    await syncInboxFromClients(userId, clients)
+  } catch {
+    // Inbox sync é best-effort; não bloqueia o CRM.
+  }
+}
+
+export async function loadLinkedCrmSnapshot(userId?: string): Promise<LinkedCrmSnapshot> {
   const clientRepository = getClientRepository()
   const crmRepository = getCrmRepository()
 
@@ -94,10 +107,16 @@ export async function loadLinkedCrmSnapshot(): Promise<LinkedCrmSnapshot> {
     }
   }
 
-  return buildLinkedCrmSnapshot(clients, columns, cards)
+  const snapshot = buildLinkedCrmSnapshot(clients, columns, cards)
+
+  if (userId) {
+    await maybeSyncInbox(userId, snapshot.clients)
+  }
+
+  return snapshot
 }
 
-export async function seedLinkedDemoData(): Promise<LinkedCrmSnapshot> {
+export async function seedLinkedDemoData(userId?: string): Promise<LinkedCrmSnapshot> {
   const clientRepository = getClientRepository()
   const crmRepository = getCrmRepository()
 
@@ -110,7 +129,7 @@ export async function seedLinkedDemoData(): Promise<LinkedCrmSnapshot> {
     ...syncedCards.map((card) => crmRepository.upsertCard(card)),
   ])
 
-  return loadLinkedCrmSnapshot()
+  return loadLinkedCrmSnapshot(userId)
 }
 
 export async function moveOpportunityToColumn(

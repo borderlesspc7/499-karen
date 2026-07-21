@@ -1,5 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
+  ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -9,10 +11,11 @@ import {
   View,
 } from 'react-native'
 import { ArrowLeft, Send, Sparkles } from 'lucide-react-native'
-import type { InboxContactStatus, InboxConversation, InboxMessage } from '@/constants/inbox-mock-data'
+import type { InboxContactStatus, InboxConversation, InboxMessage } from '@shared/types'
 import { INBOX_SMART_REPLIES } from '@/constants/inbox-mock-data'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
+import { markConversationRead, sendInboxMessage } from '@/lib/messaging-service'
 import { InboxAiSummary } from './InboxAiSummary'
 import { InboxChannelIcon } from './InboxChannelIcon'
 
@@ -53,6 +56,8 @@ function MessageBubble({
 }) {
   const isOutgoing = message.role === 'agent'
   const isAi = message.role === 'ai'
+  const isFailed = message.deliveryStatus === 'failed'
+  const isPending = message.deliveryStatus === 'pending'
 
   return (
     <View
@@ -76,11 +81,19 @@ function MessageBubble({
       >
         {message.text}
       </Text>
-      <Text
-        className={['mt-1 text-[10px]', isOutgoing ? 'text-white/60' : textMutedClass].join(' ')}
-      >
-        {message.timestamp}
-      </Text>
+      <View className="mt-1 flex-row items-center gap-2">
+        <Text
+          className={['text-[10px]', isOutgoing ? 'text-white/60' : textMutedClass].join(' ')}
+        >
+          {message.timestamp}
+        </Text>
+        {isOutgoing && isPending ? (
+          <Text className="text-[10px] text-white/60">Enviando…</Text>
+        ) : null}
+        {isOutgoing && isFailed ? (
+          <Text className="text-[10px] text-rose-300">Falhou</Text>
+        ) : null}
+      </View>
     </View>
   )
 }
@@ -92,27 +105,65 @@ export function InboxChatView({
 }: InboxChatViewProps) {
   const tc = useThemeClasses()
   const [input, setInput] = useState('')
+  const [isSending, setIsSending] = useState(false)
   const [messages, setMessages] = useState(conversation.messages)
 
+  useEffect(() => {
+    setMessages(conversation.messages)
+    void markConversationRead(conversation.id).catch(() => undefined)
+  }, [conversation.id, conversation.messages])
+
   const smartReplies = useMemo(
-    () => INBOX_SMART_REPLIES[conversation.id] ?? INBOX_SMART_REPLIES['conv-1'],
+    () => INBOX_SMART_REPLIES[conversation.id] ?? [],
     [conversation.id],
   )
 
-  function handleSend(text?: string) {
-    const trimmed = (text ?? input).trim()
-    if (!trimmed) return
+  const canSendExternally = ['whatsapp', 'instagram', 'facebook'].includes(conversation.channel)
 
+  async function handleSend(text?: string) {
+    const trimmed = (text ?? input).trim()
+    if (!trimmed || isSending) return
+
+    const optimisticId = `local-${Date.now()}`
     setMessages((current) => [
       ...current,
       {
-        id: `local-${Date.now()}`,
+        id: optimisticId,
         role: 'agent',
         text: trimmed,
         timestamp: 'Agora',
+        deliveryStatus: 'pending',
       },
     ])
     setInput('')
+    setIsSending(true)
+
+    try {
+      if (canSendExternally && conversation.externalContactId) {
+        await sendInboxMessage(conversation.id, trimmed)
+      } else if (canSendExternally) {
+        throw new Error('Conversa sem contato externo vinculado.')
+      } else {
+        Alert.alert(
+          'Canal não conectado',
+          conversation.channel === 'linkedin'
+            ? 'LinkedIn inbox requer parceria API. Conecte WhatsApp, Instagram ou Facebook para responder pelo app.'
+            : 'Conecte o canal nas Integrações para enviar mensagens reais.',
+        )
+      }
+    } catch (error) {
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === optimisticId ? { ...message, deliveryStatus: 'failed' } : message,
+        ),
+      )
+      Alert.alert(
+        'Erro ao enviar',
+        error instanceof Error ? error.message : 'Não foi possível enviar a mensagem.',
+      )
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (
@@ -183,24 +234,26 @@ export function InboxChatView({
           tc.isDark ? 'border-white/5 bg-navy' : 'border-slate-50 bg-white',
         ].join(' ')}
       >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerClassName="gap-2"
-        >
-          {smartReplies.map((reply) => (
-            <Pressable
-              key={reply}
-              onPress={() => handleSend(reply)}
-              className={[
-                'rounded-full border px-4 py-2 active:opacity-80',
-                tc.isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50',
-              ].join(' ')}
-            >
-              <Text className={['text-xs font-medium', tc.textLabel].join(' ')}>{reply}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+        {smartReplies.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerClassName="gap-2"
+          >
+            {smartReplies.map((reply) => (
+              <Pressable
+                key={reply}
+                onPress={() => handleSend(reply)}
+                className={[
+                  'rounded-full border px-4 py-2 active:opacity-80',
+                  tc.isDark ? 'border-white/10 bg-white/5' : 'border-slate-200 bg-slate-50',
+                ].join(' ')}
+              >
+                <Text className={['text-xs font-medium', tc.textLabel].join(' ')}>{reply}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        ) : null}
 
         <View className="flex-row items-end gap-3">
           <View
@@ -215,6 +268,7 @@ export function InboxChatView({
               placeholder="Escreva uma mensagem..."
               placeholderTextColor={tc.placeholderColor}
               multiline
+              editable={!isSending}
               className={['max-h-24 flex-1 py-3 text-sm', tc.textPrimary].join(' ')}
               onSubmitEditing={() => handleSend()}
               returnKeyType="send"
@@ -223,9 +277,14 @@ export function InboxChatView({
 
           <Pressable
             onPress={() => handleSend()}
+            disabled={isSending}
             className="h-12 w-12 items-center justify-center rounded-2xl bg-navy active:opacity-90"
           >
-            <Send size={18} color="#FFFFFF" />
+            {isSending ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Send size={18} color="#FFFFFF" />
+            )}
           </Pressable>
         </View>
       </View>

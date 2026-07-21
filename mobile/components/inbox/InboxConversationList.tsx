@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, Text, View } from 'react-native'
-import type { InboxConversation } from '@/constants/inbox-mock-data'
+import type { InboxConversation } from '@shared/types'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { InboxAiSummary } from './InboxAiSummary'
 import { InboxChannelIcon } from './InboxChannelIcon'

@@ -1,6 +1,6 @@
 import { View } from 'react-native'
-import { Instagram, Mail, MessageCircle, Smartphone } from 'lucide-react-native'
-import type { InboxChannel } from '@/constants/inbox-mock-data'
+import { Facebook, Instagram, Linkedin, Mail, MessageCircle, Smartphone } from 'lucide-react-native'
+import type { InboxChannel } from '@shared/types'
 
 type ChannelVisual = {
   Icon: typeof MessageCircle
@@ -18,6 +18,16 @@ const CHANNEL_VISUALS: Record<InboxChannel, ChannelVisual> = {
     Icon: Instagram,
     backgroundColor: '#FCE7F3',
     iconColor: '#DB2777',
+  },
+  facebook: {
+    Icon: Facebook,
+    backgroundColor: '#DBEAFE',
+    iconColor: '#1877F2',
+  },
+  linkedin: {
+    Icon: Linkedin,
+    backgroundColor: '#E0F2FE',
+    iconColor: '#0A66C2',
   },
   email: {
     Icon: Mail,

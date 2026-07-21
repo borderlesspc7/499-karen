@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 import { categoryLabels, priorityLabels } from '@shared/data'
 import type { ClientWithPipeline } from '@shared/types'
+import { useAuth } from '@shared/contexts'
 import { AppScreen } from '@/components/layout/AppScreen'
 import { ResponsiveDialog } from '@/components/layout/ResponsiveDialog'
 import { ScreenHeader } from '@/components/ui/ScreenHeader'
@@ -23,6 +24,7 @@ const filters = [
 
 export default function ClientesScreen() {
   const { isWebDesktop, isWebTablet } = useResponsiveLayout()
+  const { currentUser } = useAuth()
   const [statusFilter, setStatusFilter] = useState<(typeof filters)[number]['value']>('todos')
   const [clients, setClients] = useState<ClientWithPipeline[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -37,7 +39,7 @@ export default function ClientesScreen() {
     setError(null)
 
     try {
-      const snapshot = await loadLinkedCrmSnapshot()
+      const snapshot = await loadLinkedCrmSnapshot(currentUser?.id)
       setClients(snapshot.clients)
     } catch (loadError) {
       const message =
@@ -46,7 +48,7 @@ export default function ClientesScreen() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [currentUser?.id])
 
   useEffect(() => {
     void loadClients()
@@ -62,7 +64,7 @@ export default function ClientesScreen() {
     setError(null)
 
     try {
-      const snapshot = await seedLinkedDemoData()
+      const snapshot = await seedLinkedDemoData(currentUser?.id)
       setClients(snapshot.clients)
     } catch (seedError) {
       const message =

@@ -1,12 +1,8 @@
-import { useMemo, useState } from 'react'
-import { ScrollView } from 'react-native'
+import { useState } from 'react'
+import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useAuth, useGamification } from '@shared/contexts'
 import { GROWTH_ACTIONS } from '@shared/constants/growth-actions'
-import {
-  buildRevenueCenterSnapshot,
-  buildRevenueKpis,
-} from '@shared/services/revenue-center'
 import { ThemedScreen } from '@/components/layout/AppScreen'
 import { DesktopContent } from '@/components/layout/DesktopContent'
 import { ExecutionModal, type ExecutionModalProps } from '@/components/ExecutionModal'
@@ -17,6 +13,7 @@ import { RevenueKpiGrid } from '@/components/revenue-center/RevenueKpiGrid'
 import { RevenueMobileHero } from '@/components/revenue-center/RevenueMobileHero'
 import { LINKEDIN_AUTHORITY_OPPORTUNITY } from '@/constants/ai-content-engine'
 import { CAMPAIGN_LAUNCHED_PARAM } from '@/constants/campaign-journey'
+import { useAnalyticsData } from '@/hooks/useAnalyticsData'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
 type ExecutionFlow = 'leads' | 'linkedin-article' | 'upsell'
@@ -34,7 +31,7 @@ const LEADS_EXECUTION: Pick<
 > = {
   title: 'Recuperação de Leads',
   aiSuggestion:
-    'Preparei uma sequência de 3 e-mails focada em gatilhos de escassez para os 18 leads inativos.',
+    'Preparei uma sequência de 3 e-mails focada em gatilhos de escassez para os leads inativos.',
   impact: `+R$ ${GROWTH_ACTIONS['reactivate-inactive-leads'].revenueGain.toLocaleString('pt-BR')}`,
   previewDetail:
     'E-mail 1: reativação suave com prova social. E-mail 2: urgência com vaga limitada. E-mail 3: última chamada com bónus exclusivo.',
@@ -57,10 +54,10 @@ const UPSELL_EXECUTION: Pick<
 > = {
   title: 'Oportunidades de Upsell',
   aiSuggestion:
-    'Identifiquei 3 clientes ativos prontos para upgrade com alto potencial de receita.',
+    'Identifiquei clientes ativos prontos para upgrade com alto potencial de receita.',
   impact: `+R$ ${GROWTH_ACTIONS['send-proposal'].revenueGain.toLocaleString('pt-BR')}`,
   previewDetail:
-    'Cliente A: plano premium (+R$ 4.800). Cliente B: pacote anual (+R$ 4.200). Cliente C: serviço complementar (+R$ 3.300).',
+    'Análise baseada no pipeline atual de clientes ativos em negociação.',
   contextLabel: 'Decision Engine',
   loadingMessage: 'Decision Engine preparando alternativas e impacto estimado…',
   approveLabel: 'Ver Oportunidades',
@@ -76,7 +73,8 @@ function resolveUserName(email?: string | null): string {
 export default function HomeScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const { currentUser } = useAuth()
-  const { potentialRevenue, completedActions, executeAction } = useGamification()
+  const { executeAction } = useGamification()
+  const { revenue, kpis, isLoading } = useAnalyticsData()
   const searchParams = useLocalSearchParams<Record<string, string | string[]>>()
   const [activeExecutionFlow, setActiveExecutionFlow] = useState<ExecutionFlow | null>(null)
 
@@ -86,20 +84,6 @@ export default function HomeScreen() {
     (Array.isArray(campaignLaunchedParam) && campaignLaunchedParam.includes('1'))
 
   const userName = resolveUserName(currentUser?.email)
-
-  const revenueSnapshot = useMemo(
-    () =>
-      buildRevenueCenterSnapshot({
-        potentialRevenue,
-        completedActions,
-      }),
-    [potentialRevenue, completedActions],
-  )
-
-  const kpis = useMemo(
-    () => buildRevenueKpis(revenueSnapshot.dailyMetrics),
-    [revenueSnapshot.dailyMetrics],
-  )
 
   const executionConfig =
     activeExecutionFlow === 'linkedin-article'
@@ -139,6 +123,16 @@ export default function HomeScreen() {
     }
   }
 
+  if (isLoading || !revenue) {
+    return (
+      <ThemedScreen>
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#C5A059" />
+        </View>
+      </ThemedScreen>
+    )
+  }
+
   return (
     <ThemedScreen>
       <ExecutionModal
@@ -169,13 +163,13 @@ export default function HomeScreen() {
         {isWebDesktop ? (
           <RevenueKpiGrid kpis={kpis} />
         ) : (
-          <RevenueMobileHero monthlyRevenue={revenueSnapshot.dailyMetrics.monthlyRevenue} />
+          <RevenueMobileHero monthlyRevenue={revenue.dailyMetrics.monthlyRevenue} />
         )}
 
         {!isWebDesktop ? <RevenueKpiGrid kpis={kpis} /> : null}
 
         <OpportunitySection
-          opportunities={revenueSnapshot.opportunities}
+          opportunities={revenue.opportunities}
           onPress={handleOpportunityPress}
           limit={isWebDesktop ? 3 : 4}
         />

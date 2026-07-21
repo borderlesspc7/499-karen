@@ -23,6 +23,14 @@ export {
   type RevenueOpportunityType,
 } from './revenue-center'
 export {
+  buildRevenueKpisFromMetrics,
+  computeDailyMetrics,
+  computeReportsSnapshot,
+  computeRevenueCenterSnapshot,
+  computeRevenueOpportunities,
+  type AnalyticsInput,
+} from './analytics-service'
+export {
   AiOrchestrationError,
   configureAiOrchestration,
   generateCampaignContent as generateCampaignViaProvider,
