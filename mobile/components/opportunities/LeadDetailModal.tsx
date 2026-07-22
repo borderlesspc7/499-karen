@@ -86,11 +86,6 @@ function buildActivityTimeline(lead: GrowthFlowLead) {
   ]
 }
 
-function resolvePhoneNumber(lead: GrowthFlowLead): string {
-  const seed = lead.id.replace(/\D/g, '').slice(-8).padStart(8, '0')
-  return `55119${seed}`
-}
-
 export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetailModalProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>('perfil')
 
@@ -103,7 +98,7 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
   const tags = resolveLeadTags(currentLead)
   const activities = buildActivityTimeline(currentLead)
   const client = currentLead.client
-  const phone = resolvePhoneNumber(currentLead)
+  const phone = client?.phone?.replace(/\D/g, '') ?? null
 
   async function openUrl(url: string, fallbackMessage: string) {
     const canOpen = await Linking.canOpenURL(url)
@@ -117,10 +112,20 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
   }
 
   function handleCall() {
+    if (!phone) {
+      Alert.alert('Sem telefone', 'Este lead não possui telefone cadastrado no Firestore.')
+      return
+    }
+
     void openUrl(`tel:+${phone}`, 'Não foi possível iniciar a chamada neste dispositivo.')
   }
 
   function handleWhatsApp() {
+    if (!phone) {
+      Alert.alert('Sem telefone', 'Este lead não possui telefone cadastrado no Firestore.')
+      return
+    }
+
     const message = encodeURIComponent(
       `Olá ${currentLead.clientName}, tudo bem? Gostaria de dar continuidade em "${currentLead.title}".`,
     )
@@ -266,7 +271,11 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
                 <QuickActionButton
                   icon={<Phone size={20} color="#FFFFFF" />}
                   label="Ligar"
-                  description={`+${phone.slice(0, 2)} ${phone.slice(2)}`}
+                  description={
+                    phone
+                      ? `+${phone.slice(0, 2)} ${phone.slice(2)}`
+                      : 'Telefone não cadastrado'
+                  }
                   onPress={handleCall}
                 />
                 <QuickActionButton

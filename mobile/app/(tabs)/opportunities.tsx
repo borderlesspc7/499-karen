@@ -21,11 +21,7 @@ import {
   computePipelineNegotiationValue,
   type GrowthFlowLead,
 } from '@/lib/crm-lead-insights'
-import {
-  loadLinkedCrmSnapshot,
-  moveOpportunityToColumn,
-  seedLinkedDemoData,
-} from '@/lib/crm-client-service'
+import { loadLinkedCrmSnapshot, moveOpportunityToColumn } from '@/lib/crm-client-service'
 import { moveCardBetweenColumns, normalizeColumnOrders } from '@/lib/crm-move-card'
 
 export default function OpportunitiesScreen() {
@@ -37,19 +33,24 @@ export default function OpportunitiesScreen() {
   const [columns, setColumns] = useState<KanbanColumn[]>([])
   const [cards, setCards] = useState<KanbanCardWithClient[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isSeeding, setIsSeeding] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedLead, setSelectedLead] = useState<GrowthFlowLead | null>(null)
   const [activeDragCardId, setActiveDragCardId] = useState<string | null>(null)
   const [overColumnId, setOverColumnId] = useState<string | null>(null)
 
   const loadOpportunities = useCallback(async () => {
+    if (!currentUser?.id) {
+      setColumns([])
+      setCards([])
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
     try {
-      // Fonte de verdade: Firestore via firestore-crm-repository (não initial-crm em runtime).
-      const snapshot = await loadLinkedCrmSnapshot(currentUser?.id)
+      const snapshot = await loadLinkedCrmSnapshot(currentUser.id)
       setColumns(snapshot.columns)
       setCards(snapshot.cards)
     } catch (loadError) {
@@ -67,34 +68,20 @@ export default function OpportunitiesScreen() {
     void loadOpportunities()
   }, [loadOpportunities])
 
-  async function handleSeedDemoData() {
-    setIsSeeding(true)
-    setError(null)
-
-    try {
-      const snapshot = await seedLinkedDemoData(currentUser?.id)
-      setColumns(snapshot.columns)
-      setCards(snapshot.cards)
-    } catch (seedError) {
-      const message =
-        seedError instanceof Error
-          ? seedError.message
-          : 'Não foi possível importar oportunidades demo.'
-      setError(message)
-    } finally {
-      setIsSeeding(false)
-    }
-  }
-
   const handleMoveCard = useCallback(
     (cardId: string, targetColumnId: string, targetIndex?: number) => {
-      // Optimistic update: UI move na hora; Firestore sincroniza em background.
+      if (!currentUser?.id) {
+        return
+      }
+
+      const userId = currentUser.id
+
       setCards((current) => {
         const moved = moveCardBetweenColumns(current, cardId, targetColumnId, targetIndex)
         return normalizeColumnOrders(moved, columns) as KanbanCardWithClient[]
       })
 
-      void moveOpportunityToColumn(cardId, targetColumnId, targetIndex)
+      void moveOpportunityToColumn(userId, cardId, targetColumnId, targetIndex)
         .then((snapshot) => {
           setColumns(snapshot.columns)
           setCards(snapshot.cards)
@@ -103,7 +90,7 @@ export default function OpportunitiesScreen() {
           void loadOpportunities()
         })
     },
-    [columns, loadOpportunities],
+    [columns, currentUser?.id, loadOpportunities],
   )
 
   const growthFlowLeads = useMemo(() => buildGrowthFlowLeads(cards), [cards])
@@ -168,31 +155,20 @@ export default function OpportunitiesScreen() {
             </View>
           ) : null}
 
-          {cards.length === 0 && columns.length === 0 && !isLoading ? (
+          {cards.length === 0 && !isLoading ? (
             <View className={['items-center gap-4 rounded-3xl p-8', tc.emptyState].join(' ')}>
               <Text className={['text-center text-base font-medium', tc.textPrimary].join(' ')}>
-                Nenhuma oportunidade encontrada ainda
+                Nenhuma oportunidade no pipeline
+              </Text>
+              <Text className={['text-center text-sm', tc.textSecondary].join(' ')}>
+                Cadastre clientes ou crie cards no funil para começar.
               </Text>
               <Pressable
                 onPress={() => void loadOpportunities()}
                 disabled={isLoading}
                 className="rounded-2xl bg-electricBlue px-5 py-3 active:opacity-80"
               >
-                <Text className="font-semibold text-white">
-                  {isLoading ? 'Sincronizando...' : 'Sincronizar Firestore'}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => void handleSeedDemoData()}
-                disabled={isSeeding}
-                className={[
-                  'rounded-2xl border px-5 py-3 active:opacity-70',
-                  tc.isDark ? 'border-white/10' : 'border-slate-200',
-                ].join(' ')}
-              >
-                <Text className={['font-medium', tc.textLabel].join(' ')}>
-                  {isSeeding ? 'Importando...' : 'Importar dados demo'}
-                </Text>
+                <Text className="font-semibold text-white">Atualizar</Text>
               </Pressable>
             </View>
           ) : (

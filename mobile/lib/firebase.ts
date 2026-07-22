@@ -5,11 +5,13 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app'
 // @ts-expect-error getReactNativePersistence existe no bundle RN, não nos tipos web.
 import { getAuth, getReactNativePersistence, initializeAuth, type Auth } from 'firebase/auth'
 import { getFirestore, type Firestore } from 'firebase/firestore'
+import { getStorage, type FirebaseStorage } from 'firebase/storage'
 import { getFirebasePublicConfig } from './env'
 
 let firebaseApp: FirebaseApp | null = null
 let firebaseAuth: Auth | null = null
 let firestoreDb: Firestore | null = null
+let firebaseStorage: FirebaseStorage | null = null
 
 function createFirebaseAuth(app: FirebaseApp): Auth {
   if (Platform.OS === 'web') {
@@ -45,6 +47,7 @@ export function initializeFirebase(): FirebaseApp {
   firebaseApp = getApps().length > 0 ? getApp() : initializeApp(config)
   firebaseAuth = createFirebaseAuth(firebaseApp)
   firestoreDb = getFirestore(firebaseApp)
+  firebaseStorage = getStorage(firebaseApp)
 
   return firebaseApp
 }
@@ -75,4 +78,14 @@ export function getFirestoreDb(): Firestore {
   }
 
   return firestoreDb
+}
+
+export function getFirebaseStorage(): FirebaseStorage {
+  initializeFirebase()
+
+  if (!firebaseStorage) {
+    throw new Error('Firebase Storage não foi inicializado.')
+  }
+
+  return firebaseStorage
 }

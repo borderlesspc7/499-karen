@@ -1,59 +1,39 @@
 import type { UserGamificationState } from '../types/gamification'
 import {
-  applyBusinessHealthImpact,
   calculateTotalScore,
   resolveCompanyTier,
 } from '../utils/gamification-helpers'
 
-const INITIAL_BUSINESS_HEALTH = {
-  marketing: 72,
-  vendas: 58,
-  automacao: 45,
-  credibilidade: 80,
-  posicionamento: 65,
+const EMPTY_BUSINESS_HEALTH = {
+  marketing: 0,
+  vendas: 0,
+  automacao: 0,
+  credibilidade: 0,
+  posicionamento: 0,
 } as const
 
 export const INITIAL_GAMIFICATION_STATE: UserGamificationState = {
-  level: 12,
-  title: 'Growth Builder',
-  streakDays: 14,
-  influencePoints: 2450,
-  completedActions: 32,
+  level: 1,
+  title: 'Starter',
+  streakDays: 0,
+  influencePoints: 0,
+  completedActions: 0,
   userProfile: null,
   brandIdentity: null,
   companyStage: 'Iniciante',
-  potentialRevenue: 8400,
+  potentialRevenue: 0,
   timeline: [],
   businessHealth: {
-    ...INITIAL_BUSINESS_HEALTH,
-    totalScore: calculateTotalScore(INITIAL_BUSINESS_HEALTH),
+    ...EMPTY_BUSINESS_HEALTH,
+    totalScore: calculateTotalScore(EMPTY_BUSINESS_HEALTH),
   },
-  companyTier: resolveCompanyTier(calculateTotalScore(INITIAL_BUSINESS_HEALTH)),
+  companyTier: resolveCompanyTier(calculateTotalScore(EMPTY_BUSINESS_HEALTH)),
   economy: {
-    currentXp: 3150,
-    nextLevelXp: 5000,
-    coins: 420,
+    currentXp: 0,
+    nextLevelXp: 500,
+    coins: 0,
   },
-  recentActivity: [
-    {
-      id: 'activity-1',
-      date: 'Hoje',
-      action: 'Criou campanha',
-      type: 'marketing',
-    },
-    {
-      id: 'activity-2',
-      date: 'Ontem',
-      action: 'Criou landing page',
-      type: 'posicionamento',
-    },
-    {
-      id: 'activity-3',
-      date: '3 dias atrás',
-      action: 'Configurou CRM',
-      type: 'vendas',
-    },
-  ],
+  recentActivity: [],
 }
 
 export type PersistedGamificationState = Pick<

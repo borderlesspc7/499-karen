@@ -10,6 +10,18 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function ownsResource() {
+      return isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    function createsOwnResource() {
+      return isSignedIn() && request.resource.data.userId == request.auth.uid;
+    }
+
+    function keepsOwner() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
     match /users/{userId} {
       allow read, write: if isOwner(userId);
 
@@ -19,31 +31,33 @@ service cloud.firestore {
     }
 
     match /campaigns/{campaignId} {
-      allow read: if isSignedIn()
-        && resource.data.userId == request.auth.uid;
-
-      allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
-
-      allow update, delete: if isSignedIn()
-        && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == request.auth.uid;
+      allow read: if ownsResource();
+      allow create: if createsOwnResource();
+      allow update, delete: if ownsResource() && keepsOwner();
     }
 
     match /clients/{clientId} {
-      allow read, write: if isSignedIn();
+      allow read: if ownsResource();
+      allow create: if createsOwnResource();
+      allow update, delete: if ownsResource() && keepsOwner();
     }
 
     match /opportunities/{opportunityId} {
-      allow read, write: if isSignedIn();
+      allow read: if ownsResource();
+      allow create: if createsOwnResource();
+      allow update, delete: if ownsResource() && keepsOwner();
     }
 
     match /kanban_columns/{columnId} {
-      allow read, write: if isSignedIn();
+      allow read: if ownsResource();
+      allow create: if createsOwnResource();
+      allow update, delete: if ownsResource() && keepsOwner();
     }
 
     match /automations/{automationId} {
-      allow read, write: if isSignedIn();
+      allow read: if ownsResource();
+      allow create: if createsOwnResource();
+      allow update, delete: if ownsResource() && keepsOwner();
     }
 
     // Tokens OAuth — somente Cloud Functions (Admin SDK)
@@ -58,15 +72,12 @@ service cloud.firestore {
     }
 
     match /conversations/{conversationId} {
-      allow read: if isSignedIn()
-        && resource.data.userId == request.auth.uid;
+      allow read: if ownsResource();
 
-      allow create: if isSignedIn()
-        && request.resource.data.userId == request.auth.uid;
+      allow create: if createsOwnResource();
 
-      allow update: if isSignedIn()
-        && resource.data.userId == request.auth.uid
-        && request.resource.data.userId == request.auth.uid
+      allow update: if ownsResource()
+        && keepsOwner()
         && request.resource.data.diff(resource.data).affectedKeys()
           .hasOnly(['unreadCount', 'status', 'preview', 'updatedAt']);
 
@@ -74,7 +85,8 @@ service cloud.firestore {
 
       match /messages/{messageId} {
         allow read: if isSignedIn()
-          && get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId == request.auth.uid;
+          && get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId
+            == request.auth.uid;
 
         allow write: if false;
       }

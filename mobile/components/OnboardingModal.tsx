@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native'
 import { SummusSheetModal } from '@/components/ui/modal'
-import { useGamification } from '@shared/contexts'
+import { useAuth, useGamification } from '@shared/contexts'
 import type { BrandColors, BrandIdentityDraft } from '@shared/types/brand-identity'
 import type { UserProfile } from '@shared/types/gamification'
 import {
@@ -17,6 +17,7 @@ import {
   DEFAULT_BRAND_COLORS,
   isBrandIdentityComplete,
 } from '@shared/utils/brand-identity'
+import { uploadBrandLogo } from '@/lib/storage-service'
 import { AudienceStep } from './onboarding/AudienceStep'
 import { CompanyStep } from './onboarding/CompanyStep'
 import { OnboardingProgressBar } from './onboarding/OnboardingProgressBar'
@@ -53,6 +54,7 @@ const INITIAL_DRAFT: {
 }
 
 export function OnboardingModal({ visible }: OnboardingModalProps) {
+  const { currentUser } = useAuth()
   const { userProfile, setUserProfile, setBrandIdentity } = useGamification()
   const [step, setStep] = useState<OnboardingStep>('profile')
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null)
@@ -87,7 +89,7 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
     setStep('company')
   }
 
-  function handleFinishBrandIdentity() {
+  async function handleFinishBrandIdentity() {
     if (!selectedProfile) {
       return
     }
@@ -108,9 +110,20 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
 
     setStep('adapting')
 
-    setTimeout(() => {
-      setBrandIdentity(createBrandIdentity(identityDraft))
-    }, ADAPTATION_DELAY_MS)
+    try {
+      let logoUri = draft.logoUri
+      if (logoUri && currentUser?.id && !logoUri.startsWith('http')) {
+        logoUri = await uploadBrandLogo({ userId: currentUser.id, localUri: logoUri })
+      }
+
+      setTimeout(() => {
+        setBrandIdentity(createBrandIdentity({ ...identityDraft, logoUri }))
+      }, ADAPTATION_DELAY_MS)
+    } catch {
+      setTimeout(() => {
+        setBrandIdentity(createBrandIdentity(identityDraft))
+      }, ADAPTATION_DELAY_MS)
+    }
   }
 
   const canAdvanceFromCompany =

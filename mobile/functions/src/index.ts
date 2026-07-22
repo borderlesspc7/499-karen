@@ -6,3 +6,8 @@ export {
 export { oauthCallback } from './oauth-callback'
 export { metaWebhook } from './meta-webhook'
 export { sendInboxMessage, markConversationRead } from './send-message'
+export {
+  generateCampaignContent,
+  generateLeadInsight,
+  generateSmartReplies,
+} from './ai-orchestration'

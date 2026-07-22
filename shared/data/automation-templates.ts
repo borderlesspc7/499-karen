@@ -1,63 +1,40 @@
-export type AutomationTemplate = {
-  id: string
-  title: string
-  trigger: string
-  action: string
-}
+import type { AutomationTemplate } from '../types/automation'
 
-export type ActiveAutomation = {
-  id: string
-  title: string
-  description: string
-  metricPrimary: string
-  metricSecondary: string
-  enabled: boolean
-}
-
-export const activeAutomationsSeed: ActiveAutomation[] = [
-  {
-    id: 'auto-1',
-    title: 'Follow-up pós-proposta',
-    description: 'Envia lembrete automático quando uma oportunidade entra em Proposta.',
-    metricPrimary: 'Disparado 42 vezes hoje',
-    metricSecondary: 'Última execução há 2h',
-    enabled: true,
-  },
-  {
-    id: 'auto-2',
-    title: 'Alerta de negociação quente',
-    description: 'Notifica a equipe comercial via WhatsApp quando o deal está quente.',
-    metricPrimary: 'Disparado 18 vezes hoje',
-    metricSecondary: 'Última execução há 45min',
-    enabled: true,
-  },
-  {
-    id: 'auto-3',
-    title: 'Resumo semanal de pipeline',
-    description: 'Consolida métricas do funil e envia relatório toda segunda-feira.',
-    metricPrimary: 'Disparado 6 vezes esta semana',
-    metricSecondary: 'Última execução há 1 dia',
-    enabled: true,
-  },
-]
-
+/** Catálogo de produto (definições), não dados mock de usuário. */
 export const automationTemplates: AutomationTemplate[] = [
   {
-    id: 'template-1',
+    id: 'template-welcome',
     title: 'Boas-vindas a novos clientes',
-    trigger: 'Novo cliente',
-    action: 'E-mail onboarding',
+    description: 'Dispara e-mail de onboarding quando um novo cliente é cadastrado.',
+    trigger: 'new_client',
+    action: 'email_onboarding',
   },
   {
-    id: 'template-2',
-    title: 'Alerta de Negociação Quente',
-    trigger: "Oportunidade em 'Proposta'",
-    action: 'Notificar WhatsApp',
+    id: 'template-hot-deal',
+    title: 'Alerta de negociação quente',
+    description: 'Notifica a equipe via WhatsApp quando a oportunidade entra em Proposta.',
+    trigger: 'opportunity_in_proposal',
+    action: 'notify_whatsapp',
   },
   {
-    id: 'template-3',
-    title: 'Limpeza de Leads',
-    trigger: 'Inativo 30 dias',
-    action: 'Arquivar lead',
+    id: 'template-cleanup',
+    title: 'Limpeza de leads inativos',
+    description: 'Arquiva leads sem interação há 30 dias.',
+    trigger: 'inactive_30_days',
+    action: 'archive_lead',
+  },
+  {
+    id: 'template-follow-up',
+    title: 'Follow-up pós-proposta',
+    description: 'Envia lembrete automático após entrada em Proposta.',
+    trigger: 'opportunity_in_proposal',
+    action: 'send_follow_up',
+  },
+  {
+    id: 'template-weekly',
+    title: 'Resumo semanal de pipeline',
+    description: 'Consolida métricas do funil e envia relatório toda segunda-feira.',
+    trigger: 'weekly_pipeline_summary',
+    action: 'send_weekly_report',
   },
 ]

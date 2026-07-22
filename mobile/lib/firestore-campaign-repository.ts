@@ -13,12 +13,10 @@ import type { CreateSavedCampaignInput, SavedCampaign } from '@shared/types'
 import { generateId } from '@shared/utils/generate-id'
 import { getFirestoreDb } from './firebase'
 
-function buildInitialMetrics(estimatedLeads: number): SavedCampaign['metrics'] {
-  const leads = Math.max(1, Math.round(estimatedLeads * 0.12))
-  const views = Math.max(leads * 80, 1200)
-  const costPerLead = Number((850 / Math.max(leads, 1)).toFixed(2))
-
-  return { views, leads, costPerLead }
+const EMPTY_METRICS: SavedCampaign['metrics'] = {
+  views: 0,
+  leads: 0,
+  costPerLead: 0,
 }
 
 function normalizeCampaign(
@@ -42,7 +40,7 @@ function normalizeCampaign(
     channels: data.channels ?? [],
     pieceCount: data.pieceCount ?? 0,
     estimatedLeads: data.estimatedLeads ?? 0,
-    metrics: data.metrics ?? buildInitialMetrics(data.estimatedLeads ?? 40),
+    metrics: data.metrics ?? EMPTY_METRICS,
     prompt: data.prompt ?? '',
     publishedAt: data.publishedAt ?? now,
     createdAt: data.createdAt ?? now,
@@ -103,7 +101,7 @@ export function createFirestoreCampaignRepository(
         channels: input.channels,
         pieceCount: input.pieceCount,
         estimatedLeads: input.estimatedLeads,
-        metrics: buildInitialMetrics(input.estimatedLeads),
+        metrics: EMPTY_METRICS,
         prompt: input.prompt,
         publishedAt: now,
         createdAt: now,

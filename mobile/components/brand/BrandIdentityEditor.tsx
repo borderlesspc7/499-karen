@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { Palette } from 'lucide-react-native'
+import { useAuth } from '@shared/contexts'
 import type { BrandColors, BrandIdentity, TargetClientType } from '@shared/types/brand-identity'
 import type { UserProfile } from '@shared/types/gamification'
 import {
@@ -11,6 +12,7 @@ import {
 import { AudienceStep } from '@/components/onboarding/AudienceStep'
 import { CompanyStep } from '@/components/onboarding/CompanyStep'
 import { VisualStep } from '@/components/onboarding/VisualStep'
+import { uploadBrandLogo } from '@/lib/storage-service'
 
 type BrandIdentityEditorProps = {
   initialIdentity: BrandIdentity | null
@@ -55,6 +57,21 @@ function createDraftFromIdentity(identity: BrandIdentity | null): EditorDraft {
   }
 }
 
+async function resolvePersistedLogoUri(
+  userId: string | undefined,
+  logoUri: string | null,
+): Promise<string | null> {
+  if (!logoUri || !userId) {
+    return logoUri
+  }
+
+  if (logoUri.startsWith('https://') || logoUri.startsWith('http://')) {
+    return logoUri
+  }
+
+  return uploadBrandLogo({ userId, localUri: logoUri })
+}
+
 export function BrandIdentityEditor({
   initialIdentity,
   userProfile,
@@ -62,6 +79,7 @@ export function BrandIdentityEditor({
   onSaveStatusChange,
   saveTrigger = 0,
 }: BrandIdentityEditorProps) {
+  const { currentUser } = useAuth()
   const [draft, setDraft] = useState<EditorDraft>(() => createDraftFromIdentity(initialIdentity))
   const [validationError, setValidationError] = useState<string | null>(null)
 
@@ -75,27 +93,52 @@ export function BrandIdentityEditor({
       return
     }
 
-    const businessProfile = userProfile ?? 'Empresário'
-    const identityDraft = {
-      businessProfile,
-      companyName: draft.companyName,
-      servicesDescription: draft.servicesDescription,
-      targetClientType: draft.targetClientType ?? 'outro',
-      targetClientDescription: draft.targetClientDescription,
-      logoUri: draft.logoUri,
-      colors: draft.colors,
+    let isCancelled = false
+
+    async function persist() {
+      const businessProfile = userProfile ?? 'Empresário'
+      const identityDraft = {
+        businessProfile,
+        companyName: draft.companyName,
+        servicesDescription: draft.servicesDescription,
+        targetClientType: draft.targetClientType ?? 'outro',
+        targetClientDescription: draft.targetClientDescription,
+        logoUri: draft.logoUri,
+        colors: draft.colors,
+      }
+
+      if (!isBrandIdentityComplete(identityDraft)) {
+        setValidationError('Preencha nome da empresa, serviços, público-alvo e cores da marca.')
+        onSaveStatusChange?.('idle')
+        return
+      }
+
+      try {
+        const logoUri = await resolvePersistedLogoUri(currentUser?.id, draft.logoUri)
+        if (isCancelled) {
+          return
+        }
+
+        setValidationError(null)
+        onSave(createBrandIdentity({ ...identityDraft, logoUri }))
+        onSaveStatusChange?.('saved')
+      } catch (error) {
+        if (isCancelled) {
+          return
+        }
+        setValidationError(
+          error instanceof Error ? error.message : 'Falha ao enviar o logo para o Storage.',
+        )
+        onSaveStatusChange?.('idle')
+      }
     }
 
-    if (!isBrandIdentityComplete(identityDraft)) {
-      setValidationError('Preencha nome da empresa, serviços, público-alvo e cores da marca.')
-      onSaveStatusChange?.('idle')
-      return
-    }
+    void persist()
 
-    setValidationError(null)
-    onSave(createBrandIdentity(identityDraft))
-    onSaveStatusChange?.('saved')
-  }, [saveTrigger, draft, onSave, onSaveStatusChange, userProfile])
+    return () => {
+      isCancelled = true
+    }
+  }, [saveTrigger, draft, onSave, onSaveStatusChange, userProfile, currentUser?.id])
 
   return (
     <ScrollView
@@ -110,7 +153,8 @@ export function BrandIdentityEditor({
           <Text className="text-lg font-semibold text-slate-900">Identidade da marca</Text>
         </View>
         <Text className="text-sm leading-5 text-slate-500">
-          A IA usa essas informações para personalizar campanhas, conteúdos e automações.
+          A IA usa essas informações para personalizar campanhas, conteúdos e automações. O logo é
+          enviado ao Firebase Storage.
         </Text>
       </View>
 
@@ -141,29 +185,17 @@ export function BrandIdentityEditor({
       </View>
 
       <View className="gap-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-        <Text className="text-sm font-semibold text-slate-800">Logo e cores</Text>
+        <Text className="text-sm font-semibold text-slate-800">Visual da marca</Text>
         <VisualStep
-          logoUri={draft.logoUri}
           colors={draft.colors}
-          onChangeLogoUri={(uri) => setDraft((current) => ({ ...current, logoUri: uri }))}
+          logoUri={draft.logoUri}
           onChangeColors={(colors) => setDraft((current) => ({ ...current, colors }))}
+          onChangeLogoUri={(uri) => setDraft((current) => ({ ...current, logoUri: uri }))}
           variant="embedded"
         />
       </View>
 
-      {validationError ? (
-        <Text className="text-sm font-medium text-rose-600">{validationError}</Text>
-      ) : null}
-
-      {initialIdentity?.completedAt ? (
-        <Text className="text-xs text-slate-400">
-          Última atualização:{' '}
-          {new Date(initialIdentity.completedAt).toLocaleString('pt-BR', {
-            dateStyle: 'short',
-            timeStyle: 'short',
-          })}
-        </Text>
-      ) : null}
+      {validationError ? <Text className="text-sm text-red-600">{validationError}</Text> : null}
     </ScrollView>
   )
 }

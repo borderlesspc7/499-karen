@@ -45,7 +45,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "build:web": "expo export --platform web",
-    "deploy:functions": "firebase deploy --only functions,firestore:rules,firestore:indexes",
+    "deploy:functions": "firebase deploy --only functions,firestore:rules,firestore:indexes,storage",
     "deploy:channels": "npm run deploy:functions",
     "deploy:web:firebase": "npm run build:web && firebase deploy --only hosting",
     "deploy:web:eas": "npm run build:web && eas deploy --prod",

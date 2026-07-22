@@ -41,9 +41,9 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { platformEntering } from '@/lib/platform-animation'
 import { getCampaignRepository } from '@/lib/firestore-campaign-repository'
 import { useAuth, useGamification } from '@shared/contexts'
+import { AiOrchestrationError } from '@shared/services/ai-orchestration-service'
 import type { SavedCampaign } from '@shared/types'
 import {
-  buildLocalCampaignContent,
   generateCampaignContent,
   type CampaignPreviewCard,
   type GeneratedCampaignContent,
@@ -70,12 +70,11 @@ const PUBLISH_CHANNELS: PublishChannelStatus[] = [
   { id: 'whatsapp', name: 'WhatsApp', published: true },
 ]
 
-const FALLBACK_CAMPAIGN = buildLocalCampaignContent({
-  userPrompt: '',
-  brandIdentity: null,
-  brandAiContext: null,
-  userProfile: null,
-})
+const EMPTY_CAMPAIGN: GeneratedCampaignContent = {
+  social: [],
+  emails: [],
+  landing: [],
+}
 
 const INITIAL_WIZARD_DATA: CampaignWizardData = {
   objective: null,
@@ -123,7 +122,7 @@ export default function CampaignMagicScreen() {
   const [isSuccessVisible, setIsSuccessVisible] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [generatedCampaign, setGeneratedCampaign] =
-    useState<GeneratedCampaignContent>(FALLBACK_CAMPAIGN)
+    useState<GeneratedCampaignContent>(EMPTY_CAMPAIGN)
 
   const [activeCampaigns, setActiveCampaigns] = useState<SavedCampaign[]>([])
   const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(true)
@@ -173,7 +172,7 @@ export default function CampaignMagicScreen() {
     setWizardStep(0)
     setPrompt('')
     setActiveTab('social')
-    setGeneratedCampaign(FALLBACK_CAMPAIGN)
+    setGeneratedCampaign(EMPTY_CAMPAIGN)
     setPhase('wizard')
   }, [])
 
@@ -199,9 +198,18 @@ export default function CampaignMagicScreen() {
       objective: wizardData.objective ?? undefined,
       audience: wizardData.audience || undefined,
       offer: wizardData.offer || undefined,
-    }).then((content) => {
-      setGeneratedCampaign(content)
     })
+      .then((content) => {
+        setGeneratedCampaign(content)
+      })
+      .catch((error) => {
+        setPhase('wizard')
+        const message =
+          error instanceof AiOrchestrationError
+            ? error.message
+            : 'Não foi possível gerar a campanha com IA.'
+        Alert.alert('IA indisponível', message)
+      })
   }, [wizardData, brandIdentity, brandAiContext, userProfile])
 
   const handleEdit = useCallback(() => {

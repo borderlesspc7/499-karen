@@ -29,11 +29,10 @@ export {
 } from './utils/brand-identity'
 export {
   adaptCampaignResponseToGeneratedContent,
-  buildLocalCampaignContent,
   generateCampaignContent,
-  generateCampaignContentSync,
   toCampaignRequest,
 } from './utils/generate-campaign-content'
+export { scopedDocId } from './utils/scoped-doc-id'
 export type {
   CampaignPreviewCard,
   GenerateCampaignInput,

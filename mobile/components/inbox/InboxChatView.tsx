@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -11,8 +11,9 @@ import {
   View,
 } from 'react-native'
 import { ArrowLeft, Send, Sparkles } from 'lucide-react-native'
+import { generateSmartReplies } from '@shared/services/ai-orchestration-service'
 import type { InboxContactStatus, InboxConversation, InboxMessage } from '@shared/types'
-import { INBOX_SMART_REPLIES } from '@/constants/inbox-mock-data'
+import { INBOX_QUICK_TEMPLATES } from '@/constants/inbox-templates'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { markConversationRead, sendInboxMessage } from '@/lib/messaging-service'
@@ -113,10 +114,32 @@ export function InboxChatView({
     void markConversationRead(conversation.id).catch(() => undefined)
   }, [conversation.id, conversation.messages])
 
-  const smartReplies = useMemo(
-    () => INBOX_SMART_REPLIES[conversation.id] ?? [],
-    [conversation.id],
-  )
+  const [smartReplies, setSmartReplies] = useState<string[]>([...INBOX_QUICK_TEMPLATES])
+
+  useEffect(() => {
+    let isMounted = true
+
+    void generateSmartReplies({
+      contactName: conversation.contactName,
+      channel: conversation.channel,
+      preview: conversation.preview,
+      lastMessages: conversation.messages.slice(-4).map((message) => message.text),
+    })
+      .then((response) => {
+        if (isMounted && response.replies.length > 0) {
+          setSmartReplies(response.replies)
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setSmartReplies([...INBOX_QUICK_TEMPLATES])
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [conversation.id, conversation.contactName, conversation.channel, conversation.preview, conversation.messages])
 
   const canSendExternally = ['whatsapp', 'instagram', 'facebook'].includes(conversation.channel)
 

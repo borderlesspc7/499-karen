@@ -12,6 +12,12 @@ export type {
   TargetClientType,
 } from './brand-identity'
 export type { AuthUser, MockUser } from './auth'
+export type {
+  Automation,
+  AutomationAction,
+  AutomationTemplate,
+  AutomationTrigger,
+} from './automation'
 export type { Client, ClientStatus } from './client'
 export type {
   CategoryFilter,

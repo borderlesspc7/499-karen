@@ -277,17 +277,6 @@ export function computeRevenueOpportunities(input: AnalyticsInput): RevenueOppor
     })
   }
 
-  opportunities.push({
-    id: 'opp-authority',
-    type: 'authority',
-    title: 'Artigo de autoridade no LinkedIn',
-    subtitle: 'IA identificou tema em alta no seu segmento',
-    impactLabel: 'Impacto estimado',
-    impactValue: GROWTH_ACTIONS['publish-linkedin-article'].revenueGain,
-    ctaLabel: 'Gerar Artigo',
-    actionId: 'publish-linkedin-article',
-  })
-
   return opportunities
 }
 

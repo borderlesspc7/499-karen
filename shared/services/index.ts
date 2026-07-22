@@ -32,13 +32,15 @@ export {
 } from './analytics-service'
 export {
   AiOrchestrationError,
-  configureAiOrchestration,
+  configureAiCallableClient,
   generateCampaignContent as generateCampaignViaProvider,
   generateLeadInsight,
-  getAiOrchestrationConfig,
+  generateSmartReplies,
   type AiOrchestrationErrorCode,
   type CampaignRequest,
   type CampaignResponse,
   type LeadInsightRequest,
   type LeadInsightResponse,
+  type SmartRepliesRequest,
+  type SmartRepliesResponse,
 } from './ai-orchestration-service'

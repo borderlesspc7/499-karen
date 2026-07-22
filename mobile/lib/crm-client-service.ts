@@ -1,4 +1,3 @@
-import { initialCards, initialClients, initialColumns } from '@shared/data'
 import type { Client, KanbanCard } from '@shared/types'
 import {
   buildLinkedCrmSnapshot,
@@ -7,8 +6,8 @@ import {
   resolveDefaultColumns,
   type LinkedCrmSnapshot,
 } from '@shared/utils/link-crm-clients'
+import { buildDefaultKanbanColumns } from '@shared/data/default-kanban-columns'
 import { moveCardBetweenColumns, normalizeColumnOrders } from './crm-move-card'
-import { syncInboxFromClients } from './inbox-service'
 import { getClientRepository, getCrmRepository } from './repositories'
 
 function syncCardClientName(card: KanbanCard, clients: Client[]): KanbanCard {
@@ -27,76 +26,71 @@ function syncCardClientName(card: KanbanCard, clients: Client[]): KanbanCard {
   }
 }
 
-async function ensureDefaultColumns(): Promise<void> {
+async function ensureDefaultColumns(userId: string): Promise<void> {
   const crmRepository = getCrmRepository()
-  const columns = await crmRepository.listColumns()
+  const columns = await crmRepository.listColumns(userId)
 
   if (columns.length > 0) {
     return
   }
 
-  await Promise.all(initialColumns.map((column) => crmRepository.upsertColumn(column)))
+  const defaults = buildDefaultKanbanColumns(userId)
+  await Promise.all(defaults.map((column) => crmRepository.upsertColumn(column)))
 }
 
-async function syncClientOpportunities(clients: Client[], cards: KanbanCard[]): Promise<void> {
+async function syncClientOpportunities(
+  userId: string,
+  clients: Client[],
+  cards: KanbanCard[],
+): Promise<void> {
   if (clients.length === 0) {
     return
   }
 
   const crmRepository = getCrmRepository()
-  const columns = resolveDefaultColumns(await crmRepository.listColumns())
+  const columns = resolveDefaultColumns(await crmRepository.listColumns(userId), userId)
   const linkedCards = linkCardsToClients(cards, clients)
   const persistOperations: Promise<void>[] = []
 
   for (const card of linkedCards) {
     const original = cards.find((item) => item.id === card.id)
     if (original && !original.clientId && card.clientId) {
-      persistOperations.push(crmRepository.upsertCard(card))
+      persistOperations.push(crmRepository.upsertCard({ ...card, userId }))
     }
   }
 
   const missingCards = buildMissingClientOpportunityCards(clients, linkedCards, columns)
   for (const card of missingCards) {
-    persistOperations.push(crmRepository.upsertCard(syncCardClientName(card, clients)))
+    persistOperations.push(
+      crmRepository.upsertCard(syncCardClientName({ ...card, userId }, clients)),
+    )
   }
 
   await Promise.all(persistOperations)
 }
 
-async function maybeSyncInbox(userId: string | undefined, clients: Client[]): Promise<void> {
-  if (!userId || clients.length === 0) {
-    return
-  }
-
-  try {
-    await syncInboxFromClients(userId, clients)
-  } catch {
-    // Inbox sync é best-effort; não bloqueia o CRM.
-  }
-}
-
-export async function loadLinkedCrmSnapshot(userId?: string): Promise<LinkedCrmSnapshot> {
+export async function loadLinkedCrmSnapshot(userId: string): Promise<LinkedCrmSnapshot> {
   const clientRepository = getClientRepository()
   const crmRepository = getCrmRepository()
 
   try {
-    await ensureDefaultColumns()
+    await ensureDefaultColumns(userId)
   } catch {
     // Continua com colunas padrão em memória se não puder gravar no Firestore.
   }
 
-  let clients = await clientRepository.listClients()
-  let columns = await crmRepository.listColumns()
-  let cards = await crmRepository.listCards()
+  let clients = await clientRepository.listByUser(userId)
+  let columns = await crmRepository.listColumns(userId)
+  let cards = await crmRepository.listCards(userId)
 
   if (clients.length > 0) {
     try {
-      await syncClientOpportunities(clients, cards)
+      await syncClientOpportunities(userId, clients, cards)
 
       const refreshed = await Promise.all([
-        clientRepository.listClients(),
-        crmRepository.listColumns(),
-        crmRepository.listCards(),
+        clientRepository.listByUser(userId),
+        crmRepository.listColumns(userId),
+        crmRepository.listCards(userId),
       ])
 
       clients = refreshed[0]
@@ -107,38 +101,17 @@ export async function loadLinkedCrmSnapshot(userId?: string): Promise<LinkedCrmS
     }
   }
 
-  const snapshot = buildLinkedCrmSnapshot(clients, columns, cards)
-
-  if (userId) {
-    await maybeSyncInbox(userId, snapshot.clients)
-  }
-
-  return snapshot
-}
-
-export async function seedLinkedDemoData(userId?: string): Promise<LinkedCrmSnapshot> {
-  const clientRepository = getClientRepository()
-  const crmRepository = getCrmRepository()
-
-  await Promise.all(initialClients.map((client) => clientRepository.upsertClient(client)))
-
-  const syncedCards = initialCards.map((card) => syncCardClientName(card, initialClients))
-
-  await Promise.all([
-    ...initialColumns.map((column) => crmRepository.upsertColumn(column)),
-    ...syncedCards.map((card) => crmRepository.upsertCard(card)),
-  ])
-
-  return loadLinkedCrmSnapshot(userId)
+  return buildLinkedCrmSnapshot(clients, resolveDefaultColumns(columns, userId), cards)
 }
 
 export async function moveOpportunityToColumn(
+  userId: string,
   cardId: string,
   targetColumnId: string,
   targetIndex?: number,
 ): Promise<LinkedCrmSnapshot> {
   const crmRepository = getCrmRepository()
-  const snapshot = await loadLinkedCrmSnapshot()
+  const snapshot = await loadLinkedCrmSnapshot(userId)
 
   const movedCards = moveCardBetweenColumns(
     snapshot.cards,
@@ -156,7 +129,9 @@ export async function moveOpportunityToColumn(
     return previous.columnId !== card.columnId || previous.order !== card.order
   })
 
-  await Promise.all(changedCards.map((card) => crmRepository.upsertCard(card)))
+  await Promise.all(
+    changedCards.map((card) => crmRepository.upsertCard({ ...card, userId })),
+  )
 
-  return loadLinkedCrmSnapshot()
+  return loadLinkedCrmSnapshot(userId)
 }

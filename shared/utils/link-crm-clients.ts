@@ -1,4 +1,4 @@
-import { initialColumns } from '../data/initial-crm'
+import { buildDefaultKanbanColumns } from '../data/default-kanban-columns'
 import type { Client } from '../types/client'
 import type { KanbanCard, KanbanColumn } from '../types/crm'
 
@@ -58,12 +58,15 @@ function buildColumnMaps(columns: KanbanColumn[]) {
   }
 }
 
-export function resolveDefaultColumns(columns: KanbanColumn[]): KanbanColumn[] {
+export function resolveDefaultColumns(
+  columns: KanbanColumn[],
+  userId = columns[0]?.userId ?? '',
+): KanbanColumn[] {
   if (columns.length > 0) {
     return [...columns].sort((left, right) => left.order - right.order)
   }
 
-  return [...initialColumns]
+  return buildDefaultKanbanColumns(userId)
 }
 
 export function linkCardsToClients(cards: KanbanCard[], clients: Client[]): KanbanCard[] {
@@ -90,7 +93,8 @@ export function linkCardsToClients(cards: KanbanCard[], clients: Client[]): Kanb
 }
 
 function resolveColumnId(columns: KanbanColumn[], ...preferredTitles: string[]): string {
-  const sortedColumns = resolveDefaultColumns(columns)
+  const userId = columns[0]?.userId ?? ''
+  const sortedColumns = resolveDefaultColumns(columns, userId)
   const normalizedTitles = preferredTitles.map((title) => title.toLowerCase())
 
   for (const title of normalizedTitles) {
@@ -100,7 +104,7 @@ function resolveColumnId(columns: KanbanColumn[], ...preferredTitles: string[]):
     }
   }
 
-  return sortedColumns[0]?.id ?? initialColumns[0].id
+  return sortedColumns[0]?.id ?? 'col-leads'
 }
 
 function mapClientStatusToColumnId(client: Client, columns: KanbanColumn[]): string {
@@ -137,6 +141,7 @@ export function buildClientOpportunityCard(
 
   return {
     id: `client-opp-${client.id}`,
+    userId: client.userId,
     title: titleByStatus[client.status],
     description: `${client.company} — sincronizado automaticamente do cadastro de clientes.`,
     category: categoryByStatus[client.status],

@@ -7,7 +7,7 @@ import { AppScreen } from '@/components/layout/AppScreen'
 import { ResponsiveDialog } from '@/components/layout/ResponsiveDialog'
 import { ScreenHeader } from '@/components/ui/ScreenHeader'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
-import { loadLinkedCrmSnapshot, seedLinkedDemoData } from '@/lib/crm-client-service'
+import { loadLinkedCrmSnapshot } from '@/lib/crm-client-service'
 
 const statusStyles = {
   ativo: { label: 'Ativo', bg: 'bg-emerald-100', text: 'text-emerald-700' },
@@ -29,17 +29,22 @@ export default function ClientesScreen() {
   const [clients, setClients] = useState<ClientWithPipeline[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isSeeding, setIsSeeding] = useState(false)
   const [selectedClient, setSelectedClient] = useState<ClientWithPipeline | null>(null)
 
   const listColumns = isWebDesktop ? 3 : isWebTablet ? 2 : 1
 
   const loadClients = useCallback(async () => {
+    if (!currentUser?.id) {
+      setClients([])
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     setError(null)
 
     try {
-      const snapshot = await loadLinkedCrmSnapshot(currentUser?.id)
+      const snapshot = await loadLinkedCrmSnapshot(currentUser.id)
       setClients(snapshot.clients)
     } catch (loadError) {
       const message =
@@ -58,22 +63,6 @@ export default function ClientesScreen() {
     if (statusFilter === 'todos') return clients
     return clients.filter((client) => client.status === statusFilter)
   }, [clients, statusFilter])
-
-  async function handleSeedDemoData() {
-    setIsSeeding(true)
-    setError(null)
-
-    try {
-      const snapshot = await seedLinkedDemoData(currentUser?.id)
-      setClients(snapshot.clients)
-    } catch (seedError) {
-      const message =
-        seedError instanceof Error ? seedError.message : 'Não foi possível importar os dados demo.'
-      setError(message)
-    } finally {
-      setIsSeeding(false)
-    }
-  }
 
   return (
     <AppScreen>
@@ -132,15 +121,9 @@ export default function ClientesScreen() {
               <Text className="text-center text-base font-medium text-slate-800">
                 Nenhum cliente no Firestore
               </Text>
-              <Pressable
-                onPress={() => void handleSeedDemoData()}
-                disabled={isSeeding}
-                className="rounded-full bg-violet-600 px-5 py-3"
-              >
-                <Text className="font-medium text-white">
-                  {isSeeding ? 'Importando...' : 'Importar dados demo'}
-                </Text>
-              </Pressable>
+              <Text className="text-center text-sm text-slate-500">
+                Cadastre clientes para vê-los aqui e no funil de oportunidades.
+              </Text>
             </View>
           )
         }
@@ -197,6 +180,12 @@ export default function ClientesScreen() {
                 <Text className="text-xs font-medium text-slate-500">E-mail</Text>
                 <Text className="mt-1 font-medium text-slate-900">{selectedClient.email}</Text>
               </View>
+              {selectedClient.phone ? (
+                <View className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                  <Text className="text-xs font-medium text-slate-500">Telefone</Text>
+                  <Text className="mt-1 font-medium text-slate-900">{selectedClient.phone}</Text>
+                </View>
+              ) : null}
               <View className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                 <Text className="text-xs font-medium text-slate-500">Etapa no funil</Text>
                 <Text className="mt-1 font-medium text-slate-900">
