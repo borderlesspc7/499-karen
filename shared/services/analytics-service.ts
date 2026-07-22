@@ -45,6 +45,10 @@ export type AnalyticsInput = {
 }
 
 function estimateDealValue(card: KanbanCardWithClient): number {
+  if (typeof card.dealValue === 'number' && card.dealValue > 0) {
+    return card.dealValue
+  }
+
   return PRIORITY_VALUE[card.priority] ?? 2000
 }
 

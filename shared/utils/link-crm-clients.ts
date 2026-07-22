@@ -151,6 +151,12 @@ export function buildClientOpportunityCard(
     dueDate: client.lastContact,
     columnId,
     order,
+    dealValue: 0,
+    source: client.source,
+    campaignId: client.campaignId,
+    externalLeadId: client.externalLeadId,
+    createdAt: client.createdAt,
+    updatedAt: new Date().toISOString(),
   }
 }
 

@@ -20,6 +20,7 @@ import {
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { SummusSheetModal } from '@/components/ui/modal'
 import { categoryLabels, priorityLabels } from '@shared/data'
+import { LEAD_SOURCE_LABELS } from '@shared/types'
 import type { GrowthFlowLead } from '@/lib/crm-lead-insights'
 import { isForgottenLead, isHotLead, resolveHealthColor } from '@/lib/crm-lead-insights'
 
@@ -36,17 +37,23 @@ type LeadDetailModalProps = {
   visible: boolean
   onClose: () => void
   onExecute?: (lead: GrowthFlowLead) => void
+  onEdit?: (lead: GrowthFlowLead) => void
+  onDelete?: (lead: GrowthFlowLead) => void
 }
 
 function resolveLeadTags(lead: GrowthFlowLead): string[] {
-  const tags: string[] = [categoryLabels[lead.category], priorityLabels[lead.priority]]
+  const tags: string[] = [
+    categoryLabels[lead.category],
+    priorityLabels[lead.priority],
+    LEAD_SOURCE_LABELS[lead.source],
+  ]
 
   if (lead.columnId === 'col-fechado') {
     tags.push('Ganho')
   } else if (isHotLead(lead, lead.healthScore)) {
     tags.push('Quente')
   } else if (isForgottenLead(lead, lead.healthScore)) {
-    tags.push('Esquecido (IA)')
+    tags.push('Esquecido')
   }
 
   if (lead.client?.status === 'inativo') {
@@ -63,7 +70,7 @@ function buildActivityTimeline(lead: GrowthFlowLead) {
     {
       id: '1',
       type: 'nota',
-      title: 'Nota da IA',
+      title: 'Próximo passo sugerido',
       body: lead.nextBestAction,
       date: 'Hoje',
     },
@@ -86,7 +93,14 @@ function buildActivityTimeline(lead: GrowthFlowLead) {
   ]
 }
 
-export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetailModalProps) {
+export function LeadDetailModal({
+  lead,
+  visible,
+  onClose,
+  onExecute,
+  onEdit,
+  onDelete,
+}: LeadDetailModalProps) {
   const [activeTab, setActiveTab] = useState<DetailTab>('perfil')
 
   if (!lead) {
@@ -227,12 +241,49 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
                       value={priorityLabels[currentLead.priority]}
                     />
                     <ProfileField
+                      icon={<Tag size={14} color="#94A3B8" />}
+                      label="Valor do deal"
+                      value={
+                        currentLead.dealValue > 0
+                          ? `R$ ${currentLead.dealValue.toLocaleString('pt-BR')}`
+                          : `Estimado R$ ${currentLead.dealImpact.toLocaleString('pt-BR')}`
+                      }
+                    />
+                    <ProfileField
+                      icon={<Tag size={14} color="#94A3B8" />}
+                      label="Origem"
+                      value={LEAD_SOURCE_LABELS[currentLead.source]}
+                    />
+                    <ProfileField
                       icon={<Calendar size={14} color="#94A3B8" />}
                       label="Último contato"
                       value={client?.lastContact ?? '—'}
                     />
                   </View>
                 </View>
+
+                {(onEdit || onDelete) && (
+                  <View className="flex-row gap-3">
+                    {onEdit ? (
+                      <Pressable
+                        onPress={() => onEdit(currentLead)}
+                        className="flex-1 rounded-2xl bg-electricBlue py-3"
+                      >
+                        <Text className="text-center text-sm font-semibold text-white">Editar</Text>
+                      </Pressable>
+                    ) : null}
+                    {onDelete ? (
+                      <Pressable
+                        onPress={() => onDelete(currentLead)}
+                        className="flex-1 rounded-2xl border border-red-400/40 bg-red-500/10 py-3"
+                      >
+                        <Text className="text-center text-sm font-semibold text-red-300">
+                          Excluir
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                )}
 
                 <View className="rounded-2xl border border-white/10 bg-white/5 p-4">
                   <Text className="text-xs font-bold uppercase tracking-wider text-white/40">
@@ -296,8 +347,8 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
                   onPress={() => {
                     onExecute?.(currentLead)
                     Alert.alert(
-                      'Ação em execução',
-                      `A IA vai ${currentLead.nextBestAction.toLowerCase()} para ${currentLead.clientName}.`,
+                      'Próximo passo',
+                      `${currentLead.nextBestAction} — ${currentLead.clientName}.`,
                     )
                   }}
                   className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl bg-electricBlue py-4"
@@ -309,7 +360,7 @@ export function LeadDetailModal({ lead, visible, onClose, onExecute }: LeadDetai
                     elevation: 6,
                   }}
                 >
-                  <Text className="text-sm font-bold text-white">Executar melhor ação (IA)</Text>
+                  <Text className="text-sm font-bold text-white">Registrar próximo passo</Text>
                   <ArrowRight size={16} color="#FFFFFF" />
                 </AnimatedPressable>
               </View>

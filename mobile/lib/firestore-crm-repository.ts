@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -12,6 +13,7 @@ import {
 import type { KanbanCard, KanbanColumn } from '@shared/types'
 import { firestoreCollections } from '@shared/constants/firestore-collections'
 import { scopedDocId } from '@shared/utils/scoped-doc-id'
+import { omitUndefinedFields } from './firestore-sanitize'
 
 function normalizeColumn(id: string, data: Partial<KanbanColumn>): KanbanColumn | null {
   if (!data.userId || !data.title) {
@@ -31,6 +33,8 @@ function normalizeCard(id: string, data: Partial<KanbanCard>): KanbanCard | null
     return null
   }
 
+  const now = new Date().toISOString()
+
   return {
     id: data.id ?? id,
     userId: data.userId,
@@ -43,6 +47,12 @@ function normalizeCard(id: string, data: Partial<KanbanCard>): KanbanCard | null
     dueDate: data.dueDate ?? '—',
     columnId: data.columnId,
     order: data.order ?? 0,
+    dealValue: typeof data.dealValue === 'number' ? data.dealValue : 0,
+    source: data.source ?? 'manual',
+    campaignId: data.campaignId,
+    externalLeadId: data.externalLeadId,
+    createdAt: data.createdAt ?? now,
+    updatedAt: data.updatedAt ?? now,
   }
 }
 
@@ -52,6 +62,7 @@ export type FirestoreCrmRepository = {
   upsertColumn(column: KanbanColumn): Promise<void>
   upsertCard(card: KanbanCard): Promise<void>
   getCardById(userId: string, id: string): Promise<KanbanCard | null>
+  deleteCard(userId: string, id: string): Promise<void>
 }
 
 export function createFirestoreCrmRepository(db: Firestore): FirestoreCrmRepository {
@@ -88,7 +99,7 @@ export function createFirestoreCrmRepository(db: Firestore): FirestoreCrmReposit
     async upsertColumn(column) {
       await setDoc(
         doc(db, firestoreCollections.kanbanColumns, scopedDocId(column.userId, column.id)),
-        column as DocumentData,
+        omitUndefinedFields(column as Record<string, unknown>) as DocumentData,
         { merge: true },
       )
     },
@@ -96,9 +107,13 @@ export function createFirestoreCrmRepository(db: Firestore): FirestoreCrmReposit
     async upsertCard(card) {
       await setDoc(
         doc(db, firestoreCollections.opportunities, scopedDocId(card.userId, card.id)),
-        card as DocumentData,
+        omitUndefinedFields(card as Record<string, unknown>) as DocumentData,
         { merge: true },
       )
+    },
+
+    async deleteCard(userId, id) {
+      await deleteDoc(doc(db, firestoreCollections.opportunities, scopedDocId(userId, id)))
     },
   }
 }

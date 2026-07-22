@@ -1,13 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, FlatList, Pressable, Text, View } from 'react-native'
 import { categoryLabels, priorityLabels } from '@shared/data'
-import type { ClientWithPipeline } from '@shared/types'
+import { LEAD_SOURCE_LABELS, type ClientWithPipeline } from '@shared/types'
 import { useAuth } from '@shared/contexts'
 import { AppScreen } from '@/components/layout/AppScreen'
 import { ResponsiveDialog } from '@/components/layout/ResponsiveDialog'
+import { ClientFormModal, type ClientFormValues } from '@/components/clients/ClientFormModal'
 import { ScreenHeader } from '@/components/ui/ScreenHeader'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
-import { loadLinkedCrmSnapshot } from '@/lib/crm-client-service'
+import {
+  createClient,
+  deleteClient,
+  loadLinkedCrmSnapshot,
+  updateClient,
+} from '@/lib/crm-client-service'
 
 const statusStyles = {
   ativo: { label: 'Ativo', bg: 'bg-emerald-100', text: 'text-emerald-700' },
@@ -28,8 +34,11 @@ export default function ClientesScreen() {
   const [statusFilter, setStatusFilter] = useState<(typeof filters)[number]['value']>('todos')
   const [clients, setClients] = useState<ClientWithPipeline[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedClient, setSelectedClient] = useState<ClientWithPipeline | null>(null)
+  const [isFormVisible, setIsFormVisible] = useState(false)
+  const [editingClient, setEditingClient] = useState<ClientWithPipeline | null>(null)
 
   const listColumns = isWebDesktop ? 3 : isWebTablet ? 2 : 1
 
@@ -64,6 +73,91 @@ export default function ClientesScreen() {
     return clients.filter((client) => client.status === statusFilter)
   }, [clients, statusFilter])
 
+  function openCreateForm() {
+    setEditingClient(null)
+    setIsFormVisible(true)
+  }
+
+  function openEditForm(client: ClientWithPipeline) {
+    setEditingClient(client)
+    setSelectedClient(null)
+    setIsFormVisible(true)
+  }
+
+  async function handleSubmitForm(values: ClientFormValues) {
+    if (!currentUser?.id) {
+      return
+    }
+
+    setIsSaving(true)
+    setError(null)
+
+    try {
+      const snapshot = editingClient
+        ? await updateClient(currentUser.id, editingClient.id, {
+            name: values.name,
+            company: values.company,
+            email: values.email,
+            phone: values.phone,
+            status: values.status,
+            notes: values.notes,
+          })
+        : await createClient({
+            userId: currentUser.id,
+            name: values.name,
+            company: values.company,
+            email: values.email,
+            phone: values.phone,
+            status: values.status,
+            notes: values.notes,
+            attribution: { source: 'manual' },
+          })
+
+      setClients(snapshot.clients)
+      setIsFormVisible(false)
+      setEditingClient(null)
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error ? saveError.message : 'Não foi possível salvar o cliente.',
+      )
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  function handleDelete(client: ClientWithPipeline) {
+    if (!currentUser?.id) {
+      return
+    }
+
+    Alert.alert(
+      'Excluir cliente',
+      `Remover ${client.name}? Oportunidades vinculadas também serão removidas.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              try {
+                const snapshot = await deleteClient(currentUser.id, client.id)
+                setClients(snapshot.clients)
+                setSelectedClient(null)
+              } catch (deleteError) {
+                setError(
+                  deleteError instanceof Error
+                    ? deleteError.message
+                    : 'Não foi possível excluir o cliente.',
+                )
+              }
+            })()
+          },
+        },
+      ],
+    )
+  }
+
   return (
     <AppScreen>
       <FlatList
@@ -77,11 +171,21 @@ export default function ClientesScreen() {
         onRefresh={() => void loadClients()}
         ListHeaderComponent={
           <View className="mb-4 gap-4">
-            <ScreenHeader
-              badge="Gestão de contas"
-              title="Clientes"
-              description="Cadastro integrado ao funil — veja em qual etapa cada cliente está."
-            />
+            <View className="flex-row items-start justify-between gap-3">
+              <View className="flex-1">
+                <ScreenHeader
+                  badge="Gestão de contas"
+                  title="Clientes"
+                  description="Cadastre manualmente agora. Leads de Meta Ads entram aqui quando a integração estiver ativa."
+                />
+              </View>
+              <Pressable
+                onPress={openCreateForm}
+                className="rounded-2xl bg-violet-600 px-4 py-3 active:opacity-80"
+              >
+                <Text className="text-sm font-semibold text-white">Novo</Text>
+              </Pressable>
+            </View>
             <View className="flex-row flex-wrap gap-2">
               {filters.map((filter) => (
                 <Pressable
@@ -89,7 +193,9 @@ export default function ClientesScreen() {
                   onPress={() => setStatusFilter(filter.value)}
                   className={[
                     'rounded-full px-4 py-2',
-                    statusFilter === filter.value ? 'bg-violet-600' : 'border border-slate-200 bg-white',
+                    statusFilter === filter.value
+                      ? 'bg-violet-600'
+                      : 'border border-slate-200 bg-white',
                   ].join(' ')}
                 >
                   <Text
@@ -119,11 +225,17 @@ export default function ClientesScreen() {
           ) : (
             <View className="items-center gap-4 rounded-3xl border border-dashed border-slate-300 bg-white p-8">
               <Text className="text-center text-base font-medium text-slate-800">
-                Nenhum cliente no Firestore
+                Nenhum cliente cadastrado
               </Text>
               <Text className="text-center text-sm text-slate-500">
-                Cadastre clientes para vê-los aqui e no funil de oportunidades.
+                Cadastre o primeiro cliente para alimentar o funil de oportunidades.
               </Text>
+              <Pressable
+                onPress={openCreateForm}
+                className="rounded-full bg-violet-600 px-5 py-3"
+              >
+                <Text className="font-medium text-white">Cadastrar cliente</Text>
+              </Pressable>
             </View>
           )
         }
@@ -151,7 +263,9 @@ export default function ClientesScreen() {
                 </View>
               </View>
               <Text className="mt-3 text-sm text-slate-500">{item.email}</Text>
-              <Text className="mt-1 text-xs text-slate-400">Último contato: {item.lastContact}</Text>
+              <Text className="mt-1 text-xs text-slate-400">
+                Origem: {LEAD_SOURCE_LABELS[item.source]} · Último contato: {item.lastContact}
+              </Text>
               <View className="mt-3 flex-row flex-wrap gap-2">
                 {item.pipelineStage ? (
                   <View className="rounded-full bg-violet-100 px-3 py-1">
@@ -187,6 +301,19 @@ export default function ClientesScreen() {
                 </View>
               ) : null}
               <View className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                <Text className="text-xs font-medium text-slate-500">Origem</Text>
+                <Text className="mt-1 font-medium text-slate-900">
+                  {LEAD_SOURCE_LABELS[selectedClient.source]}
+                  {selectedClient.campaignId ? ` · campanha ${selectedClient.campaignId}` : ''}
+                </Text>
+              </View>
+              {selectedClient.notes ? (
+                <View className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                  <Text className="text-xs font-medium text-slate-500">Notas</Text>
+                  <Text className="mt-1 font-medium text-slate-900">{selectedClient.notes}</Text>
+                </View>
+              ) : null}
+              <View className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
                 <Text className="text-xs font-medium text-slate-500">Etapa no funil</Text>
                 <Text className="mt-1 font-medium text-slate-900">
                   {selectedClient.pipelineStage ?? 'Nenhuma oportunidade vinculada'}
@@ -205,19 +332,41 @@ export default function ClientesScreen() {
                   <Text className="font-medium text-slate-900">{opportunity.title}</Text>
                   <Text className="mt-1 text-xs text-violet-700">
                     {categoryLabels[opportunity.category]} · {priorityLabels[opportunity.priority]}
+                    {opportunity.dealValue > 0
+                      ? ` · R$ ${opportunity.dealValue.toLocaleString('pt-BR')}`
+                      : ''}
                   </Text>
                 </View>
               ))
             )}
-            <Pressable
-              onPress={() => setSelectedClient(null)}
-              className="mt-6 rounded-2xl bg-violet-600 py-3"
-            >
-              <Text className="text-center text-sm font-semibold text-white">Fechar</Text>
-            </Pressable>
+            <View className="mt-6 flex-row gap-3">
+              <Pressable
+                onPress={() => openEditForm(selectedClient)}
+                className="flex-1 rounded-2xl bg-violet-600 py-3"
+              >
+                <Text className="text-center text-sm font-semibold text-white">Editar</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => handleDelete(selectedClient)}
+                className="flex-1 rounded-2xl border border-red-200 bg-red-50 py-3"
+              >
+                <Text className="text-center text-sm font-semibold text-red-600">Excluir</Text>
+              </Pressable>
+            </View>
           </>
         ) : null}
       </ResponsiveDialog>
+
+      <ClientFormModal
+        visible={isFormVisible}
+        initialClient={editingClient}
+        isSaving={isSaving}
+        onClose={() => {
+          setIsFormVisible(false)
+          setEditingClient(null)
+        }}
+        onSubmit={(values) => void handleSubmitForm(values)}
+      />
     </AppScreen>
   )
 }

@@ -18,14 +18,17 @@ export type {
   AutomationTemplate,
   AutomationTrigger,
 } from './automation'
-export type { Client, ClientStatus } from './client'
+export type { Client, ClientStatus, CreateClientInput } from './client'
 export type {
   CategoryFilter,
+  CreateOpportunityInput,
   KanbanCard,
   KanbanColumn,
   TaskCategory,
   TaskPriority,
 } from './crm'
+export type { LeadAttribution, LeadSource } from './lead-source'
+export { LEAD_SOURCE_LABELS } from './lead-source'
 export type {
   BusinessHealthCategoryKey,
   BusinessHealthScores,

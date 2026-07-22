@@ -125,6 +125,10 @@ export function estimateDealImpact(
   card: KanbanCardWithClient,
   healthScore: number,
 ): number {
+  if (typeof card.dealValue === 'number' && card.dealValue > 0) {
+    return Math.round(card.dealValue)
+  }
+
   const base = PRIORITY_BASE_IMPACT[card.priority]
   const multiplier = COLUMN_IMPACT_MULTIPLIER[card.columnId] ?? 1
   const healthFactor = 0.65 + healthScore / 200

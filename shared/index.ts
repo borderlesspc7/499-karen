@@ -33,6 +33,12 @@ export {
   toCampaignRequest,
 } from './utils/generate-campaign-content'
 export { scopedDocId } from './utils/scoped-doc-id'
+export {
+  attachMetaIdsToClient,
+  attachMetaIdsToOpportunity,
+  buildMetaAdsLeadDraft,
+  buildMetaScopedEntityIds,
+} from './utils/meta-lead-ingestion'
 export type {
   CampaignPreviewCard,
   GenerateCampaignInput,

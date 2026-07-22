@@ -61,6 +61,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: {
       package: 'com.borderless.app',
       versionCode: 1,
+      softwareKeyboardLayoutMode: 'resize',
       adaptiveIcon: {
         backgroundColor: '#04122C',
         foregroundImage: './assets/images/android-icon-foreground.png',
@@ -74,6 +75,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     plugins: [
       'expo-router',
       'expo-font',
+      '@react-native-community/datetimepicker',
       [
         'expo-splash-screen',
         {

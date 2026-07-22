@@ -49,9 +49,23 @@ function CrmOpportunityCardComponent({
           <Text className="text-xs font-medium text-violet-700">{categoryLabels[card.category]}</Text>
         </View>
         <Text className="text-xs font-medium text-amber-700">{priorityLabels[card.priority]}</Text>
-        {card.isClientDerived ? (
+        {card.dealValue > 0 ? (
           <View className="rounded-full bg-emerald-100 px-2.5 py-0.5">
-            <Text className="text-xs font-medium text-emerald-700">Do cadastro</Text>
+            <Text className="text-xs font-medium text-emerald-700">
+              R$ {card.dealValue.toLocaleString('pt-BR')}
+            </Text>
+          </View>
+        ) : null}
+        {card.source !== 'manual' ? (
+          <View className="rounded-full bg-sky-100 px-2.5 py-0.5">
+            <Text className="text-xs font-medium text-sky-700">
+              {card.source === 'meta_ads' ? 'Meta Ads' : 'Campanha'}
+            </Text>
+          </View>
+        ) : null}
+        {card.isClientDerived ? (
+          <View className="rounded-full bg-slate-200 px-2.5 py-0.5">
+            <Text className="text-xs font-medium text-slate-700">Do cadastro</Text>
           </View>
         ) : null}
       </View>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -10,8 +11,14 @@ import {
 import { ThemedScreen } from '@/components/layout/AppScreen'
 import { DesktopContent } from '@/components/layout/DesktopContent'
 import { CrmKanbanBoard } from '@/components/crm/CrmKanbanBoard'
-import { LeadDetailModal, PipelineValueBanner } from '@/components/opportunities'
-import type { KanbanCardWithClient, KanbanColumn } from '@shared/types'
+import {
+  LeadDetailModal,
+  OpportunityFormModal,
+  PipelineValueBanner,
+  parseDealValueInput,
+  type OpportunityFormValues,
+} from '@/components/opportunities'
+import type { Client, KanbanCardWithClient, KanbanColumn } from '@shared/types'
 import { useAuth, useGamification } from '@shared/contexts'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -21,7 +28,13 @@ import {
   computePipelineNegotiationValue,
   type GrowthFlowLead,
 } from '@/lib/crm-lead-insights'
-import { loadLinkedCrmSnapshot, moveOpportunityToColumn } from '@/lib/crm-client-service'
+import {
+  createOpportunity,
+  deleteOpportunity,
+  loadLinkedCrmSnapshot,
+  moveOpportunityToColumn,
+  updateOpportunity,
+} from '@/lib/crm-client-service'
 import { moveCardBetweenColumns, normalizeColumnOrders } from '@/lib/crm-move-card'
 
 export default function OpportunitiesScreen() {
@@ -32,16 +45,21 @@ export default function OpportunitiesScreen() {
 
   const [columns, setColumns] = useState<KanbanColumn[]>([])
   const [cards, setCards] = useState<KanbanCardWithClient[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedLead, setSelectedLead] = useState<GrowthFlowLead | null>(null)
   const [activeDragCardId, setActiveDragCardId] = useState<string | null>(null)
   const [overColumnId, setOverColumnId] = useState<string | null>(null)
+  const [isFormVisible, setIsFormVisible] = useState(false)
+  const [editingCard, setEditingCard] = useState<KanbanCardWithClient | null>(null)
 
   const loadOpportunities = useCallback(async () => {
     if (!currentUser?.id) {
       setColumns([])
       setCards([])
+      setClients([])
       setIsLoading(false)
       return
     }
@@ -53,6 +71,7 @@ export default function OpportunitiesScreen() {
       const snapshot = await loadLinkedCrmSnapshot(currentUser.id)
       setColumns(snapshot.columns)
       setCards(snapshot.cards)
+      setClients(snapshot.clients)
     } catch (loadError) {
       const message =
         loadError instanceof Error
@@ -85,6 +104,7 @@ export default function OpportunitiesScreen() {
         .then((snapshot) => {
           setColumns(snapshot.columns)
           setCards(snapshot.cards)
+          setClients(snapshot.clients)
         })
         .catch(() => {
           void loadOpportunities()
@@ -109,6 +129,100 @@ export default function OpportunitiesScreen() {
     if (lead) {
       setSelectedLead(lead)
     }
+  }
+
+  function openCreateForm() {
+    setEditingCard(null)
+    setIsFormVisible(true)
+  }
+
+  function openEditFromLead(lead: GrowthFlowLead) {
+    setSelectedLead(null)
+    setEditingCard(lead)
+    setIsFormVisible(true)
+  }
+
+  async function handleSubmitOpportunity(values: OpportunityFormValues) {
+    if (!currentUser?.id) {
+      return
+    }
+
+    setIsSaving(true)
+    setError(null)
+
+    try {
+      const dealValue = parseDealValueInput(values.dealValue)
+      const snapshot = editingCard
+        ? await updateOpportunity(currentUser.id, editingCard.id, {
+            title: values.title,
+            description: values.description,
+            category: values.category,
+            priority: values.priority,
+            clientId: values.clientId ?? undefined,
+            clientName: values.clientName,
+            dueDate: values.dueDate,
+            columnId: values.columnId,
+            dealValue,
+          })
+        : await createOpportunity({
+            userId: currentUser.id,
+            title: values.title,
+            description: values.description,
+            category: values.category,
+            priority: values.priority,
+            clientId: values.clientId ?? undefined,
+            clientName: values.clientName,
+            dueDate: values.dueDate,
+            columnId: values.columnId,
+            dealValue,
+            attribution: { source: 'manual' },
+          })
+
+      setColumns(snapshot.columns)
+      setCards(snapshot.cards)
+      setClients(snapshot.clients)
+      setIsFormVisible(false)
+      setEditingCard(null)
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : 'Não foi possível salvar a oportunidade.',
+      )
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  function handleDeleteLead(lead: GrowthFlowLead) {
+    if (!currentUser?.id) {
+      return
+    }
+
+    Alert.alert('Excluir oportunidade', `Remover "${lead.title}" do funil?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            try {
+              const snapshot = await deleteOpportunity(currentUser.id, lead.id)
+              setColumns(snapshot.columns)
+              setCards(snapshot.cards)
+              setClients(snapshot.clients)
+              setSelectedLead(null)
+            } catch (deleteError) {
+              setError(
+                deleteError instanceof Error
+                  ? deleteError.message
+                  : 'Não foi possível excluir a oportunidade.',
+              )
+            }
+          })()
+        },
+      },
+    ])
   }
 
   if (isLoading && cards.length === 0) {
@@ -136,13 +250,22 @@ export default function OpportunitiesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <DesktopContent maxWidth="7xl" className="gap-6">
-          <View className="gap-2">
-            <Text className={['text-3xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
-              Oportunidades
-            </Text>
-            <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
-              Kanban CRM sincronizado com Firestore — arraste cards entre etapas do funil.
-            </Text>
+          <View className="flex-row items-start justify-between gap-3">
+            <View className="flex-1 gap-2">
+              <Text className={['text-3xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
+                Oportunidades
+              </Text>
+              <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
+                Funil CRM no Firestore. Cadastre deals agora; leads de Meta Ads entram na mesma
+                estrutura depois.
+              </Text>
+            </View>
+            <Pressable
+              onPress={openCreateForm}
+              className="rounded-2xl bg-electricBlue px-4 py-3 active:opacity-80"
+            >
+              <Text className="text-sm font-semibold text-white">Nova</Text>
+            </Pressable>
           </View>
 
           {growthFlowLeads.length > 0 ? (
@@ -161,14 +284,13 @@ export default function OpportunitiesScreen() {
                 Nenhuma oportunidade no pipeline
               </Text>
               <Text className={['text-center text-sm', tc.textSecondary].join(' ')}>
-                Cadastre clientes ou crie cards no funil para começar.
+                Crie a primeira oportunidade ou cadastre um cliente para começar.
               </Text>
               <Pressable
-                onPress={() => void loadOpportunities()}
-                disabled={isLoading}
+                onPress={openCreateForm}
                 className="rounded-2xl bg-electricBlue px-5 py-3 active:opacity-80"
               >
-                <Text className="font-semibold text-white">Atualizar</Text>
+                <Text className="font-semibold text-white">Criar oportunidade</Text>
               </Pressable>
             </View>
           ) : (
@@ -192,6 +314,21 @@ export default function OpportunitiesScreen() {
         visible={selectedLead !== null}
         onClose={() => setSelectedLead(null)}
         onExecute={() => executeAction('follow-up-leads')}
+        onEdit={selectedLead ? () => openEditFromLead(selectedLead) : undefined}
+        onDelete={selectedLead ? () => handleDeleteLead(selectedLead) : undefined}
+      />
+
+      <OpportunityFormModal
+        visible={isFormVisible}
+        columns={columns}
+        clients={clients}
+        initialCard={editingCard}
+        isSaving={isSaving}
+        onClose={() => {
+          setIsFormVisible(false)
+          setEditingCard(null)
+        }}
+        onSubmit={(values) => void handleSubmitOpportunity(values)}
       />
     </ThemedScreen>
   )
