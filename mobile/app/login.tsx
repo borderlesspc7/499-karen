@@ -11,7 +11,7 @@ import {
 } from 'react-native'
 import { Redirect } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useAuth, useGamification } from '@shared/contexts'
+import { useAuth, useGamification, useSubscription } from '@shared/contexts'
 import { getAuthErrorMessage } from '@shared/services'
 import { SummusLogo } from '@/components/ui/SummusLogo'
 import { summusBrand } from '@/constants/summus-brand'
@@ -31,7 +31,7 @@ const authModeContent: Record<
   },
   signup: {
     title: 'Cadastrar',
-    subtitle: 'Ative o Núcleo Cognitivo — Context, Decision e Blind Spot em toda interação.',
+    subtitle: 'Crie sua conta. Depois você escolhe o plano e libera o acesso.',
     submitLabel: 'Criar conta',
     toggleLabel: 'Já possui conta? Entrar',
   },
@@ -50,6 +50,7 @@ function mapAuthErrorMessage(error: unknown) {
 export default function LoginScreen() {
   const { currentUser, isAuthLoading, signIn, signUp, resetPassword } = useAuth()
   const { isHydrated, isOnboardingComplete } = useGamification()
+  const { hasActiveSubscription, isSubscriptionLoading } = useSubscription()
   const { isWebDesktop } = useResponsiveLayout()
   const [authMode, setAuthMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState('')
@@ -60,7 +61,7 @@ export default function LoginScreen() {
 
   const content = useMemo(() => authModeContent[authMode], [authMode])
 
-  if (isAuthLoading) {
+  if (isAuthLoading || (currentUser && (isSubscriptionLoading || !isHydrated))) {
     return (
       <View
         className="flex-1 items-center justify-center"
@@ -72,15 +73,8 @@ export default function LoginScreen() {
   }
 
   if (currentUser) {
-    if (!isHydrated) {
-      return (
-        <View
-          className="flex-1 items-center justify-center"
-          style={{ backgroundColor: summusBrand.backgroundColor }}
-        >
-          <ActivityIndicator size="large" color="#C5A059" />
-        </View>
-      )
+    if (!hasActiveSubscription) {
+      return <Redirect href="/plans" />
     }
 
     return (

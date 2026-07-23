@@ -22,8 +22,35 @@ service cloud.firestore {
       return request.resource.data.userId == resource.data.userId;
     }
 
+    // Assinatura: cliente só grava mode == 'mock' (demo). Stripe real = Admin SDK.
+    function subscriptionWriteAllowed() {
+      return !('subscription' in request.resource.data)
+        || request.resource.data.subscription == null
+        || (
+          request.resource.data.subscription.keys().hasAll(['mode', 'status', 'planId'])
+          && request.resource.data.subscription.mode == 'mock'
+          && request.resource.data.subscription.status == 'active'
+        )
+        || (
+          resource.data.keys().hasAny(['subscription'])
+          && request.resource.data.subscription == resource.data.subscription
+        );
+    }
+
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && (
+          !('subscription' in request.resource.data)
+          || request.resource.data.subscription == null
+          || (
+            request.resource.data.subscription.keys().hasAll(['mode', 'status', 'planId'])
+            && request.resource.data.subscription.mode == 'mock'
+            && request.resource.data.subscription.status == 'active'
+          )
+        );
+      allow update: if isOwner(userId) && subscriptionWriteAllowed();
+      allow delete: if isOwner(userId);
 
       match /campaigns/{campaignId} {
         allow read, write: if isOwner(userId);
@@ -69,6 +96,15 @@ service cloud.firestore {
     match /channel_connections/{userId}/channels/{channelId} {
       allow read: if isOwner(userId);
       allow write: if false;
+    }
+
+    // Stripe — somente Admin SDK
+    match /stripe_webhook_events/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /stripe_checkout_sessions/{sessionId} {
+      allow read, write: if false;
     }
 
     match /conversations/{conversationId} {

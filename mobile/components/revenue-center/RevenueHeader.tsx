@@ -49,7 +49,7 @@ export function RevenueHeader({ userName }: RevenueHeaderProps) {
           {greeting}, {userName}.
         </Text>
         <Text className={['mt-1 text-sm', tc.textSecondary].join(' ')}>
-          O Núcleo Cognitivo está ampliando como você decide e age.
+          Aqui está o resumo do seu negócio e o que fazer agora.
         </Text>
       </View>
 

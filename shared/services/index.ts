@@ -10,6 +10,15 @@ export {
   type GamificationPersistence,
 } from './gamification-persistence'
 export {
+  configureSubscriptionBackend,
+  configureSubscriptionPersistence,
+  getSubscriptionBackend,
+  getSubscriptionPersistence,
+  type SubscriptionBackend,
+  type SubscriptionListener,
+  type SubscriptionPersistence,
+} from './subscription-backend'
+export {
   buildRevenueCenterSnapshot,
   buildRevenueKpis,
   formatCurrencyBrl,

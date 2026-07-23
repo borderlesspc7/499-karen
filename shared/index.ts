@@ -5,6 +5,15 @@ export * from './services'
 export * from './contexts'
 export * from './constants/firestore-collections'
 export {
+  SUBSCRIPTION_PLANS,
+  formatPlanPriceBrl,
+  getSubscriptionPlan,
+} from './constants/subscription-plans'
+export {
+  buildActiveSubscription,
+  parseUserSubscription,
+} from './utils/subscription-helpers'
+export {
   buildLinkedCrmSnapshot,
   buildMissingClientOpportunityCards,
   dedupeCardsById,

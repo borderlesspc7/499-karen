@@ -13,7 +13,11 @@ import {
   Shield,
   Users,
 } from 'lucide-react-native'
-import { useAuth, useGamification } from '@shared/contexts'
+import { useAuth, useGamification, useSubscription } from '@shared/contexts'
+import {
+  formatPlanPriceBrl,
+  getSubscriptionPlan,
+} from '@shared/constants/subscription-plans'
 import { AppScreen } from '@/components/layout/AppScreen'
 import { PageScroll } from '@/components/layout/PageScroll'
 import { ScreenHeader } from '@/components/ui/ScreenHeader'
@@ -41,10 +45,12 @@ export default function SettingsScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const { currentUser, signOutUser } = useAuth()
   const { brandIdentity, userProfile, setBrandIdentity } = useGamification()
+  const { subscription, openCustomerPortal } = useSubscription()
   const { settings, isLoading, updateIntegrations } = useUserSettings()
   const [activeSection, setActiveSection] = useState<SettingsSection>('geral')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved'>('idle')
   const [brandSaveTrigger, setBrandSaveTrigger] = useState(0)
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false)
 
   const connected = settings?.integrations ?? {
     instagram: false,
@@ -237,13 +243,51 @@ export default function SettingsScreen() {
         <View className="gap-4">
           <View className="rounded-3xl bg-violet-600 p-5">
             <Text className="text-sm text-violet-100">Plano atual</Text>
-            <Text className="mt-2 text-2xl font-semibold text-white">Summus Edge</Text>
-            <Text className="mt-1 text-sm text-violet-100">Cognitive Operating System</Text>
-            <Text className="mt-2 text-sm text-violet-100">R$ 297 / mês</Text>
-            <Pressable className="mt-4 rounded-2xl bg-white py-3">
-              <Text className="text-center text-sm font-semibold text-violet-700">Upgrade</Text>
+            <Text className="mt-2 text-2xl font-semibold text-white">
+              {subscription
+                ? getSubscriptionPlan(subscription.planId).productName
+                : 'Summus Edge'}
+            </Text>
+            <Text className="mt-1 text-sm text-violet-100">
+              {subscription
+                ? `Plano ${getSubscriptionPlan(subscription.planId).name}`
+                : 'Cognitive Operating System'}
+            </Text>
+            <Text className="mt-2 text-sm text-violet-100">
+              {subscription
+                ? subscription.billingInterval === 'year'
+                  ? `${formatPlanPriceBrl(getSubscriptionPlan(subscription.planId).priceYearlyCents)} / ano`
+                  : `${formatPlanPriceBrl(getSubscriptionPlan(subscription.planId).priceMonthlyCents)} / mês`
+                : 'R$ 297 / mês'}
+            </Text>
+            <Text className="mt-3 text-xs text-violet-200">
+              Status:{' '}
+              {subscription?.status === 'active'
+                ? 'Ativo'
+                : subscription?.status ?? 'Sem assinatura'}
+              {subscription?.mode === 'mock' ? ' · Demo Stripe' : ''}
+            </Text>
+            <Pressable
+              disabled={isOpeningPortal}
+              onPress={async () => {
+                setIsOpeningPortal(true)
+                try {
+                  await openCustomerPortal()
+                } finally {
+                  setIsOpeningPortal(false)
+                }
+              }}
+              className="mt-4 rounded-2xl bg-white py-3"
+            >
+              <Text className="text-center text-sm font-semibold text-violet-700">
+                {isOpeningPortal ? 'Abrindo…' : 'Gerenciar assinatura'}
+              </Text>
             </Pressable>
           </View>
+          <Text className="text-xs leading-5 text-slate-500">
+            Em produção, o portal Stripe Billing permite trocar cartão, baixar faturas e cancelar.
+            Neste ambiente o fluxo está em modo demonstração.
+          </Text>
         </View>
       ) : null}
     </View>

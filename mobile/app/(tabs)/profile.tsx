@@ -23,7 +23,8 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { premiumColors } from '@/constants/premium-theme'
 import { platformEntering } from '@/lib/platform-animation'
-import { useAuth, useGamification } from '@shared/contexts'
+import { useAuth, useGamification, useSubscription } from '@shared/contexts'
+import { getSubscriptionPlan } from '@shared/constants/subscription-plans'
 
 const STAGGER_MS = 70
 const ENTER_DURATION_MS = 420
@@ -90,6 +91,7 @@ export default function ProfileScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const tc = useThemeClasses()
   const { currentUser, signOutUser } = useAuth()
+  const { subscription } = useSubscription()
   const {
     level,
     title,
@@ -104,6 +106,10 @@ export default function ProfileScreen() {
     companyStage,
     companyTier,
   } = useGamification()
+
+  const planLabel = subscription
+    ? `${getSubscriptionPlan(subscription.planId).name} Plan`
+    : 'Sem plano'
 
   const displayName = useMemo(() => resolveDisplayName(currentUser?.email), [currentUser?.email])
   const initials = useMemo(() => resolveInitials(displayName), [displayName])
@@ -176,7 +182,7 @@ export default function ProfileScreen() {
               <View className="mt-1 flex-row flex-wrap gap-2">
                 <View className="rounded-full bg-gold/15 px-2.5 py-0.5">
                   <Text className="text-[10px] font-bold uppercase tracking-wider text-gold">
-                    Elite Plan
+                    {planLabel}
                   </Text>
                 </View>
                 {userProfile ? (

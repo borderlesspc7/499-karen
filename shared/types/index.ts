@@ -13,6 +13,20 @@ export type {
 } from './brand-identity'
 export type { AuthUser, MockUser } from './auth'
 export type {
+  ConfirmMockCheckoutRequest,
+  ConfirmMockCheckoutResponse,
+  CreateCheckoutSessionRequest,
+  CreateCheckoutSessionResponse,
+  PlanEntitlements,
+  SubscriptionBillingInterval,
+  SubscriptionMode,
+  SubscriptionPlan,
+  SubscriptionPlanId,
+  SubscriptionStatus,
+  UserSubscription,
+} from './subscription'
+export { isSubscriptionActive } from './subscription'
+export type {
   Automation,
   AutomationAction,
   AutomationTemplate,

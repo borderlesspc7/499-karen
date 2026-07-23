@@ -9,7 +9,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import 'react-native-reanimated'
 import { configureStorage } from '@shared/storage'
-import { AuthProvider, GamificationProvider, ThemeProvider } from '@shared/contexts'
+import {
+  AuthProvider,
+  GamificationProvider,
+  SubscriptionProvider,
+  ThemeProvider,
+} from '@shared/contexts'
 import { createAsyncStorageAdapter } from '@/lib/async-storage'
 import { premiumColors } from '@/constants/premium-theme'
 import { FirebaseBootstrap } from '@/components/FirebaseBootstrap'
@@ -50,22 +55,25 @@ export default function RootLayout() {
           <ThemeProvider>
             <ThemeSync />
             <AuthProvider>
-              <GamificationProvider>
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="login" />
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen
-                    name="reports"
-                    options={{
-                      headerShown: Platform.OS !== 'web',
-                      title: 'Relatórios',
-                      headerStyle: { backgroundColor: premiumColors.navy },
-                      headerTintColor: premiumColors.gold,
-                    }}
-                  />
-                </Stack>
-              </GamificationProvider>
+              <SubscriptionProvider>
+                <GamificationProvider>
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="index" />
+                    <Stack.Screen name="login" />
+                    <Stack.Screen name="plans" />
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen
+                      name="reports"
+                      options={{
+                        headerShown: Platform.OS !== 'web',
+                        title: 'Relatórios',
+                        headerStyle: { backgroundColor: premiumColors.navy },
+                        headerTintColor: premiumColors.gold,
+                      }}
+                    />
+                  </Stack>
+                </GamificationProvider>
+              </SubscriptionProvider>
             </AuthProvider>
           </ThemeProvider>
         </FirebaseBootstrap>

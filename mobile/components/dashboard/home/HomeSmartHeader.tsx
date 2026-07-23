@@ -43,7 +43,7 @@ export function HomeSmartHeader({ userName }: HomeSmartHeaderProps) {
           {greeting}, {userName}.
         </Text>
         <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
-          Context, Decision e Blind Spot operando em segundo plano.
+          Veja o panorama do negócio e escolha a próxima ação com clareza.
         </Text>
       </View>
 

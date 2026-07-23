@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native'
 import { router } from 'expo-router'
-import { useGamification } from '@shared/contexts'
+import { useGamification, useSubscription } from '@shared/contexts'
+import { getSubscriptionPlan } from '@shared/constants/subscription-plans'
 
 type GamificationProfileCardProps = {
   displayName?: string
@@ -13,9 +14,13 @@ function formatXp(value: number): string {
 
 export function GamificationProfileCard({
   displayName = 'Sarah Johnson',
-  planLabel = 'Elite Plan',
+  planLabel,
 }: GamificationProfileCardProps) {
   const { level, currentXp, maxXp, xpProgress } = useGamification()
+  const { subscription } = useSubscription()
+  const resolvedPlanLabel =
+    planLabel ??
+    (subscription ? `${getSubscriptionPlan(subscription.planId).name} Plan` : 'Elite Plan')
   const initials = displayName
     .split(' ')
     .map((part) => part[0])
@@ -38,7 +43,7 @@ export function GamificationProfileCard({
           <Text className="text-sm font-semibold text-white">{displayName}</Text>
           <View className="mt-1 self-start rounded-full bg-gold/15 px-2 py-0.5">
             <Text className="text-[10px] font-bold uppercase tracking-wider text-gold">
-              {planLabel}
+              {resolvedPlanLabel}
             </Text>
           </View>
         </View>

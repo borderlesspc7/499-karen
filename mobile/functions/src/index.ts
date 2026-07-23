@@ -11,3 +11,9 @@ export {
   generateLeadInsight,
   generateSmartReplies,
 } from './ai-orchestration'
+export {
+  createCheckoutSession,
+  confirmMockCheckout,
+  createBillingPortalSession,
+  stripeWebhook,
+} from './stripe-billing'

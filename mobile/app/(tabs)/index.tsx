@@ -11,6 +11,7 @@ import { OpportunitySection } from '@/components/revenue-center/OpportunityCard'
 import { RevenueHeader } from '@/components/revenue-center/RevenueHeader'
 import { RevenueKpiGrid } from '@/components/revenue-center/RevenueKpiGrid'
 import { RevenueMobileHero } from '@/components/revenue-center/RevenueMobileHero'
+import { GettingStartedChecklist } from '@/components/guidance/GettingStartedChecklist'
 import { LINKEDIN_AUTHORITY_OPPORTUNITY } from '@/constants/ai-content-engine'
 import { CAMPAIGN_LAUNCHED_PARAM } from '@/constants/campaign-journey'
 import { useAnalyticsData } from '@/hooks/useAnalyticsData'
@@ -159,6 +160,8 @@ export default function HomeScreen() {
       >
         <DesktopContent maxWidth="7xl" className="gap-8">
         <RevenueHeader userName={userName} />
+
+        <GettingStartedChecklist />
 
         {isWebDesktop ? (
           <RevenueKpiGrid kpis={kpis} />
