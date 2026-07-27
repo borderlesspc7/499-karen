@@ -41,7 +41,7 @@ export function SidebarUserProfile({ displayName }: SidebarUserProfileProps) {
         <Text className="text-sm font-semibold text-white" numberOfLines={1}>
           {name}
         </Text>
-        <Text className="text-xs text-white/45">Cognitive OS</Text>
+        <Text className="text-xs text-white/45">Meridian</Text>
       </View>
     </Pressable>
   )

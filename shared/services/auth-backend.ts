@@ -1,10 +1,21 @@
-import type { AuthUser } from '../types/auth'
+import type { AuthUser, SocialAuthProvider } from '../types/auth'
+
+export type SocialAuthCredential = {
+  provider: SocialAuthProvider
+  idToken: string
+  accessToken?: string
+  nonce?: string
+}
 
 export type AuthBackend = {
   onAuthStateChanged: (callback: (user: AuthUser | null) => void) => () => void
   signIn: (email: string, password: string) => Promise<AuthUser>
   signUp: (email: string, password: string) => Promise<AuthUser>
   resetPassword: (email: string) => Promise<void>
+  sendEmailVerification: () => Promise<void>
+  reloadCurrentUser: () => Promise<AuthUser | null>
+  signInWithSocial: (credential: SocialAuthCredential) => Promise<AuthUser>
+  signInWithSocialPopup: (provider: SocialAuthProvider) => Promise<AuthUser>
   signOut: () => Promise<void>
 }
 

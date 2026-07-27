@@ -32,7 +32,7 @@ export function AppSidebar() {
           Summus Edge
         </Text>
         <Text className="mt-1 text-xl font-semibold text-slate-900">
-          Cognitive Operating System
+          Meridian
         </Text>
         <Text className="mt-1 text-sm text-slate-500">Olá, {userLabel}</Text>
       </View>

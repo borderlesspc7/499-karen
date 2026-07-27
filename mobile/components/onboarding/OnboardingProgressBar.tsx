@@ -1,4 +1,4 @@
-import { Pressable, Text, View } from 'react-native'
+import { Text, View } from 'react-native'
 
 type OnboardingProgressBarProps = {
   currentStep: number
@@ -9,7 +9,7 @@ export function OnboardingProgressBar({ currentStep, totalSteps }: OnboardingPro
   const progress = Math.min(1, Math.max(0, currentStep / totalSteps))
 
   return (
-    <View className="mb-8 gap-2">
+    <View className="gap-2">
       <View className="flex-row items-center justify-between">
         <Text className="text-xs font-medium uppercase tracking-wider text-white/40">
           Identidade da marca

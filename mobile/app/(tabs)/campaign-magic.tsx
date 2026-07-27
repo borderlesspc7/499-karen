@@ -91,6 +91,7 @@ export default function CampaignMagicScreen() {
     loadActiveCampaigns,
     handleStartCreate,
     handleBackToHub,
+    handleBackToWizardStart,
     handleLoadingComplete,
     handleGenerate,
     handleEdit,
@@ -148,6 +149,16 @@ export default function CampaignMagicScreen() {
                     ← Campanhas ativas
                   </Text>
                 </Pressable>
+                {wizardStep > 0 ? (
+                  <Pressable
+                    onPress={handleBackToWizardStart}
+                    className="self-start active:opacity-70"
+                  >
+                    <Text className={['text-xs font-semibold', tc.backText].join(' ')}>
+                      Voltar ao início do formulário
+                    </Text>
+                  </Pressable>
+                ) : null}
                 <View className="flex-row items-center gap-2 self-start rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5">
                   <Sparkles size={12} color="#C5A059" />
                   <Text className="text-[11px] font-bold uppercase tracking-wider text-gold">
@@ -158,7 +169,7 @@ export default function CampaignMagicScreen() {
                   Criador de Campanhas
                 </Text>
                 <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
-                  Responda algumas perguntas e a IA cria toda a campanha para você.
+                  Responda algumas perguntas e a Meridian cria toda a campanha para você.
                 </Text>
               </Animated.View>
 

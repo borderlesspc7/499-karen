@@ -1,6 +1,6 @@
 /**
  * @deprecated Prefer `@/constants/cognitive-engines`.
- * Mantido para compatibilidade com imports legados — agora espelha o Cognitive Core.
+ * Mantido para compatibilidade com imports legados — agora espelha a Meridian.
  */
 import {
   COGNITIVE_ENGINES,

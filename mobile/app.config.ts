@@ -57,6 +57,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.borderless.app',
+      usesAppleSignIn: true,
     },
     android: {
       package: 'com.borderless.app',
@@ -76,11 +77,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-router',
       'expo-font',
       '@react-native-community/datetimepicker',
+      'expo-apple-authentication',
       [
         'expo-splash-screen',
         {
           image: './assets/images/splash-icon.png',
-          imageWidth: 280,
+          imageWidth: 180,
           resizeMode: 'contain',
           backgroundColor: '#04122C',
         },
@@ -92,6 +94,13 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     extra: {
       ...config?.extra,
       firebase,
+      oauth: {
+        googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim() || '',
+        googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID?.trim() || '',
+        googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID?.trim() || '',
+        facebookAppId: process.env.EXPO_PUBLIC_FACEBOOK_APP_ID?.trim() || '',
+        microsoftClientId: process.env.EXPO_PUBLIC_MICROSOFT_CLIENT_ID?.trim() || '',
+      },
       eas: {
         projectId: '64b83486-e3e3-4b1c-9ed4-68c2f5092dc9',
       },

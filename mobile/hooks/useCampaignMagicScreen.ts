@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router } from 'expo-router'
 import {
   buildCampaignPrompt,
@@ -34,6 +35,12 @@ const INITIAL_WIZARD_DATA: CampaignWizardData = {
   offer: '',
 }
 
+const WIZARD_DRAFT_DEBOUNCE_MS = 500
+
+function wizardDraftKey(userId: string) {
+  return `summus_campaign_wizard_draft_v1:${userId}`
+}
+
 function resolveCampaignTitle(data: CampaignWizardData): string {
   if (data.offer.trim()) {
     return data.offer.trim()
@@ -56,6 +63,8 @@ export function useCampaignMagicScreen() {
   const [isPublishing, setIsPublishing] = useState(false)
   const [generatedCampaign, setGeneratedCampaign] =
     useState<GeneratedCampaignContent>(EMPTY_CAMPAIGN)
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false)
+  const draftTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const [activeCampaigns, setActiveCampaigns] = useState<SavedCampaign[]>([])
   const [isLoadingCampaigns, setIsLoadingCampaigns] = useState(true)
@@ -101,6 +110,78 @@ export function useCampaignMagicScreen() {
     void loadActiveCampaigns()
   }, [loadActiveCampaigns])
 
+  useEffect(() => {
+    if (!currentUser?.id || hasRestoredDraft) {
+      return
+    }
+
+    let isMounted = true
+
+    void AsyncStorage.getItem(wizardDraftKey(currentUser.id)).then((raw) => {
+      if (!isMounted) return
+
+      if (raw) {
+        try {
+          const draft = JSON.parse(raw) as {
+            wizardStep?: CampaignWizardStep
+            wizardData?: CampaignWizardData
+            phase?: CampaignScreenPhase
+          }
+
+          if (draft.wizardData) {
+            setWizardData({ ...INITIAL_WIZARD_DATA, ...draft.wizardData })
+          }
+          if (typeof draft.wizardStep === 'number') {
+            setWizardStep(draft.wizardStep)
+          }
+          if (draft.phase === 'wizard') {
+            setPhase('wizard')
+          }
+        } catch {
+          // rascunho inválido
+        }
+      }
+
+      setHasRestoredDraft(true)
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [currentUser?.id, hasRestoredDraft])
+
+  useEffect(() => {
+    if (!currentUser?.id || !hasRestoredDraft || phase !== 'wizard') {
+      return
+    }
+
+    if (draftTimeoutRef.current) {
+      clearTimeout(draftTimeoutRef.current)
+    }
+
+    draftTimeoutRef.current = setTimeout(() => {
+      void AsyncStorage.setItem(
+        wizardDraftKey(currentUser.id),
+        JSON.stringify({
+          phase,
+          wizardStep,
+          wizardData,
+        }),
+      )
+    }, WIZARD_DRAFT_DEBOUNCE_MS)
+
+    return () => {
+      if (draftTimeoutRef.current) {
+        clearTimeout(draftTimeoutRef.current)
+      }
+    }
+  }, [currentUser?.id, hasRestoredDraft, phase, wizardStep, wizardData])
+
+  const clearWizardDraft = useCallback(async () => {
+    if (!currentUser?.id) return
+    await AsyncStorage.removeItem(wizardDraftKey(currentUser.id))
+  }, [currentUser?.id])
+
   const handleStartCreate = useCallback(() => {
     setWizardData(INITIAL_WIZARD_DATA)
     setWizardStep(0)
@@ -115,6 +196,11 @@ export function useCampaignMagicScreen() {
     void loadActiveCampaigns()
   }, [loadActiveCampaigns])
 
+  const handleBackToWizardStart = useCallback(() => {
+    setWizardStep(0)
+    setPhase('wizard')
+  }, [])
+
   const handleLoadingComplete = useCallback(() => {
     setPhase('dashboard')
   }, [])
@@ -123,6 +209,7 @@ export function useCampaignMagicScreen() {
     const builtPrompt = buildCampaignPrompt(wizardData)
     setPrompt(builtPrompt)
     setPhase('loading')
+    void clearWizardDraft()
 
     void generateCampaignContent({
       userPrompt: builtPrompt,
@@ -144,7 +231,7 @@ export function useCampaignMagicScreen() {
             : 'Não foi possível gerar a campanha com IA.'
         Alert.alert('IA indisponível', message)
       })
-  }, [wizardData, brandIdentity, brandAiContext, userProfile])
+  }, [wizardData, brandIdentity, brandAiContext, userProfile, clearWizardDraft])
 
   const handleEdit = useCallback(() => {
     Alert.alert(
@@ -180,6 +267,7 @@ export function useCampaignMagicScreen() {
 
       executeAction('launch-campaign')
       await loadActiveCampaigns()
+      await clearWizardDraft()
       setIsSuccessVisible(true)
     } catch (error) {
       const message =
@@ -198,6 +286,7 @@ export function useCampaignMagicScreen() {
     prompt,
     executeAction,
     loadActiveCampaigns,
+    clearWizardDraft,
   ])
 
   const navigateToHomeAfterLaunch = useCallback(() => {
@@ -240,6 +329,7 @@ export function useCampaignMagicScreen() {
     loadActiveCampaigns,
     handleStartCreate,
     handleBackToHub,
+    handleBackToWizardStart,
     handleLoadingComplete,
     handleGenerate,
     handleEdit,

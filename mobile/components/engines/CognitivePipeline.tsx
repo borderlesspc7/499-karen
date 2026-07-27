@@ -12,7 +12,7 @@ export function CognitivePipeline({ compact = false }: CognitivePipelineProps) {
   return (
     <View className={['p-5', tc.cardLg].join(' ')} style={tc.cardShadow}>
       <Text className={['text-xs font-bold uppercase tracking-wider text-gold'].join(' ')}>
-        Pipeline do Núcleo
+        Pipeline Meridian
       </Text>
       <Text className={['mt-1 text-base font-bold', tc.textPrimary].join(' ')}>
         Um único cérebro

@@ -4,9 +4,10 @@ export const summusLogoIconImage = require('../assets/images/summus-logo-icon.pn
 export const summusBrand = {
   name: 'Summus Edge',
   shortName: 'Summus',
-  tagline: 'Cognitive Operating System',
-  taglinePt: 'Sistema Operacional Cognitivo',
+  tagline: 'Meridian AI',
+  taglinePt: 'Meridian — CMO virtual da sua empresa',
   positioning:
-    'Amplia a capacidade humana de perceber, analisar, decidir e agir.',
+    'A Meridian compreende o negócio, aprende com você e age como um estrategista de marketing.',
   backgroundColor: '#04122C',
+  aiName: 'Meridian',
 } as const

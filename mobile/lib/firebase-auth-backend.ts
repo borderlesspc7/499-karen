@@ -1,20 +1,30 @@
 import {
   createUserWithEmailAndPassword,
+  FacebookAuthProvider,
+  GoogleAuthProvider,
+  OAuthProvider,
   onAuthStateChanged,
+  sendEmailVerification,
   sendPasswordResetEmail,
+  signInWithCredential,
   signInWithEmailAndPassword,
+  signInWithPopup,
   signOut,
+  type AuthProvider,
   type User,
 } from 'firebase/auth'
-import type { AuthBackend } from '@shared/services/auth-backend'
+import type { AuthBackend, SocialAuthCredential } from '@shared/services/auth-backend'
 import { AuthError, mapFirebaseAuthError } from '@shared/services/auth-error'
-import type { AuthUser } from '@shared/types/auth'
+import type { AuthUser, SocialAuthProvider } from '@shared/types/auth'
+import { assertPasswordStrongEnough } from '@shared/utils/password-strength'
 import { getFirebaseAuth } from './firebase'
 
 function toAuthUser(user: User): AuthUser {
   return {
     id: user.uid,
     email: user.email ?? '',
+    emailVerified: user.emailVerified,
+    providerIds: user.providerData.map((provider) => provider.providerId),
   }
 }
 
@@ -24,16 +34,74 @@ function validateEmail(email: string) {
   }
 }
 
-function validatePassword(password: string) {
+function validatePasswordForSignIn(password: string) {
   if (!password) {
     throw new AuthError('auth/missing-password', 'Informe uma senha.')
   }
+}
 
-  if (password.length < 6) {
+function validatePasswordForSignUp(password: string) {
+  validatePasswordForSignIn(password)
+
+  try {
+    assertPasswordStrongEnough(password)
+  } catch (error) {
     throw new AuthError(
       'auth/weak-password',
-      'A senha deve conter pelo menos 6 caracteres.',
+      error instanceof Error
+        ? error.message
+        : 'A senha deve ser forte: mínimo 8 caracteres, maiúscula, minúscula, número e especial.',
     )
+  }
+}
+
+function createFirebaseProvider(provider: SocialAuthProvider): AuthProvider {
+  switch (provider) {
+    case 'google':
+      return new GoogleAuthProvider()
+    case 'facebook':
+      return new FacebookAuthProvider()
+    case 'apple': {
+      const apple = new OAuthProvider('apple.com')
+      apple.addScope('email')
+      apple.addScope('name')
+      return apple
+    }
+    case 'microsoft': {
+      const microsoft = new OAuthProvider('microsoft.com')
+      microsoft.setCustomParameters({ prompt: 'select_account' })
+      microsoft.addScope('email')
+      microsoft.addScope('openid')
+      microsoft.addScope('profile')
+      return microsoft
+    }
+    default:
+      throw new AuthError('auth/operation-not-allowed', 'Provedor social não suportado.')
+  }
+}
+
+function createSocialCredential(input: SocialAuthCredential) {
+  switch (input.provider) {
+    case 'google':
+      return GoogleAuthProvider.credential(input.idToken, input.accessToken)
+    case 'facebook':
+      return FacebookAuthProvider.credential(input.accessToken ?? input.idToken)
+    case 'apple': {
+      const apple = new OAuthProvider('apple.com')
+      return apple.credential({
+        idToken: input.idToken,
+        rawNonce: input.nonce,
+      })
+    }
+    case 'microsoft': {
+      const microsoft = new OAuthProvider('microsoft.com')
+      return microsoft.credential({
+        idToken: input.idToken,
+        accessToken: input.accessToken,
+      })
+    }
+    default:
+      throw new AuthError('auth/operation-not-allowed', 'Provedor social não suportado.')
   }
 }
 
@@ -47,7 +115,7 @@ export function createFirebaseAuthBackend(): AuthBackend {
 
     async signIn(email, password) {
       validateEmail(email)
-      validatePassword(password)
+      validatePasswordForSignIn(password)
 
       try {
         const credential = await signInWithEmailAndPassword(
@@ -63,7 +131,7 @@ export function createFirebaseAuthBackend(): AuthBackend {
 
     async signUp(email, password) {
       validateEmail(email)
-      validatePassword(password)
+      validatePasswordForSignUp(password)
 
       try {
         const credential = await createUserWithEmailAndPassword(
@@ -71,6 +139,13 @@ export function createFirebaseAuthBackend(): AuthBackend {
           email.trim(),
           password,
         )
+        try {
+          await sendEmailVerification(credential.user)
+        } catch (verificationError) {
+          if (__DEV__) {
+            console.warn('[Firebase Auth] sendEmailVerification failed', verificationError)
+          }
+        }
         return toAuthUser(credential.user)
       } catch (error) {
         throw mapFirebaseAuthError(error)
@@ -82,6 +157,53 @@ export function createFirebaseAuthBackend(): AuthBackend {
 
       try {
         await sendPasswordResetEmail(getFirebaseAuth(), email.trim())
+      } catch (error) {
+        throw mapFirebaseAuthError(error)
+      }
+    },
+
+    async sendEmailVerification() {
+      const user = getFirebaseAuth().currentUser
+      if (!user) {
+        throw new AuthError('auth/user-not-found', 'Nenhuma sessão ativa para verificar o e-mail.')
+      }
+
+      try {
+        await sendEmailVerification(user)
+      } catch (error) {
+        throw mapFirebaseAuthError(error)
+      }
+    },
+
+    async reloadCurrentUser() {
+      const user = getFirebaseAuth().currentUser
+      if (!user) {
+        return null
+      }
+
+      try {
+        await user.reload()
+        const refreshed = getFirebaseAuth().currentUser
+        return refreshed ? toAuthUser(refreshed) : null
+      } catch (error) {
+        throw mapFirebaseAuthError(error)
+      }
+    },
+
+    async signInWithSocial(input) {
+      try {
+        const credential = createSocialCredential(input)
+        const result = await signInWithCredential(getFirebaseAuth(), credential)
+        return toAuthUser(result.user)
+      } catch (error) {
+        throw mapFirebaseAuthError(error)
+      }
+    },
+
+    async signInWithSocialPopup(provider) {
+      try {
+        const result = await signInWithPopup(getFirebaseAuth(), createFirebaseProvider(provider))
+        return toAuthUser(result.user)
       } catch (error) {
         throw mapFirebaseAuthError(error)
       }

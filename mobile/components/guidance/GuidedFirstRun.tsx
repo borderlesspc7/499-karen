@@ -37,14 +37,14 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'welcome',
     title: 'Bem-vindo ao Summus',
-    body: 'Aqui você entende o que está acontecendo no negócio e decide o próximo passo — sem precisar ser especialista em marketing ou tecnologia.',
+    body: 'Eu sou a Meridian e vou ajudar você a transformar sua empresa em uma máquina de criação de conteúdo — sem precisar ser especialista em marketing.',
     ctaLabel: 'Começar o tour',
     icon: Sparkles,
   },
   {
     id: 'company',
     title: 'Sua empresa já está no sistema',
-    body: 'Usamos o nome, serviços e público que você informou para a IA criar campanhas e respostas alinhadas ao seu negócio. Dá para ajustar depois em Configurações.',
+    body: 'Usamos o nome, serviços e público que você informou para a Meridian criar campanhas e respostas alinhadas ao seu negócio. Dá para ajustar depois em Configurações.',
     ctaLabel: 'Continuar',
     icon: Building2,
   },
@@ -59,7 +59,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'campaigns',
     title: '2. Crie uma campanha',
-    body: 'A IA monta textos e ideias para você. Você só revisa e aprova o que faz sentido.',
+    body: 'A Meridian monta textos e ideias para você. Você só revisa e aprova o que faz sentido.',
     ctaLabel: 'Abrir campanhas',
     href: '/(tabs)/campaign-magic',
     icon: Megaphone,
@@ -75,7 +75,7 @@ const TOUR_STEPS: TourStep[] = [
   {
     id: 'inbox',
     title: '4. Responda no Inbox',
-    body: 'Todas as conversas em um só lugar. A IA pode sugerir respostas; você decide o que enviar.',
+    body: 'Todas as conversas em um só lugar. A Meridian pode sugerir respostas; você decide o que enviar.',
     ctaLabel: 'Ir ao Inbox',
     href: '/(tabs)/inbox',
     icon: MessageSquare,

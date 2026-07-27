@@ -143,7 +143,7 @@ export function CampaignPublishSuccess({
             {onGoHome ? (
               <Pressable onPress={onGoHome} className="rounded-2xl py-3 active:opacity-70">
                 <Text className={['text-center text-sm font-semibold', tc.textSecondary].join(' ')}>
-                  Ir para o Núcleo Cognitivo
+                  Ir para a Meridian
                 </Text>
               </Pressable>
             ) : null}

@@ -17,7 +17,7 @@ export function SummusPlaceholderScreen({ title, description }: SummusPlaceholde
       <PageScroll contentClassName="flex-1 justify-center py-10">
         <SummusCard>
           <Text className="text-[10px] font-bold uppercase tracking-[0.25em] text-gold">
-            Cognitive Operating System
+            Meridian
           </Text>
           <Text className={`mt-3 text-2xl font-bold ${tc.textPrimary}`}>{title}</Text>
           <Text className={`mt-3 text-sm leading-6 ${tc.textSecondary}`}>{description}</Text>

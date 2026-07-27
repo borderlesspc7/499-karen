@@ -19,9 +19,9 @@ Este mês, a nossa operação cresceu 15% — e quero partilhar o que realmente 
 Se lidera uma empresa em fase de escala, a pergunta não é "como fazer mais?". É "o que ignorar?".
 
 #Crescimento #Liderança #CaseDeSucesso`,
-    contextLabel: 'Decision Engine',
+    contextLabel: 'Meridian',
     loadingMessage:
-      'Decision Engine integrando contexto e redigindo a decisão de autoridade…',
+      'Meridian integrando contexto e redigindo a decisão de autoridade…',
     approveLabel: 'Aprovar e Publicar',
     successMessage: 'Publicado com sucesso! A monitorizar o alcance do artigo.',
   },

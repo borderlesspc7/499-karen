@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -11,13 +11,20 @@ import {
 } from 'react-native'
 import { Redirect } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useAuth, useGamification, useSubscription } from '@shared/contexts'
 import { getAuthErrorMessage } from '@shared/services'
+import { requiresEmailVerification } from '@shared/utils/auth-guards'
+import { evaluatePasswordStrength } from '@shared/utils/password-strength'
+import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
+import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons'
 import { SummusLogo } from '@/components/ui/SummusLogo'
 import { summusBrand } from '@/constants/summus-brand'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
 type AuthMode = 'signin' | 'signup' | 'reset'
+
+const LOGIN_DRAFT_KEY = 'summus_login_draft_v1'
 
 const authModeContent: Record<
   AuthMode,
@@ -25,26 +32,22 @@ const authModeContent: Record<
 > = {
   signin: {
     title: 'Entrar',
-    subtitle: 'Seu Sistema Operacional Cognitivo está pronto para ampliar como você decide e age.',
+    subtitle: 'A Meridian está pronta para transformar sua empresa em uma máquina de conteúdo.',
     submitLabel: 'Entrar no Summus',
     toggleLabel: 'Ainda não tem conta? Cadastre-se',
   },
   signup: {
     title: 'Cadastrar',
-    subtitle: 'Crie sua conta. Depois você escolhe o plano e libera o acesso.',
+    subtitle: 'Crie sua conta com senha forte. Depois confirme o e-mail para ativar o acesso.',
     submitLabel: 'Criar conta',
     toggleLabel: 'Já possui conta? Entrar',
   },
   reset: {
     title: 'Recuperar senha',
-    subtitle: 'Enviaremos um link de redefinição para o seu e-mail.',
+    subtitle: 'Enviaremos um link simples de redefinição para o seu e-mail.',
     submitLabel: 'Enviar link de recuperação',
     toggleLabel: 'Voltar para o login',
   },
-}
-
-function mapAuthErrorMessage(error: unknown) {
-  return getAuthErrorMessage(error)
 }
 
 export default function LoginScreen() {
@@ -55,11 +58,56 @@ export default function LoginScreen() {
   const [authMode, setAuthMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isDraftReady, setIsDraftReady] = useState(false)
 
   const content = useMemo(() => authModeContent[authMode], [authMode])
+  const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password])
+
+  useEffect(() => {
+    let isMounted = true
+
+    void AsyncStorage.getItem(LOGIN_DRAFT_KEY).then((raw) => {
+      if (!isMounted) return
+
+      if (raw) {
+        try {
+          const draft = JSON.parse(raw) as { email?: string; authMode?: AuthMode }
+          if (draft.email) setEmail(draft.email)
+          if (draft.authMode === 'signin' || draft.authMode === 'signup') {
+            setAuthMode(draft.authMode)
+          }
+        } catch {
+          // rascunho inválido — ignora
+        }
+      }
+
+      setIsDraftReady(true)
+    })
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isDraftReady) return
+
+    const timeout = setTimeout(() => {
+      void AsyncStorage.setItem(
+        LOGIN_DRAFT_KEY,
+        JSON.stringify({
+          email: email.trim(),
+          authMode: authMode === 'reset' ? 'signin' : authMode,
+        }),
+      )
+    }, 400)
+
+    return () => clearTimeout(timeout)
+  }, [email, authMode, isDraftReady])
 
   if (isAuthLoading || (currentUser && (isSubscriptionLoading || !isHydrated))) {
     return (
@@ -73,6 +121,10 @@ export default function LoginScreen() {
   }
 
   if (currentUser) {
+    if (requiresEmailVerification(currentUser)) {
+      return <Redirect href="/verify-email" />
+    }
+
     if (!hasActiveSubscription) {
       return <Redirect href="/plans" />
     }
@@ -85,6 +137,21 @@ export default function LoginScreen() {
   async function handleSubmit() {
     setErrorMessage('')
     setSuccessMessage('')
+
+    if (authMode === 'signup') {
+      if (!passwordStrength.isStrongEnough) {
+        setErrorMessage(
+          `Senha fraca. Inclua: ${passwordStrength.feedback.join(', ').toLowerCase()}.`,
+        )
+        return
+      }
+
+      if (password !== confirmPassword) {
+        setErrorMessage('As senhas não coincidem.')
+        return
+      }
+    }
+
     setIsSubmitting(true)
 
     try {
@@ -92,12 +159,13 @@ export default function LoginScreen() {
         await signIn(email, password)
       } else if (authMode === 'signup') {
         await signUp(email, password)
+        setSuccessMessage('Conta criada. Confirme o e-mail para ativar o acesso.')
       } else {
         await resetPassword(email)
         setSuccessMessage('Enviamos um link de recuperação para o seu e-mail.')
       }
     } catch (error) {
-      setErrorMessage(mapAuthErrorMessage(error))
+      setErrorMessage(getAuthErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }
@@ -108,6 +176,8 @@ export default function LoginScreen() {
       if (current === 'reset') return 'signin'
       return current === 'signin' ? 'signup' : 'signin'
     })
+    setPassword('')
+    setConfirmPassword('')
     setErrorMessage('')
     setSuccessMessage('')
   }
@@ -125,6 +195,7 @@ export default function LoginScreen() {
             onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
+            autoComplete="email"
             className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-navy"
             placeholder="seu@email.com"
             placeholderTextColor="#94A3B8"
@@ -138,10 +209,32 @@ export default function LoginScreen() {
               value={password}
               onChangeText={setPassword}
               secureTextEntry
+              autoComplete={authMode === 'signup' ? 'new-password' : 'password'}
               className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-navy"
-              placeholder="••••••"
+              placeholder={authMode === 'signup' ? 'Mín. 8 caracteres' : '••••••••'}
               placeholderTextColor="#94A3B8"
             />
+            {authMode === 'signup' ? <PasswordStrengthMeter password={password} /> : null}
+          </View>
+        ) : null}
+
+        {authMode === 'signup' ? (
+          <View>
+            <Text className="mb-2 text-sm font-medium text-slate-700">Confirmar senha</Text>
+            <TextInput
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              autoComplete="new-password"
+              className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-navy"
+              placeholder="Repita a senha"
+              placeholderTextColor="#94A3B8"
+            />
+            {confirmPassword.length > 0 && confirmPassword !== password ? (
+              <Text className="mt-2 text-xs font-medium text-rose-600">
+                As senhas não coincidem.
+              </Text>
+            ) : null}
           </View>
         ) : null}
 
@@ -153,7 +246,7 @@ export default function LoginScreen() {
         ) : null}
 
         <Pressable
-          onPress={handleSubmit}
+          onPress={() => void handleSubmit()}
           disabled={isSubmitting}
           className="rounded-2xl bg-gold py-3.5 active:opacity-90 disabled:opacity-70"
         >
@@ -161,6 +254,16 @@ export default function LoginScreen() {
             {isSubmitting ? 'Processando...' : content.submitLabel}
           </Text>
         </Pressable>
+
+        {authMode !== 'reset' ? (
+          <SocialAuthButtons
+            disabled={isSubmitting}
+            onError={(message) => {
+              setSuccessMessage('')
+              setErrorMessage(message)
+            }}
+          />
+        ) : null}
 
         <Pressable onPress={handleModeToggle}>
           <Text className="text-center text-sm font-medium text-gold">
@@ -190,7 +293,7 @@ export default function LoginScreen() {
               {summusBrand.taglinePt}.
             </Text>
             <Text className="mt-4 text-center text-lg leading-7 text-white/55">
-              {summusBrand.positioning} Três motores permanentes. Uma única resposta integrada.
+              {summusBrand.positioning} A Meridian pensa junto com você — do primeiro minuto.
             </Text>
           </View>
         </View>

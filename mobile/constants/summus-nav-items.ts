@@ -11,7 +11,7 @@ export type SummusNavItem = {
 export const summusNavItems: SummusNavItem[] = [
   {
     href: '/(tabs)',
-    label: 'Núcleo',
+    label: 'Meridian',
     icon: LayoutGrid,
     match: (path) => path === '/' || path === '/index' || path.endsWith('/(tabs)'),
   },

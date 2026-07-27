@@ -1,6 +1,7 @@
 import { ActivityIndicator, Platform, View } from 'react-native'
 import { Redirect, Tabs } from 'expo-router'
 import { useAuth, useGamification, useSubscription, useTheme } from '@shared/contexts'
+import { requiresEmailVerification } from '@shared/utils/auth-guards'
 import { OnboardingModal } from '@/components/OnboardingModal'
 import { GuidedFirstRun } from '@/components/guidance/GuidedFirstRun'
 import { SummusAppShell } from '@/components/layout/SummusAppShell'
@@ -29,6 +30,10 @@ export default function TabLayout() {
     return <Redirect href="/login" />
   }
 
+  if (requiresEmailVerification(currentUser)) {
+    return <Redirect href="/verify-email" />
+  }
+
   if (!hasActiveSubscription) {
     return <Redirect href="/plans" />
   }
@@ -54,13 +59,13 @@ export default function TabLayout() {
           <Tabs.Screen
             name="index"
             options={{
-              title: 'Núcleo Cognitivo',
+              title: 'Meridian',
             }}
           />
           <Tabs.Screen
             name="workforce"
             options={{
-              title: 'Motores Cognitivos',
+              title: 'Motores Meridian',
             }}
           />
           <Tabs.Screen

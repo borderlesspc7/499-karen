@@ -21,6 +21,7 @@ import {
 } from '@shared/constants/subscription-plans'
 import { useAuth, useSubscription } from '@shared/contexts'
 import type { SubscriptionBillingInterval } from '@shared/types/subscription'
+import { requiresEmailVerification } from '@shared/utils/auth-guards'
 import { SummusLogo } from '@/components/ui/SummusLogo'
 import { summusBrand } from '@/constants/summus-brand'
 import { premiumColors } from '@/constants/premium-theme'
@@ -64,6 +65,10 @@ export default function PlansScreen() {
 
   if (!currentUser) {
     return <Redirect href="/login" />
+  }
+
+  if (requiresEmailVerification(currentUser)) {
+    return <Redirect href="/verify-email" />
   }
 
   if (hasActiveSubscription) {

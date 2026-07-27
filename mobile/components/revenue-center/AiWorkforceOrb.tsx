@@ -132,7 +132,7 @@ export function AiWorkforceOrb({ compact = false }: AiWorkforceOrbProps) {
           tc.textSecondary,
         ].join(' ')}
       >
-        Cognitive Core — motores permanentes em toda interação
+        Meridian — motores permanentes em toda interação
       </Text>
     </View>
   )

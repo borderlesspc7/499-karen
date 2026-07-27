@@ -16,7 +16,7 @@ export function AiWorkforcePanel({ isLiveReveal = false }: AiWorkforcePanelProps
     <View className="gap-4">
       <View className="gap-1">
         <Text className={['text-lg font-bold', tc.textPrimary].join(' ')}>
-          Núcleo Cognitivo em operação
+          Meridian em operação
         </Text>
         <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
           Context, Decision e Blind Spot rodando em paralelo — você vê só a resposta integrada.

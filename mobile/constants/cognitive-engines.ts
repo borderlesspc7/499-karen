@@ -38,7 +38,7 @@ export type FutureCognitiveEngine = {
   icon: LucideIcon
 }
 
-/** Os três motores permanentes do Cognitive Core — operam em toda interação. */
+/** Os três motores permanentes da Meridian — operam em toda interação. */
 export const COGNITIVE_ENGINES: CognitiveEngine[] = [
   {
     id: 'context',
@@ -102,7 +102,7 @@ export const COGNITIVE_ENGINES: CognitiveEngine[] = [
 export const COGNITIVE_PIPELINE: CognitivePipelineStage[] = [
   { id: 'input', label: 'Entrada' },
   { id: 'understanding', label: 'Compreensão profunda' },
-  { id: 'engines', label: 'Motores cognitivos' },
+  { id: 'engines', label: 'Motores Meridian' },
   { id: 'integration', label: 'Integração' },
   { id: 'response', label: 'Resposta' },
 ]
@@ -153,17 +153,17 @@ export const FUTURE_COGNITIVE_ENGINES: FutureCognitiveEngine[] = [
 ]
 
 export const COGNITIVE_CORE_COPY = {
-  badge: 'Cognitive Core',
-  title: 'Núcleo Cognitivo',
+  badge: 'Meridian',
+  title: 'Meridian',
   subtitle:
-    'Um único cérebro. Três motores permanentes operam em segundo plano em absolutamente toda interação.',
+    'Sua CMO virtual. Três motores permanentes operam em segundo plano em absolutamente toda interação.',
   notChatbot:
-    'Não é um assistente. Não é um chatbot. É um Sistema Operacional Cognitivo.',
+    'Não é um assistente. Não é um chatbot. É a Meridian — inteligência de marketing da sua empresa.',
   userSeesOne: 'O usuário enxerga apenas uma resposta. Nos bastidores, dezenas de processos rodam ao mesmo tempo.',
-  alwaysOn: 'Motores permanentes — Core v1',
+  alwaysOn: 'Motores permanentes — Meridian',
   futureTitle: 'Próximos motores',
   futureSubtitle:
-    'Novos motores entram no núcleo sem mudar a forma como você interage com o Summus.',
+    'Novos motores entram na Meridian sem mudar a forma como você interage com o Summus.',
 } as const
 
 /** Mapeamento de ações de gamificação por motor (Decision Engine executa). */

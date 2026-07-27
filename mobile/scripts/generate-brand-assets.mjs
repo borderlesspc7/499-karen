@@ -136,10 +136,10 @@ async function generateAssets() {
     .png()
     .toFile(path.join(imagesDir, 'android-icon-background.png'))
 
-  // Splash — logo completa sobre navy sólido (sem caixa)
+  // Splash — logo completa com área de segurança generosa (evita crop em telas estreitas)
   const splash = await composeSquare({
     size,
-    paddingRatio: 0.18,
+    paddingRatio: 0.28,
     background: BRAND_BG_RGBA,
     symbol: fullLogo,
   })

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth, useGamification } from '@shared/contexts'
 import type { BrandColors, BrandIdentityDraft } from '@shared/types/brand-identity'
@@ -27,21 +28,28 @@ import { VisualStep } from './onboarding/VisualStep'
 
 const ADAPTATION_DELAY_MS = 2400
 const BRAND_FORM_STEPS = 3
+const DRAFT_SAVE_DEBOUNCE_MS = 500
 
 type OnboardingStep = 'profile' | 'company' | 'audience' | 'visual' | 'adapting'
+
+type OnboardingDraftPersist = {
+  step: OnboardingStep
+  selectedProfile: UserProfile | null
+  draft: {
+    companyName: string
+    servicesDescription: string
+    targetClientType: BrandIdentityDraft['targetClientType'] | null
+    targetClientDescription: string
+    logoUri: string | null
+    colors: BrandColors
+  }
+}
 
 type OnboardingModalProps = {
   visible: boolean
 }
 
-const INITIAL_DRAFT: {
-  companyName: string
-  servicesDescription: string
-  targetClientType: BrandIdentityDraft['targetClientType'] | null
-  targetClientDescription: string
-  logoUri: string | null
-  colors: BrandColors
-} = {
+const INITIAL_DRAFT: OnboardingDraftPersist['draft'] = {
   companyName: '',
   servicesDescription: '',
   targetClientType: null,
@@ -52,6 +60,10 @@ const INITIAL_DRAFT: {
     secondary: DEFAULT_BRAND_COLORS.secondary,
     accent: DEFAULT_BRAND_COLORS.accent,
   },
+}
+
+function draftStorageKey(userId: string) {
+  return `summus_onboarding_draft_v1:${userId}`
 }
 
 /**
@@ -65,6 +77,7 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null)
   const [draft, setDraft] = useState(INITIAL_DRAFT)
   const [hasInitializedSession, setHasInitializedSession] = useState(false)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const brandFormStep = useMemo(() => {
     if (step === 'company') return 1
@@ -74,7 +87,7 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
   }, [step])
 
   useEffect(() => {
-    if (!visible) {
+    if (!visible || !currentUser?.id) {
       setHasInitializedSession(false)
       return
     }
@@ -83,50 +96,119 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
       return
     }
 
-    // Sessão incompleta: perfil já escolhido → vai direto para a empresa (nunca pula).
-    if (userProfile) {
-      const hasCompleteBrand =
-        brandIdentity !== null &&
-        isBrandIdentityComplete({
-          businessProfile: userProfile,
-          companyName: brandIdentity.companyName,
-          servicesDescription: brandIdentity.servicesDescription,
-          targetClientType: brandIdentity.targetClientType,
-          targetClientDescription: brandIdentity.targetClientDescription,
-          logoUri: brandIdentity.logoUri,
-          colors: brandIdentity.colors,
-        })
+    let isMounted = true
 
-      if (!hasCompleteBrand) {
-        setSelectedProfile(userProfile)
-        setStep('company')
-        if (brandIdentity) {
-          setDraft({
-            companyName: brandIdentity.companyName ?? '',
-            servicesDescription: brandIdentity.servicesDescription ?? '',
-            targetClientType: brandIdentity.targetClientType ?? null,
-            targetClientDescription: brandIdentity.targetClientDescription ?? '',
-            logoUri: brandIdentity.logoUri ?? null,
-            colors: brandIdentity.colors ?? { ...DEFAULT_BRAND_COLORS },
-          })
-        } else {
-          setDraft(INITIAL_DRAFT)
+    void (async () => {
+      const raw = await AsyncStorage.getItem(draftStorageKey(currentUser.id))
+      let persisted: OnboardingDraftPersist | null = null
+
+      if (raw) {
+        try {
+          persisted = JSON.parse(raw) as OnboardingDraftPersist
+        } catch {
+          persisted = null
         }
-        setHasInitializedSession(true)
-        return
       }
+
+      if (!isMounted) return
+
+      if (persisted?.draft) {
+        setDraft({
+          ...INITIAL_DRAFT,
+          ...persisted.draft,
+          colors: persisted.draft.colors ?? { ...DEFAULT_BRAND_COLORS },
+        })
+        if (persisted.selectedProfile) {
+          setSelectedProfile(persisted.selectedProfile)
+        }
+        if (
+          persisted.step &&
+          persisted.step !== 'adapting' &&
+          (persisted.selectedProfile || persisted.step === 'profile')
+        ) {
+          setStep(persisted.step === 'profile' && !persisted.selectedProfile ? 'profile' : persisted.step)
+          setHasInitializedSession(true)
+          return
+        }
+      }
+
+      if (userProfile) {
+        const hasCompleteBrand =
+          brandIdentity !== null &&
+          isBrandIdentityComplete({
+            businessProfile: userProfile,
+            companyName: brandIdentity.companyName,
+            servicesDescription: brandIdentity.servicesDescription,
+            targetClientType: brandIdentity.targetClientType,
+            targetClientDescription: brandIdentity.targetClientDescription,
+            logoUri: brandIdentity.logoUri,
+            colors: brandIdentity.colors,
+          })
+
+        if (!hasCompleteBrand) {
+          setSelectedProfile(userProfile)
+          setStep('company')
+          if (brandIdentity) {
+            setDraft({
+              companyName: brandIdentity.companyName ?? '',
+              servicesDescription: brandIdentity.servicesDescription ?? '',
+              targetClientType: brandIdentity.targetClientType ?? null,
+              targetClientDescription: brandIdentity.targetClientDescription ?? '',
+              logoUri: brandIdentity.logoUri ?? null,
+              colors: brandIdentity.colors ?? { ...DEFAULT_BRAND_COLORS },
+            })
+          } else {
+            setDraft(INITIAL_DRAFT)
+          }
+          setHasInitializedSession(true)
+          return
+        }
+      }
+
+      setStep('profile')
+      setSelectedProfile(null)
+      setDraft(INITIAL_DRAFT)
+      setHasInitializedSession(true)
+    })()
+
+    return () => {
+      isMounted = false
+    }
+  }, [visible, userProfile, brandIdentity, hasInitializedSession, currentUser?.id])
+
+  useEffect(() => {
+    if (!visible || !hasInitializedSession || !currentUser?.id || step === 'adapting') {
+      return
     }
 
-    setStep('profile')
-    setSelectedProfile(null)
-    setDraft(INITIAL_DRAFT)
-    setHasInitializedSession(true)
-  }, [visible, userProfile, brandIdentity, hasInitializedSession])
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      const payload: OnboardingDraftPersist = {
+        step,
+        selectedProfile,
+        draft,
+      }
+      void AsyncStorage.setItem(draftStorageKey(currentUser.id), JSON.stringify(payload))
+    }, DRAFT_SAVE_DEBOUNCE_MS)
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [visible, hasInitializedSession, currentUser?.id, step, selectedProfile, draft])
 
   function handleSelectProfile(profile: UserProfile) {
     setSelectedProfile(profile)
     setUserProfile(profile)
     setStep('company')
+  }
+
+  function handleBackToStart() {
+    setStep('profile')
   }
 
   async function handleFinishBrandIdentity() {
@@ -158,10 +240,16 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
 
       setTimeout(() => {
         setBrandIdentity(createBrandIdentity({ ...identityDraft, logoUri }))
+        if (currentUser?.id) {
+          void AsyncStorage.removeItem(draftStorageKey(currentUser.id))
+        }
       }, ADAPTATION_DELAY_MS)
     } catch {
       setTimeout(() => {
         setBrandIdentity(createBrandIdentity(identityDraft))
+        if (currentUser?.id) {
+          void AsyncStorage.removeItem(draftStorageKey(currentUser.id))
+        }
       }, ADAPTATION_DELAY_MS)
     }
   }
@@ -209,7 +297,7 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
                 </View>
                 <View className="items-center gap-2">
                   <Text className="text-center text-xl font-semibold text-white">
-                    Configurando a IA com a identidade da sua marca...
+                    Olá! Eu sou a Meridian e estou configurando a identidade da sua marca…
                   </Text>
                   <Text className="text-center text-sm text-white/50">{draft.companyName}</Text>
                 </View>
@@ -226,10 +314,15 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
               ) : (
                 <>
                   {showBrandProgress ? (
-                    <OnboardingProgressBar
-                      currentStep={brandFormStep}
-                      totalSteps={BRAND_FORM_STEPS}
-                    />
+                    <View className="mb-4 gap-2">
+                      <Pressable onPress={handleBackToStart} className="self-start py-1">
+                        <Text className="text-xs font-semibold text-gold">← Voltar ao início</Text>
+                      </Pressable>
+                      <OnboardingProgressBar
+                        currentStep={brandFormStep}
+                        totalSteps={BRAND_FORM_STEPS}
+                      />
+                    </View>
                   ) : null}
 
                   {step === 'company' ? (

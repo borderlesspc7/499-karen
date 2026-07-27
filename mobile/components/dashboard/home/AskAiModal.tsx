@@ -26,17 +26,17 @@ export function AskAiModal({ visible, onClose, onAccept }: AskAiModalProps) {
         </View>
 
         <View className="mt-4">
-          <SummusModalBadge label="Blind Spot Engine" icon={Sparkles} />
+          <SummusModalBadge label="Meridian" icon={Sparkles} />
         </View>
 
         <Text className="mt-2 text-xs font-semibold uppercase tracking-wider text-[#F9A8D4]">
-          Interrupção do Núcleo Cognitivo
+          Interrupção da Meridian
         </Text>
 
         <Text className="mt-4 text-base leading-7 text-white/90">
           Detectei algo que quase passou despercebido: a conversão do site caiu 12% esta semana, mas
           a premissa de que o tráfego é o problema está frágil. O contexto aponta para a headline.
-          Quer que o Decision Engine reescreva agora com base nisso?
+          Quer que a Meridian reescreva agora com base nisso?
         </Text>
 
         <AnimatedPressable

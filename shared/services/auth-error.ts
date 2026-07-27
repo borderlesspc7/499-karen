@@ -58,11 +58,12 @@ const FIREBASE_AUTH_MESSAGES: Record<string, string> = {
   'auth/wrong-password': 'Credenciais inválidas. Revise e-mail e senha.',
   'auth/invalid-credential': 'Credenciais inválidas. Revise e-mail e senha.',
   'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
-  'auth/weak-password': 'A senha deve conter pelo menos 6 caracteres.',
+  'auth/weak-password':
+    'A senha deve ser forte: mínimo 8 caracteres, com maiúscula, minúscula, número e caractere especial.',
   'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
   'auth/network-request-failed': 'Sem conexão. Verifique sua internet e tente novamente.',
   'auth/operation-not-allowed':
-    'Cadastro por e-mail/senha não está ativo no Firebase. Ative em Authentication → Sign-in method → E-mail/senha.',
+    'Este método de login ainda não está ativo no Firebase. Ative em Authentication → Sign-in method.',
   'auth/admin-restricted-operation':
     'Cadastro por e-mail/senha não está ativo no Firebase. Ative em Authentication → Sign-in method → E-mail/senha.',
   'auth/configuration-not-found':
@@ -70,6 +71,12 @@ const FIREBASE_AUTH_MESSAGES: Record<string, string> = {
   'auth/invalid-api-key': 'Chave da API Firebase inválida. Verifique a configuração do projeto.',
   'auth/app-not-authorized':
     'Este app não está autorizado no Firebase. Adicione o domínio/bundle no console do Firebase.',
+  'auth/popup-closed-by-user': 'Login cancelado. Tente novamente quando quiser.',
+  'auth/cancelled-popup-request': 'Login cancelado. Tente novamente quando quiser.',
+  'auth/account-exists-with-different-credential':
+    'Já existe uma conta com este e-mail usando outro método de login.',
+  'auth/provider-not-configured':
+    'Este provedor ainda não foi configurado. Ative no Firebase Console e adicione as chaves no app.',
 }
 
 function mapFirebaseAuthCode(code: string, fallbackMessage: string): string {

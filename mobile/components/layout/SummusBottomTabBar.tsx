@@ -20,7 +20,7 @@ const TAB_CONFIG: Record<
   VisibleTabName,
   { label: string; Icon: typeof LayoutGrid }
 > = {
-  index: { label: 'Núcleo', Icon: LayoutGrid },
+  index: { label: 'Meridian', Icon: LayoutGrid },
   opportunities: { label: 'Oportunidades', Icon: TrendingUp },
   workforce: { label: 'Motores', Icon: BrainCircuit },
   integrations: { label: 'Canais', Icon: Link2 },

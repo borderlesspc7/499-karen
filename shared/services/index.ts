@@ -3,6 +3,7 @@ export {
   configureAuthBackend,
   getAuthBackend,
   type AuthBackend,
+  type SocialAuthCredential,
 } from './auth-backend'
 export {
   configureGamificationPersistence,

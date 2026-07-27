@@ -11,7 +11,7 @@ export type {
   BrandIdentityDraft,
   TargetClientType,
 } from './brand-identity'
-export type { AuthUser, MockUser } from './auth'
+export type { AuthUser, MockUser, SocialAuthProvider } from './auth'
 export type {
   ConfirmMockCheckoutRequest,
   ConfirmMockCheckoutResponse,

@@ -251,7 +251,7 @@ export default function SettingsScreen() {
             <Text className="mt-1 text-sm text-violet-100">
               {subscription
                 ? `Plano ${getSubscriptionPlan(subscription.planId).name}`
-                : 'Cognitive Operating System'}
+                : 'Meridian'}
             </Text>
             <Text className="mt-2 text-sm text-violet-100">
               {subscription

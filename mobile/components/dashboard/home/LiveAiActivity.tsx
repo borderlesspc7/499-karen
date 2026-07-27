@@ -21,20 +21,20 @@ type StrategicActivityItem = {
 }
 
 const STRATEGIC_AI_FEED: StrategicActivityItem[] = [
-  { id: 's1', timestamp: '09:41', message: 'Context Engine — reconstruindo histórico e intenção…' },
-  { id: 's2', timestamp: '09:42', message: 'Context Engine — detectou limitações e sinais implícitos.' },
-  { id: 's3', timestamp: '09:42', message: 'Decision Engine — calculando cenários e custo de oportunidade.' },
-  { id: 's4', timestamp: '09:43', message: 'Decision Engine — avaliando riscos e reversibilidade.' },
-  { id: 's5', timestamp: '09:43', message: 'Blind Spot Engine — procurando premissas frágeis…' },
+  { id: 's1', timestamp: '09:41', message: 'Meridian — reconstruindo histórico e intenção…' },
+  { id: 's2', timestamp: '09:42', message: 'Meridian — detectou limitações e sinais implícitos.' },
+  { id: 's3', timestamp: '09:42', message: 'Meridian — calculando cenários e custo de oportunidade.' },
+  { id: 's4', timestamp: '09:43', message: 'Meridian — avaliando riscos e reversibilidade.' },
+  { id: 's5', timestamp: '09:43', message: 'Meridian — procurando premissas frágeis…' },
   { id: 's6', timestamp: '09:44', message: 'Integração — decisão fundamentada pronta.' },
 ]
 
 const CAMPAIGN_LAUNCH_FEED: StrategicActivityItem[] = [
-  { id: 'l1', timestamp: 'Agora', message: 'Context Engine — alinhando campanha ao contexto atual…' },
-  { id: 'l2', timestamp: 'Agora', message: 'Decision Engine — priorizando canais por retorno esperado…' },
-  { id: 'l3', timestamp: 'Agora', message: 'Blind Spot Engine — checando contradições na oferta…' },
+  { id: 'l1', timestamp: 'Agora', message: 'Meridian — alinhando campanha ao contexto atual…' },
+  { id: 'l2', timestamp: 'Agora', message: 'Meridian — priorizando canais por retorno esperado…' },
+  { id: 'l3', timestamp: 'Agora', message: 'Meridian — checando contradições na oferta…' },
   { id: 'l4', timestamp: 'Agora', message: 'Integração — sincronizando execução nos canais…' },
-  { id: 'l5', timestamp: 'Agora', message: 'Resposta — campanha no ar. Núcleo continua em observação.' },
+  { id: 'l5', timestamp: 'Agora', message: 'Resposta — campanha no ar. Meridian continua em observação.' },
 ]
 
 const REVEAL_INTERVAL_MS = 900
@@ -147,7 +147,7 @@ export function LiveAiActivity({ isLiveReveal = false, embedded = false }: LiveA
           </View>
           <View className="flex-1">
             <Text className={['text-base font-bold', tc.textPrimary].join(' ')}>
-              Cognitive Core
+              Meridian
             </Text>
             <View className="mt-1 flex-row items-center gap-2">
               <PulsingStatusDot />

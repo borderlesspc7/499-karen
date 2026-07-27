@@ -36,8 +36,8 @@ const LEADS_EXECUTION: Pick<
   impact: `+R$ ${GROWTH_ACTIONS['reactivate-inactive-leads'].revenueGain.toLocaleString('pt-BR')}`,
   previewDetail:
     'E-mail 1: reativação suave com prova social. E-mail 2: urgência com vaga limitada. E-mail 3: última chamada com bónus exclusivo.',
-  contextLabel: 'Cognitive Core',
-  loadingMessage: 'O Núcleo Cognitivo está reconstruindo contexto e calculando a decisão…',
+  contextLabel: 'Meridian',
+  loadingMessage: 'A Meridian está reconstruindo contexto e calculando a decisão…',
   approveLabel: 'Aprovar e Executar',
   successMessage: 'Sequência ativada. Impacto estimado sendo rastreado.',
 }
@@ -59,8 +59,8 @@ const UPSELL_EXECUTION: Pick<
   impact: `+R$ ${GROWTH_ACTIONS['send-proposal'].revenueGain.toLocaleString('pt-BR')}`,
   previewDetail:
     'Análise baseada no pipeline atual de clientes ativos em negociação.',
-  contextLabel: 'Decision Engine',
-  loadingMessage: 'Decision Engine preparando alternativas e impacto estimado…',
+  contextLabel: 'Meridian',
+  loadingMessage: 'Meridian preparando alternativas e impacto estimado…',
   approveLabel: 'Ver Oportunidades',
   successMessage: 'Propostas prontas para envio.',
 }
