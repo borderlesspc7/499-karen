@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   collection,
-  getDocs,
+  limit,
   onSnapshot,
   query,
   where,
@@ -9,9 +9,13 @@ import {
 } from 'firebase/firestore'
 import { useAuth } from '@shared/contexts'
 import { firestoreCollections } from '@shared/constants/firestore-collections'
-import type { InboxConversation, InboxMessage } from '@shared/types'
+import type { InboxConversation } from '@shared/types'
 import { getFirestoreDb } from '@/lib/firebase'
+import { FIRESTORE_PAGE_LIMITS } from '@/lib/firestore-limits'
 
+/**
+ * Lista conversas em tempo real sem carregar subcoleções de mensagens (evita N+1).
+ */
 export function useInboxConversations() {
   const { currentUser } = useAuth()
   const [conversations, setConversations] = useState<InboxConversation[]>([])
@@ -32,6 +36,7 @@ export function useInboxConversations() {
     const conversationsQuery = query(
       collection(db, firestoreCollections.conversations),
       where('userId', '==', userId),
+      limit(FIRESTORE_PAGE_LIMITS.conversations),
     )
 
     setIsLoading(true)
@@ -39,29 +44,15 @@ export function useInboxConversations() {
 
     unsubscribe = onSnapshot(
       conversationsQuery,
-      async (snapshot) => {
-        const nextConversations = await Promise.all(
-          snapshot.docs.map(async (document) => {
-            const data = document.data() as Omit<InboxConversation, 'messages'>
-            const messagesSnapshot = await getDocs(
-              collection(db, firestoreCollections.conversations, document.id, 'messages'),
-            )
-
-            const messages = messagesSnapshot.docs
-              .map((messageDoc) => messageDoc.data() as InboxMessage)
-              .sort((left, right) => {
-                const leftTime = left.createdAt ?? left.timestamp
-                const rightTime = right.createdAt ?? right.timestamp
-                return String(leftTime).localeCompare(String(rightTime))
-              })
-
-            return {
-              ...data,
-              id: data.id ?? document.id,
-              messages,
-            }
-          }),
-        )
+      (snapshot) => {
+        const nextConversations = snapshot.docs.map((document) => {
+          const data = document.data() as Omit<InboxConversation, 'messages'>
+          return {
+            ...data,
+            id: data.id ?? document.id,
+            messages: [],
+          }
+        })
 
         nextConversations.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
 

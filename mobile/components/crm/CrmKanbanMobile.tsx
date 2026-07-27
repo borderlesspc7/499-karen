@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { Pressable, StyleSheet, Text, View } from 'react-native'
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
 import Animated, {
   runOnJS,
@@ -322,21 +322,28 @@ export function CrmKanbanMobile({
                     {isHovered ? 'Solte aqui' : 'Nenhuma oportunidade nesta etapa.'}
                   </Text>
                 ) : (
-                  columnCards.map((card) => (
-                    <MobileDraggableCard
-                      key={card.id}
-                      card={card}
-                      onPress={() => onCardPress(card)}
-                      onMoveCard={onMoveCard}
-                      getColumnLayouts={getColumnLayouts}
-                      columnIds={columnIds}
-                      draggingCardId={draggingCardId}
-                      onDragStart={handleDragStart}
-                      onDragEnd={handleDragEnd}
-                      onHoverColumn={setHoverColumnId}
-                      onMeasureColumns={measureColumns}
-                    />
-                  ))
+                  <FlatList
+                    data={columnCards}
+                    keyExtractor={(card) => card.id}
+                    scrollEnabled={false}
+                    initialNumToRender={8}
+                    maxToRenderPerBatch={6}
+                    windowSize={5}
+                    renderItem={({ item: card }) => (
+                      <MobileDraggableCard
+                        card={card}
+                        onPress={() => onCardPress(card)}
+                        onMoveCard={onMoveCard}
+                        getColumnLayouts={getColumnLayouts}
+                        columnIds={columnIds}
+                        draggingCardId={draggingCardId}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        onHoverColumn={setHoverColumnId}
+                        onMeasureColumns={measureColumns}
+                      />
+                    )}
+                  />
                 )}
               </View>
             ) : null}

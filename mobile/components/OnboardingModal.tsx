@@ -5,10 +5,11 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from 'react-native'
-import { SummusSheetModal } from '@/components/ui/modal'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth, useGamification } from '@shared/contexts'
 import type { BrandColors, BrandIdentityDraft } from '@shared/types/brand-identity'
 import type { UserProfile } from '@shared/types/gamification'
@@ -53,12 +54,17 @@ const INITIAL_DRAFT: {
   },
 }
 
+/**
+ * Overlay full-screen (não RN Modal) — o Modal nativo falha com frequência
+ * logo após `router.replace` do paywall e “pula” a etapa da empresa.
+ */
 export function OnboardingModal({ visible }: OnboardingModalProps) {
   const { currentUser } = useAuth()
-  const { userProfile, setUserProfile, setBrandIdentity } = useGamification()
+  const { userProfile, brandIdentity, setUserProfile, setBrandIdentity } = useGamification()
   const [step, setStep] = useState<OnboardingStep>('profile')
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null)
   const [draft, setDraft] = useState(INITIAL_DRAFT)
+  const [hasInitializedSession, setHasInitializedSession] = useState(false)
 
   const brandFormStep = useMemo(() => {
     if (step === 'company') return 1
@@ -69,19 +75,53 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
 
   useEffect(() => {
     if (!visible) {
+      setHasInitializedSession(false)
       return
     }
 
-    if (userProfile) {
-      setSelectedProfile(userProfile)
-      setStep('company')
+    if (hasInitializedSession) {
       return
+    }
+
+    // Sessão incompleta: perfil já escolhido → vai direto para a empresa (nunca pula).
+    if (userProfile) {
+      const hasCompleteBrand =
+        brandIdentity !== null &&
+        isBrandIdentityComplete({
+          businessProfile: userProfile,
+          companyName: brandIdentity.companyName,
+          servicesDescription: brandIdentity.servicesDescription,
+          targetClientType: brandIdentity.targetClientType,
+          targetClientDescription: brandIdentity.targetClientDescription,
+          logoUri: brandIdentity.logoUri,
+          colors: brandIdentity.colors,
+        })
+
+      if (!hasCompleteBrand) {
+        setSelectedProfile(userProfile)
+        setStep('company')
+        if (brandIdentity) {
+          setDraft({
+            companyName: brandIdentity.companyName ?? '',
+            servicesDescription: brandIdentity.servicesDescription ?? '',
+            targetClientType: brandIdentity.targetClientType ?? null,
+            targetClientDescription: brandIdentity.targetClientDescription ?? '',
+            logoUri: brandIdentity.logoUri ?? null,
+            colors: brandIdentity.colors ?? { ...DEFAULT_BRAND_COLORS },
+          })
+        } else {
+          setDraft(INITIAL_DRAFT)
+        }
+        setHasInitializedSession(true)
+        return
+      }
     }
 
     setStep('profile')
     setSelectedProfile(null)
     setDraft(INITIAL_DRAFT)
-  }, [visible, userProfile])
+    setHasInitializedSession(true)
+  }, [visible, userProfile, brandIdentity, hasInitializedSession])
 
   function handleSelectProfile(profile: UserProfile) {
     setSelectedProfile(profile)
@@ -143,140 +183,158 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
 
   const showBrandProgress = step === 'company' || step === 'audience' || step === 'visual'
 
+  if (!visible) {
+    return null
+  }
+
   return (
-    <SummusSheetModal
-      visible={visible}
-      onClose={() => {}}
-      showClose={false}
-      presentationStyle="fullScreen"
-    >
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        {step === 'adapting' ? (
-          <View className="flex-1 items-center justify-center px-6">
-            <View className="items-center gap-6">
-              <View className="relative h-24 w-24 items-center justify-center">
-                <View className="absolute h-24 w-24 rounded-full border border-electricBlue/30 bg-electricBlue/10" />
-                <View className="absolute h-16 w-16 rounded-full bg-electricBlue/15" />
-                <ActivityIndicator size="large" color="#3B82F6" />
-              </View>
-              <View className="items-center gap-2">
-                <Text className="text-center text-xl font-semibold text-white">
-                  Configurando a IA com a identidade da sua marca...
-                </Text>
-                <Text className="text-center text-sm text-white/50">{draft.companyName}</Text>
+    <View style={styles.overlay} pointerEvents="auto">
+      <SafeAreaView className="flex-1 bg-deepBlue" edges={['top', 'bottom']}>
+        <View className="absolute inset-0 overflow-hidden" pointerEvents="none">
+          <View className="absolute -right-28 top-0 h-72 w-72 rounded-full bg-electricBlue/10" />
+          <View className="absolute -left-36 bottom-24 h-80 w-80 rounded-full bg-gold/6" />
+        </View>
+
+        <KeyboardAvoidingView
+          className="flex-1"
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          {step === 'adapting' ? (
+            <View className="flex-1 items-center justify-center px-6">
+              <View className="items-center gap-6">
+                <View className="relative h-24 w-24 items-center justify-center">
+                  <View className="absolute h-24 w-24 rounded-full border border-electricBlue/30 bg-electricBlue/10" />
+                  <View className="absolute h-16 w-16 rounded-full bg-electricBlue/15" />
+                  <ActivityIndicator size="large" color="#3B82F6" />
+                </View>
+                <View className="items-center gap-2">
+                  <Text className="text-center text-xl font-semibold text-white">
+                    Configurando a IA com a identidade da sua marca...
+                  </Text>
+                  <Text className="text-center text-sm text-white/50">{draft.companyName}</Text>
+                </View>
               </View>
             </View>
-          </View>
-        ) : (
-          <ScrollView
-            className="flex-1"
-            contentContainerClassName="grow justify-center px-6 py-10"
-            keyboardShouldPersistTaps="handled"
-          >
-            {step === 'profile' ? (
-              <ProfileStep onSelectProfile={handleSelectProfile} />
-            ) : (
-              <>
-                {showBrandProgress ? (
-                  <OnboardingProgressBar
-                    currentStep={brandFormStep}
-                    totalSteps={BRAND_FORM_STEPS}
-                  />
-                ) : null}
+          ) : (
+            <ScrollView
+              className="flex-1"
+              contentContainerClassName="grow justify-center px-6 py-10"
+              keyboardShouldPersistTaps="handled"
+            >
+              {step === 'profile' ? (
+                <ProfileStep onSelectProfile={handleSelectProfile} />
+              ) : (
+                <>
+                  {showBrandProgress ? (
+                    <OnboardingProgressBar
+                      currentStep={brandFormStep}
+                      totalSteps={BRAND_FORM_STEPS}
+                    />
+                  ) : null}
 
-                {step === 'company' ? (
-                  <CompanyStep
-                    companyName={draft.companyName}
-                    servicesDescription={draft.servicesDescription}
-                    onChangeCompanyName={(value) =>
-                      setDraft((current) => ({ ...current, companyName: value }))
-                    }
-                    onChangeServicesDescription={(value) =>
-                      setDraft((current) => ({ ...current, servicesDescription: value }))
-                    }
-                  />
-                ) : null}
-
-                {step === 'audience' ? (
-                  <AudienceStep
-                    targetClientType={draft.targetClientType}
-                    targetClientDescription={draft.targetClientDescription}
-                    onSelectTarget={(type) =>
-                      setDraft((current) => ({ ...current, targetClientType: type }))
-                    }
-                    onChangeDescription={(value) =>
-                      setDraft((current) => ({ ...current, targetClientDescription: value }))
-                    }
-                  />
-                ) : null}
-
-                {step === 'visual' ? (
-                  <VisualStep
-                    logoUri={draft.logoUri}
-                    colors={draft.colors}
-                    onChangeLogoUri={(uri) => setDraft((current) => ({ ...current, logoUri: uri }))}
-                    onChangeColors={(colors: BrandColors) =>
-                      setDraft((current) => ({ ...current, colors }))
-                    }
-                  />
-                ) : null}
-
-                {step === 'company' || step === 'audience' || step === 'visual' ? (
-                  <View className="mt-8 flex-row gap-3">
-                    <Pressable
-                      onPress={() => {
-                        if (step === 'company') {
-                          setStep('profile')
-                          return
-                        }
-                        if (step === 'audience') {
-                          setStep('company')
-                          return
-                        }
-                        if (step === 'visual') {
-                          setStep('audience')
-                        }
-                      }}
-                      className="flex-1 rounded-2xl border border-white/15 py-4"
-                    >
-                      <Text className="text-center text-sm font-semibold text-white/70">Voltar</Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => {
-                        if (step === 'company' && canAdvanceFromCompany) {
-                          setStep('audience')
-                          return
-                        }
-                        if (step === 'audience' && canAdvanceFromAudience) {
-                          setStep('visual')
-                          return
-                        }
-                        if (step === 'visual' && canFinishVisual) {
-                          handleFinishBrandIdentity()
-                        }
-                      }}
-                      disabled={
-                        (step === 'company' && !canAdvanceFromCompany) ||
-                        (step === 'audience' && !canAdvanceFromAudience) ||
-                        (step === 'visual' && !canFinishVisual)
+                  {step === 'company' ? (
+                    <CompanyStep
+                      companyName={draft.companyName}
+                      servicesDescription={draft.servicesDescription}
+                      onChangeCompanyName={(value) =>
+                        setDraft((current) => ({ ...current, companyName: value }))
                       }
-                      className="flex-1 rounded-2xl bg-gold py-4 disabled:opacity-40"
-                    >
-                      <Text className="text-center text-sm font-semibold text-deepBlue">
-                        {step === 'visual' ? 'Concluir identidade' : 'Continuar'}
-                      </Text>
-                    </Pressable>
-                  </View>
-                ) : null}
-              </>
-            )}
-          </ScrollView>
-        )}
-      </KeyboardAvoidingView>
-    </SummusSheetModal>
+                      onChangeServicesDescription={(value) =>
+                        setDraft((current) => ({ ...current, servicesDescription: value }))
+                      }
+                    />
+                  ) : null}
+
+                  {step === 'audience' ? (
+                    <AudienceStep
+                      targetClientType={draft.targetClientType}
+                      targetClientDescription={draft.targetClientDescription}
+                      onSelectTarget={(type) =>
+                        setDraft((current) => ({ ...current, targetClientType: type }))
+                      }
+                      onChangeDescription={(value) =>
+                        setDraft((current) => ({ ...current, targetClientDescription: value }))
+                      }
+                    />
+                  ) : null}
+
+                  {step === 'visual' ? (
+                    <VisualStep
+                      logoUri={draft.logoUri}
+                      colors={draft.colors}
+                      onChangeLogoUri={(uri) =>
+                        setDraft((current) => ({ ...current, logoUri: uri }))
+                      }
+                      onChangeColors={(colors: BrandColors) =>
+                        setDraft((current) => ({ ...current, colors }))
+                      }
+                    />
+                  ) : null}
+
+                  {step === 'company' || step === 'audience' || step === 'visual' ? (
+                    <View className="mt-8 flex-row gap-3">
+                      <Pressable
+                        onPress={() => {
+                          if (step === 'company') {
+                            setStep('profile')
+                            return
+                          }
+                          if (step === 'audience') {
+                            setStep('company')
+                            return
+                          }
+                          if (step === 'visual') {
+                            setStep('audience')
+                          }
+                        }}
+                        className="flex-1 rounded-2xl border border-white/15 py-4"
+                      >
+                        <Text className="text-center text-sm font-semibold text-white/70">
+                          Voltar
+                        </Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => {
+                          if (step === 'company' && canAdvanceFromCompany) {
+                            setStep('audience')
+                            return
+                          }
+                          if (step === 'audience' && canAdvanceFromAudience) {
+                            setStep('visual')
+                            return
+                          }
+                          if (step === 'visual' && canFinishVisual) {
+                            void handleFinishBrandIdentity()
+                          }
+                        }}
+                        disabled={
+                          (step === 'company' && !canAdvanceFromCompany) ||
+                          (step === 'audience' && !canAdvanceFromAudience) ||
+                          (step === 'visual' && !canFinishVisual)
+                        }
+                        className="flex-1 rounded-2xl bg-gold py-4 disabled:opacity-40"
+                      >
+                        <Text className="text-center text-sm font-semibold text-deepBlue">
+                          {step === 'visual' ? 'Concluir identidade' : 'Continuar'}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  ) : null}
+                </>
+              )}
+            </ScrollView>
+          )}
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </View>
   )
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,
+    elevation: 1000,
+  },
+})

@@ -4,6 +4,9 @@
  * Em produção, apenas Cloud Functions (Admin SDK / webhook Stripe)
  * devem gravar este campo. O fallback local mock existe para demos
  * sem Functions deployadas — ver EXPO_PUBLIC_STRIPE_MOCK_LOCAL.
+ *
+ * O listener ignora snapshots em que `subscription` não mudou, para
+ * não reagir a writes de gamificação / outros campos no mesmo doc.
  */
 import {
   doc,
@@ -22,26 +25,49 @@ type UserBillingDocument = {
   subscription?: UserSubscription | null
 }
 
+function serializeSubscription(subscription: UserSubscription | null): string {
+  return JSON.stringify(subscription)
+}
+
 export function createFirestoreSubscriptionPersistence(
   db: Firestore = getFirestoreDb(),
 ): SubscriptionPersistence {
   return {
     subscribe(userId, listener) {
       const reference = doc(db, firestoreCollections.users, userId)
+      let lastSerialized: string | null = null
+      let hasEmitted = false
 
       return onSnapshot(
         reference,
         (snapshot) => {
           if (!snapshot.exists()) {
-            listener(null)
+            if (!hasEmitted || lastSerialized !== 'null') {
+              lastSerialized = 'null'
+              hasEmitted = true
+              listener(null)
+            }
             return
           }
 
           const data = snapshot.data() as UserBillingDocument
-          listener(parseUserSubscription(data.subscription))
+          const next = parseUserSubscription(data.subscription)
+          const serialized = serializeSubscription(next)
+
+          if (hasEmitted && serialized === lastSerialized) {
+            return
+          }
+
+          lastSerialized = serialized
+          hasEmitted = true
+          listener(next)
         },
         () => {
-          listener(null)
+          if (!hasEmitted || lastSerialized !== 'null') {
+            lastSerialized = 'null'
+            hasEmitted = true
+            listener(null)
+          }
         },
       )
     },

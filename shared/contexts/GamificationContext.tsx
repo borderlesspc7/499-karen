@@ -20,7 +20,7 @@ import {
 import { generateId } from '../utils/generate-id'
 import type { TimelineActionItem, UserProfile } from '../types/gamification'
 import type { BrandIdentity } from '../types/brand-identity'
-import { buildBrandAiContext } from '../utils/brand-identity'
+import { buildBrandAiContext, isBrandIdentityComplete } from '../utils/brand-identity'
 
 const PERSIST_DEBOUNCE_MS = 700
 
@@ -413,7 +413,13 @@ export function GamificationProvider({
       xpProgress,
       xpRemaining,
       isHydrated,
-      isOnboardingComplete: state.userProfile !== null && state.brandIdentity !== null,
+      isOnboardingComplete:
+        state.userProfile !== null &&
+        state.brandIdentity !== null &&
+        isBrandIdentityComplete({
+          businessProfile: state.userProfile,
+          ...state.brandIdentity,
+        }),
       brandAiContext,
       addXp,
       completeMission,

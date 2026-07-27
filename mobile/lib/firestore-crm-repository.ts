@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   query,
   setDoc,
   where,
@@ -13,6 +14,7 @@ import {
 import type { KanbanCard, KanbanColumn } from '@shared/types'
 import { firestoreCollections } from '@shared/constants/firestore-collections'
 import { scopedDocId } from '@shared/utils/scoped-doc-id'
+import { FIRESTORE_PAGE_LIMITS, type ListQueryOptions } from './firestore-limits'
 import { omitUndefinedFields } from './firestore-sanitize'
 
 function normalizeColumn(id: string, data: Partial<KanbanColumn>): KanbanColumn | null {
@@ -57,8 +59,8 @@ function normalizeCard(id: string, data: Partial<KanbanCard>): KanbanCard | null
 }
 
 export type FirestoreCrmRepository = {
-  listColumns(userId: string): Promise<KanbanColumn[]>
-  listCards(userId: string): Promise<KanbanCard[]>
+  listColumns(userId: string, options?: ListQueryOptions): Promise<KanbanColumn[]>
+  listCards(userId: string, options?: ListQueryOptions): Promise<KanbanCard[]>
   upsertColumn(column: KanbanColumn): Promise<void>
   upsertCard(card: KanbanCard): Promise<void>
   getCardById(userId: string, id: string): Promise<KanbanCard | null>
@@ -70,16 +72,22 @@ export function createFirestoreCrmRepository(db: Firestore): FirestoreCrmReposit
   const cardsRef = collection(db, firestoreCollections.opportunities)
 
   return {
-    async listColumns(userId) {
-      const snapshot = await getDocs(query(columnsRef, where('userId', '==', userId)))
+    async listColumns(userId, options = {}) {
+      const pageSize = options.limit ?? FIRESTORE_PAGE_LIMITS.columns
+      const snapshot = await getDocs(
+        query(columnsRef, where('userId', '==', userId), limit(pageSize)),
+      )
       return snapshot.docs
         .map((document) => normalizeColumn(document.id, document.data() as Partial<KanbanColumn>))
         .filter((column): column is KanbanColumn => column !== null)
         .sort((left, right) => left.order - right.order)
     },
 
-    async listCards(userId) {
-      const snapshot = await getDocs(query(cardsRef, where('userId', '==', userId)))
+    async listCards(userId, options = {}) {
+      const pageSize = options.limit ?? FIRESTORE_PAGE_LIMITS.cards
+      const snapshot = await getDocs(
+        query(cardsRef, where('userId', '==', userId), limit(pageSize)),
+      )
       return snapshot.docs
         .map((document) => normalizeCard(document.id, document.data() as Partial<KanbanCard>))
         .filter((card): card is KanbanCard => card !== null)

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -15,6 +16,7 @@ import { generateSmartReplies } from '@shared/services/ai-orchestration-service'
 import type { InboxContactStatus, InboxConversation, InboxMessage } from '@shared/types'
 import { INBOX_QUICK_TEMPLATES } from '@/constants/inbox-templates'
 import { premiumColors } from '@/constants/premium-theme'
+import { useInboxMessages } from '@/hooks/useInboxMessages'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { markConversationRead, sendInboxMessage } from '@/lib/messaging-service'
 import { InboxAiSummary } from './InboxAiSummary'
@@ -77,23 +79,15 @@ function MessageBubble({
           <Text className="text-[10px] font-bold uppercase tracking-wider text-gold">IA</Text>
         </View>
       ) : null}
-      <Text
-        className={['text-sm leading-5', isOutgoing ? 'text-white' : textPrimaryClass].join(' ')}
-      >
+      <Text className={['text-sm leading-5', isOutgoing ? 'text-white' : textPrimaryClass].join(' ')}>
         {message.text}
       </Text>
       <View className="mt-1 flex-row items-center gap-2">
-        <Text
-          className={['text-[10px]', isOutgoing ? 'text-white/60' : textMutedClass].join(' ')}
-        >
+        <Text className={['text-[10px]', isOutgoing ? 'text-white/60' : textMutedClass].join(' ')}>
           {message.timestamp}
         </Text>
-        {isOutgoing && isPending ? (
-          <Text className="text-[10px] text-white/60">Enviando…</Text>
-        ) : null}
-        {isOutgoing && isFailed ? (
-          <Text className="text-[10px] text-rose-300">Falhou</Text>
-        ) : null}
+        {isOutgoing && isPending ? <Text className="text-[10px] text-white/60">Enviando…</Text> : null}
+        {isOutgoing && isFailed ? <Text className="text-[10px] text-rose-300">Falhou</Text> : null}
       </View>
     </View>
   )
@@ -105,25 +99,41 @@ export function InboxChatView({
   showBackButton = false,
 }: InboxChatViewProps) {
   const tc = useThemeClasses()
+  const { messages: remoteMessages, isLoading: isLoadingMessages } = useInboxMessages(
+    conversation.id,
+  )
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
-  const [messages, setMessages] = useState(conversation.messages)
+  const [optimisticMessages, setOptimisticMessages] = useState<InboxMessage[]>([])
+  const listRef = useRef<FlatList<InboxMessage>>(null)
+
+  const messages = [...remoteMessages, ...optimisticMessages]
 
   useEffect(() => {
-    setMessages(conversation.messages)
+    setOptimisticMessages([])
     void markConversationRead(conversation.id).catch(() => undefined)
-  }, [conversation.id, conversation.messages])
+  }, [conversation.id])
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      return
+    }
+    requestAnimationFrame(() => {
+      listRef.current?.scrollToEnd({ animated: true })
+    })
+  }, [messages.length])
 
   const [smartReplies, setSmartReplies] = useState<string[]>([...INBOX_QUICK_TEMPLATES])
 
   useEffect(() => {
     let isMounted = true
+    const lastMessages = remoteMessages.slice(-4).map((message) => message.text)
 
     void generateSmartReplies({
       contactName: conversation.contactName,
       channel: conversation.channel,
       preview: conversation.preview,
-      lastMessages: conversation.messages.slice(-4).map((message) => message.text),
+      lastMessages,
     })
       .then((response) => {
         if (isMounted && response.replies.length > 0) {
@@ -139,7 +149,13 @@ export function InboxChatView({
     return () => {
       isMounted = false
     }
-  }, [conversation.id, conversation.contactName, conversation.channel, conversation.preview, conversation.messages])
+  }, [
+    conversation.id,
+    conversation.contactName,
+    conversation.channel,
+    conversation.preview,
+    remoteMessages,
+  ])
 
   const canSendExternally = ['whatsapp', 'instagram', 'facebook'].includes(conversation.channel)
 
@@ -148,7 +164,7 @@ export function InboxChatView({
     if (!trimmed || isSending) return
 
     const optimisticId = `local-${Date.now()}`
-    setMessages((current) => [
+    setOptimisticMessages((current) => [
       ...current,
       {
         id: optimisticId,
@@ -164,6 +180,9 @@ export function InboxChatView({
     try {
       if (canSendExternally && conversation.externalContactId) {
         await sendInboxMessage(conversation.id, trimmed)
+        setOptimisticMessages((current) =>
+          current.filter((message) => message.id !== optimisticId),
+        )
       } else if (canSendExternally) {
         throw new Error('Conversa sem contato externo vinculado.')
       } else {
@@ -173,9 +192,12 @@ export function InboxChatView({
             ? 'LinkedIn inbox requer parceria API. Conecte WhatsApp, Instagram ou Facebook para responder pelo app.'
             : 'Conecte o canal nas Integrações para enviar mensagens reais.',
         )
+        setOptimisticMessages((current) =>
+          current.filter((message) => message.id !== optimisticId),
+        )
       }
     } catch (error) {
-      setMessages((current) =>
+      setOptimisticMessages((current) =>
         current.map((message) =>
           message.id === optimisticId ? { ...message, deliveryStatus: 'failed' } : message,
         ),
@@ -235,21 +257,31 @@ export function InboxChatView({
         </View>
       </View>
 
-      <ScrollView
-        className="flex-1 px-5"
-        contentContainerClassName="gap-4 py-6"
-        showsVerticalScrollIndicator={false}
-      >
-        {messages.map((message) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            incomingBubbleClass={tc.incomingBubble}
-            textPrimaryClass={tc.textPrimary}
-            textMutedClass={tc.textMuted}
-          />
-        ))}
-      </ScrollView>
+      {isLoadingMessages && messages.length === 0 ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="small" color="#C5A059" />
+        </View>
+      ) : (
+        <FlatList
+          ref={listRef}
+          data={messages}
+          keyExtractor={(item) => item.id}
+          className="flex-1 px-5"
+          contentContainerClassName="gap-4 py-6"
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={16}
+          maxToRenderPerBatch={12}
+          windowSize={8}
+          renderItem={({ item }) => (
+            <MessageBubble
+              message={item}
+              incomingBubbleClass={tc.incomingBubble}
+              textPrimaryClass={tc.textPrimary}
+              textMutedClass={tc.textMuted}
+            />
+          )}
+        />
+      )}
 
       <View
         className={[

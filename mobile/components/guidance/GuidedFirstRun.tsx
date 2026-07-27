@@ -3,6 +3,7 @@ import { Modal, Pressable, Text, View } from 'react-native'
 import { router } from 'expo-router'
 import {
   ArrowRight,
+  Building2,
   Megaphone,
   MessageSquare,
   Radio,
@@ -22,7 +23,13 @@ type TourStep = {
   title: string
   body: string
   ctaLabel: string
-  href?: '/(tabs)' | '/(tabs)/integrations' | '/(tabs)/campaign-magic' | '/(tabs)/opportunities' | '/(tabs)/inbox'
+  href?:
+    | '/(tabs)'
+    | '/(tabs)/integrations'
+    | '/(tabs)/campaign-magic'
+    | '/(tabs)/opportunities'
+    | '/(tabs)/inbox'
+    | '/(tabs)/settings'
   icon: typeof Sparkles
 }
 
@@ -33,6 +40,13 @@ const TOUR_STEPS: TourStep[] = [
     body: 'Aqui você entende o que está acontecendo no negócio e decide o próximo passo — sem precisar ser especialista em marketing ou tecnologia.',
     ctaLabel: 'Começar o tour',
     icon: Sparkles,
+  },
+  {
+    id: 'company',
+    title: 'Sua empresa já está no sistema',
+    body: 'Usamos o nome, serviços e público que você informou para a IA criar campanhas e respostas alinhadas ao seu negócio. Dá para ajustar depois em Configurações.',
+    ctaLabel: 'Continuar',
+    icon: Building2,
   },
   {
     id: 'channels',

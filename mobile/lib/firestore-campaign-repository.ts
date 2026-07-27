@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDocs,
+  limit,
   query,
   setDoc,
   where,
@@ -12,6 +13,7 @@ import { firestoreCollections } from '@shared/constants/firestore-collections'
 import type { CreateSavedCampaignInput, SavedCampaign } from '@shared/types'
 import { generateId } from '@shared/utils/generate-id'
 import { getFirestoreDb } from './firebase'
+import { FIRESTORE_PAGE_LIMITS, type ListQueryOptions } from './firestore-limits'
 
 const EMPTY_METRICS: SavedCampaign['metrics'] = {
   views: 0,
@@ -49,8 +51,8 @@ function normalizeCampaign(
 }
 
 export type FirestoreCampaignRepository = {
-  listByUser(userId: string): Promise<SavedCampaign[]>
-  listActiveByUser(userId: string): Promise<SavedCampaign[]>
+  listByUser(userId: string, options?: ListQueryOptions): Promise<SavedCampaign[]>
+  listActiveByUser(userId: string, options?: ListQueryOptions): Promise<SavedCampaign[]>
   upsert(campaign: SavedCampaign): Promise<void>
   createActive(input: CreateSavedCampaignInput): Promise<SavedCampaign>
 }
@@ -61,8 +63,11 @@ export function createFirestoreCampaignRepository(
   const campaignsRef = collection(db, firestoreCollections.campaigns)
 
   return {
-    async listByUser(userId) {
-      const snapshot = await getDocs(query(campaignsRef, where('userId', '==', userId)))
+    async listByUser(userId, options = {}) {
+      const pageSize = options.limit ?? FIRESTORE_PAGE_LIMITS.campaigns
+      const snapshot = await getDocs(
+        query(campaignsRef, where('userId', '==', userId), limit(pageSize)),
+      )
       const campaigns = snapshot.docs
         .map((document) =>
           normalizeCampaign(document.id, document.data() as Partial<SavedCampaign>),
@@ -75,8 +80,8 @@ export function createFirestoreCampaignRepository(
       )
     },
 
-    async listActiveByUser(userId) {
-      const campaigns = await this.listByUser(userId)
+    async listActiveByUser(userId, options = {}) {
+      const campaigns = await this.listByUser(userId, options)
       return campaigns.filter((campaign) => campaign.status === 'active')
     },
 

@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, Text, View } from 'react-native'
+import { useCallback, useMemo, useState } from 'react'
+import { FlatList, Pressable, Text, View } from 'react-native'
 import type { InboxConversation } from '@shared/types'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { InboxAiSummary } from './InboxAiSummary'
@@ -17,6 +18,73 @@ const PRIORITY_DOT: Record<InboxConversation['priority'], string> = {
   cold: 'bg-slate-300',
 }
 
+function ConversationRow({
+  conversation,
+  isSelected,
+  onSelect,
+  isDark,
+  textPrimary,
+  textSecondary,
+  textMuted,
+  listItemPressed,
+}: {
+  conversation: InboxConversation
+  isSelected: boolean
+  onSelect: (conversationId: string) => void
+  isDark: boolean
+  textPrimary: string
+  textSecondary: string
+  textMuted: string
+  listItemPressed: string
+}) {
+  return (
+    <Pressable
+      onPress={() => onSelect(conversation.id)}
+      className={[
+        'gap-3 border-b px-6 py-5',
+        isDark ? 'border-white/[0.04]' : 'border-slate-50/80',
+        isSelected ? (isDark ? 'bg-white/[0.04]' : 'bg-slate-50/80') : 'bg-transparent',
+        listItemPressed,
+      ].join(' ')}
+    >
+      <View className="flex-row items-start gap-4">
+        <View className="relative">
+          <InboxChannelIcon channel={conversation.channel} size="lg" />
+          <View
+            className={[
+              'absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2',
+              PRIORITY_DOT[conversation.priority],
+              isDark ? 'border-navy' : 'border-white',
+            ].join(' ')}
+          />
+        </View>
+
+        <View className="min-w-0 flex-1 gap-1.5">
+          <View className="flex-row items-center justify-between gap-2">
+            <Text className={['flex-1 text-base font-semibold', textPrimary].join(' ')} numberOfLines={1}>
+              {conversation.contactName}
+            </Text>
+            <Text className={['text-xs tabular-nums', textMuted].join(' ')}>
+              {conversation.updatedAt}
+            </Text>
+          </View>
+
+          <Text className={['text-sm', textSecondary].join(' ')} numberOfLines={1}>
+            {conversation.preview}
+          </Text>
+
+          <InboxAiSummary
+            summary={conversation.aiSummary}
+            estimatedValue={conversation.estimatedValue}
+            priority={conversation.priority}
+            compact
+          />
+        </View>
+      </View>
+    </Pressable>
+  )
+}
+
 export function InboxConversationList({
   conversations,
   selectedId,
@@ -24,7 +92,26 @@ export function InboxConversationList({
   isCompact = false,
 }: InboxConversationListProps) {
   const tc = useThemeClasses()
-  const unreadTotal = conversations.reduce((sum, c) => sum + c.unreadCount, 0)
+  const unreadTotal = useMemo(
+    () => conversations.reduce((sum, conversation) => sum + conversation.unreadCount, 0),
+    [conversations],
+  )
+
+  const renderItem = useCallback(
+    ({ item }: { item: InboxConversation }) => (
+      <ConversationRow
+        conversation={item}
+        isSelected={selectedId === item.id}
+        onSelect={onSelect}
+        isDark={tc.isDark}
+        textPrimary={tc.textPrimary}
+        textSecondary={tc.textSecondary}
+        textMuted={tc.textMuted}
+        listItemPressed={tc.listItemPressed}
+      />
+    ),
+    [onSelect, selectedId, tc.isDark, tc.listItemPressed, tc.textMuted, tc.textPrimary, tc.textSecondary],
+  )
 
   return (
     <View
@@ -47,66 +134,17 @@ export function InboxConversationList({
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} className="flex-1">
-        {conversations.map((conversation) => {
-          const isSelected = selectedId === conversation.id
-
-          return (
-            <Pressable
-              key={conversation.id}
-              onPress={() => onSelect(conversation.id)}
-              className={[
-                'gap-3 border-b px-6 py-5',
-                tc.isDark ? 'border-white/[0.04]' : 'border-slate-50/80',
-                isSelected
-                  ? tc.isDark
-                    ? 'bg-white/[0.04]'
-                    : 'bg-slate-50/80'
-                  : 'bg-transparent',
-                tc.listItemPressed,
-              ].join(' ')}
-            >
-              <View className="flex-row items-start gap-4">
-                <View className="relative">
-                  <InboxChannelIcon channel={conversation.channel} size="lg" />
-                  <View
-                    className={[
-                      'absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2',
-                      PRIORITY_DOT[conversation.priority],
-                      tc.isDark ? 'border-navy' : 'border-white',
-                    ].join(' ')}
-                  />
-                </View>
-
-                <View className="min-w-0 flex-1 gap-1.5">
-                  <View className="flex-row items-center justify-between gap-2">
-                    <Text
-                      className={['flex-1 text-base font-semibold', tc.textPrimary].join(' ')}
-                      numberOfLines={1}
-                    >
-                      {conversation.contactName}
-                    </Text>
-                    <Text className={['text-xs tabular-nums', tc.textMuted].join(' ')}>
-                      {conversation.updatedAt}
-                    </Text>
-                  </View>
-
-                  <Text className={['text-sm', tc.textSecondary].join(' ')} numberOfLines={1}>
-                    {conversation.preview}
-                  </Text>
-
-                  <InboxAiSummary
-                    summary={conversation.aiSummary}
-                    estimatedValue={conversation.estimatedValue}
-                    priority={conversation.priority}
-                    compact
-                  />
-                </View>
-              </View>
-            </Pressable>
-          )
-        })}
-      </ScrollView>
+      <FlatList
+        data={conversations}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        showsVerticalScrollIndicator={false}
+        className="flex-1"
+        initialNumToRender={12}
+        maxToRenderPerBatch={10}
+        windowSize={7}
+        removeClippedSubviews
+      />
     </View>
   )
 }

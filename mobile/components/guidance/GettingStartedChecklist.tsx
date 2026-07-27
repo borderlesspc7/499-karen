@@ -15,7 +15,7 @@ type ChecklistItem = {
   label: string
   hint: string
   done: boolean
-  href: '/(tabs)/integrations' | '/(tabs)/campaign-magic' | '/(tabs)/opportunities' | '/(tabs)/inbox'
+  href: '/(tabs)/integrations' | '/(tabs)/campaign-magic' | '/(tabs)/opportunities' | '/(tabs)/inbox' | '/(tabs)/settings'
 }
 
 export function GettingStartedChecklist() {
@@ -60,9 +60,11 @@ export function GettingStartedChecklist() {
       {
         id: 'brand',
         label: 'Contar quem é a sua empresa',
-        hint: 'Já feito no início — sua marca está salva.',
-        done: isOnboardingComplete && Boolean(brandIdentity?.companyName),
-        href: '/(tabs)/integrations',
+        hint: brandIdentity?.companyName
+          ? `Marca salva: ${brandIdentity.companyName}`
+          : 'Complete nome, serviços e público da sua empresa',
+        done: isOnboardingComplete && Boolean(brandIdentity?.companyName?.trim()),
+        href: '/(tabs)/settings',
       },
       {
         id: 'channel',

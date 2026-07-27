@@ -1,4 +1,4 @@
-import { Alert, Pressable, Text, View } from 'react-native'
+import { Alert, FlatList, Pressable, Text, View } from 'react-native'
 import { ArrowRight, Sparkles, TrendingUp } from 'lucide-react-native'
 import type { GrowthFlowLead } from '@/lib/crm-lead-insights'
 import { resolveHealthColor } from '@/lib/crm-lead-insights'
@@ -102,23 +102,28 @@ export function GrowthFlowList({ leads, onLeadPress, onExecuteLead }: GrowthFlow
   }
 
   return (
-    <View>
-      {leads.map((lead, index) => (
+    <FlatList
+      data={leads}
+      keyExtractor={(item) => item.id}
+      scrollEnabled={false}
+      initialNumToRender={8}
+      maxToRenderPerBatch={6}
+      windowSize={5}
+      renderItem={({ item, index }) => (
         <GrowthFlowItem
-          key={lead.id}
-          lead={lead}
+          lead={item}
           rank={index + 1}
           isLast={index === leads.length - 1}
-          onPress={() => onLeadPress?.(lead)}
+          onPress={() => onLeadPress?.(item)}
           onExecute={() => {
-            onExecuteLead?.(lead)
+            onExecuteLead?.(item)
             Alert.alert(
               'Ação em execução',
-              `A IA vai ${lead.nextBestAction.toLowerCase()} para ${lead.clientName}.`,
+              `A IA vai ${item.nextBestAction.toLowerCase()} para ${item.clientName}.`,
             )
           }}
         />
-      ))}
-    </View>
+      )}
+    />
   )
 }

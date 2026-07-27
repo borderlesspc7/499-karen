@@ -2,6 +2,7 @@ import {
   collection,
   doc,
   getDocs,
+  limit,
   query,
   setDoc,
   where,
@@ -13,6 +14,7 @@ import { firestoreCollections } from '@shared/constants/firestore-collections'
 import { generateId } from '@shared/utils/generate-id'
 import { scopedDocId } from '@shared/utils/scoped-doc-id'
 import { getFirestoreDb } from './firebase'
+import { FIRESTORE_PAGE_LIMITS, type ListQueryOptions } from './firestore-limits'
 
 function normalizeAutomation(id: string, data: Partial<Automation>): Automation | null {
   if (!data.userId || !data.title || !data.trigger || !data.action) {
@@ -46,7 +48,7 @@ export type CreateAutomationInput = {
 }
 
 export type FirestoreAutomationRepository = {
-  listByUser(userId: string): Promise<Automation[]>
+  listByUser(userId: string, options?: ListQueryOptions): Promise<Automation[]>
   upsert(automation: Automation): Promise<void>
   create(input: CreateAutomationInput): Promise<Automation>
   setEnabled(userId: string, automationId: string, enabled: boolean): Promise<void>
@@ -58,8 +60,11 @@ export function createFirestoreAutomationRepository(
   const automationsRef = collection(db, firestoreCollections.automations)
 
   return {
-    async listByUser(userId) {
-      const snapshot = await getDocs(query(automationsRef, where('userId', '==', userId)))
+    async listByUser(userId, options = {}) {
+      const pageSize = options.limit ?? FIRESTORE_PAGE_LIMITS.automations
+      const snapshot = await getDocs(
+        query(automationsRef, where('userId', '==', userId), limit(pageSize)),
+      )
       return snapshot.docs
         .map((document) =>
           normalizeAutomation(document.id, document.data() as Partial<Automation>),

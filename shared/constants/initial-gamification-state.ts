@@ -3,6 +3,7 @@ import {
   calculateTotalScore,
   resolveCompanyTier,
 } from '../utils/gamification-helpers'
+import { isBrandIdentityComplete } from '../utils/brand-identity'
 
 const EMPTY_BUSINESS_HEALTH = {
   marketing: 0,
@@ -83,9 +84,18 @@ export function mergeGamificationState(
     totalScore: calculateTotalScore(persisted.businessHealth),
   }
 
+  const brandIdentity =
+    persisted.brandIdentity &&
+    isBrandIdentityComplete({
+      businessProfile: persisted.userProfile ?? 'Empresário',
+      ...persisted.brandIdentity,
+    })
+      ? persisted.brandIdentity
+      : null
+
   return {
     ...persisted,
-    brandIdentity: persisted.brandIdentity ?? null,
+    brandIdentity,
     businessHealth,
     companyTier: resolveCompanyTier(businessHealth.totalScore),
   }

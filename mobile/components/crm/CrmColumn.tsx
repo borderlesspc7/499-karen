@@ -1,6 +1,6 @@
 import { memo, type ReactNode } from 'react'
 import type { KanbanCardWithClient, KanbanColumn } from '@shared/types'
-import { Text, View } from 'react-native'
+import { FlatList, Text, View } from 'react-native'
 import { CrmOpportunityCard } from './CrmOpportunityCard'
 
 export type CrmColumnGroup = {
@@ -47,18 +47,25 @@ function CrmColumnComponent({
             {isOver ? 'Solte aqui' : 'Nenhuma oportunidade nesta etapa.'}
           </Text>
         ) : (
-          group.cards.map((card) =>
-            renderCard ? (
-              <View key={card.id}>{renderCard(card)}</View>
-            ) : (
-              <CrmOpportunityCard
-                key={card.id}
-                card={card}
-                onPress={() => onCardPress(card)}
-                isDragging={activeDragCardId === card.id}
-              />
-            ),
-          )
+          <FlatList
+            data={group.cards}
+            keyExtractor={(card) => card.id}
+            scrollEnabled={false}
+            initialNumToRender={10}
+            maxToRenderPerBatch={8}
+            windowSize={5}
+            renderItem={({ item: card }) =>
+              renderCard ? (
+                <View>{renderCard(card)}</View>
+              ) : (
+                <CrmOpportunityCard
+                  card={card}
+                  onPress={() => onCardPress(card)}
+                  isDragging={activeDragCardId === card.id}
+                />
+              )
+            }
+          />
         )}
       </View>
     </View>

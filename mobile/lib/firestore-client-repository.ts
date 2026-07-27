@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   query,
   setDoc,
   where,
@@ -13,6 +14,7 @@ import {
 import type { Client } from '@shared/types'
 import { firestoreCollections } from '@shared/constants/firestore-collections'
 import { scopedDocId } from '@shared/utils/scoped-doc-id'
+import { FIRESTORE_PAGE_LIMITS, type ListQueryOptions } from './firestore-limits'
 import { omitUndefinedFields } from './firestore-sanitize'
 
 function normalizeClient(id: string, data: Partial<Client>): Client | null {
@@ -41,7 +43,7 @@ function normalizeClient(id: string, data: Partial<Client>): Client | null {
 }
 
 export type FirestoreClientRepository = {
-  listByUser(userId: string): Promise<Client[]>
+  listByUser(userId: string, options?: ListQueryOptions): Promise<Client[]>
   getClientById(userId: string, id: string): Promise<Client | null>
   upsertClient(client: Client): Promise<void>
   deleteClient(userId: string, id: string): Promise<void>
@@ -51,8 +53,11 @@ export function createFirestoreClientRepository(db: Firestore): FirestoreClientR
   const clientsRef = collection(db, firestoreCollections.clients)
 
   return {
-    async listByUser(userId) {
-      const snapshot = await getDocs(query(clientsRef, where('userId', '==', userId)))
+    async listByUser(userId, options = {}) {
+      const pageSize = options.limit ?? FIRESTORE_PAGE_LIMITS.clients
+      const snapshot = await getDocs(
+        query(clientsRef, where('userId', '==', userId), limit(pageSize)),
+      )
       return snapshot.docs
         .map((document) => normalizeClient(document.id, document.data() as Partial<Client>))
         .filter((client): client is Client => client !== null)

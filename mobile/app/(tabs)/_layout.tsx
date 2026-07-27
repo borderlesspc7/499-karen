@@ -34,81 +34,85 @@ export default function TabLayout() {
   }
 
   return (
-    <SummusAppShell>
-      <OnboardingModal visible={!isOnboardingComplete} />
-      <GuidedFirstRun enabled={isOnboardingComplete} />
-      <Tabs
-        initialRouteName={isOnboardingComplete ? 'index' : 'integrations'}
-        tabBar={
-          hideMobileTabBar
-            ? () => null
-            : (props) => <SummusBottomTabBar {...props} />
-        }
-        screenOptions={{
-          headerShown: false,
-          animation: 'fade',
-          sceneStyle: { flex: 1, backgroundColor: tc.sceneBg },
-          tabBarStyle: { backgroundColor: tc.tabBarBg, borderTopColor: tc.tabBarBorder },
-        }}
-      >
-        <Tabs.Screen
-          name="index"
-          options={{
-            title: 'Núcleo Cognitivo',
+    <View className="flex-1">
+      <SummusAppShell>
+        {isOnboardingComplete ? <GuidedFirstRun enabled /> : null}
+        <Tabs
+          initialRouteName={isOnboardingComplete ? 'index' : 'integrations'}
+          tabBar={
+            hideMobileTabBar
+              ? () => null
+              : (props) => <SummusBottomTabBar {...props} />
+          }
+          screenOptions={{
+            headerShown: false,
+            animation: 'fade',
+            sceneStyle: { flex: 1, backgroundColor: tc.sceneBg },
+            tabBarStyle: { backgroundColor: tc.tabBarBg, borderTopColor: tc.tabBarBorder },
           }}
-        />
-        <Tabs.Screen
-          name="workforce"
-          options={{
-            title: 'Motores Cognitivos',
-          }}
-        />
-        <Tabs.Screen
-          name="integrations"
-          options={{
-            title: 'Canais',
-          }}
-        />
-        <Tabs.Screen
-          name="campaign-magic"
-          options={{
-            title: 'Campanhas',
-          }}
-        />
-        <Tabs.Screen
-          name="inbox"
-          options={{
-            title: 'Inbox',
-          }}
-        />
-        <Tabs.Screen name="conversations" options={{ href: null }} />
+        >
+          <Tabs.Screen
+            name="index"
+            options={{
+              title: 'Núcleo Cognitivo',
+            }}
+          />
+          <Tabs.Screen
+            name="workforce"
+            options={{
+              title: 'Motores Cognitivos',
+            }}
+          />
+          <Tabs.Screen
+            name="integrations"
+            options={{
+              title: 'Canais',
+            }}
+          />
+          <Tabs.Screen
+            name="campaign-magic"
+            options={{
+              title: 'Campanhas',
+            }}
+          />
+          <Tabs.Screen
+            name="inbox"
+            options={{
+              title: 'Inbox',
+            }}
+          />
+          <Tabs.Screen name="conversations" options={{ href: null }} />
 
-        <Tabs.Screen name="ai-coach" options={{ href: null }} />
-        <Tabs.Screen name="learn" options={{ href: null }} />
-        <Tabs.Screen
-          name="opportunities"
-          options={{
-            title: 'Oportunidades',
-          }}
-        />
-        <Tabs.Screen
-          name="crm"
-          options={{
-            href: null,
-            title: 'CRM',
-          }}
-        />
-        <Tabs.Screen name="automations" options={{ href: null }} />
-        <Tabs.Screen name="treasure-vault" options={{ href: null }} />
-        <Tabs.Screen name="tasks" options={{ href: null }} />
-        <Tabs.Screen name="marketing" options={{ href: null }} />
-        <Tabs.Screen name="bookings" options={{ href: null }} />
-        <Tabs.Screen name="analytics" options={{ href: null }} />
-        <Tabs.Screen name="resources" options={{ href: null }} />
-        <Tabs.Screen name="clientes" options={{ href: null }} />
-        <Tabs.Screen name="settings" options={{ href: null }} />
-        <Tabs.Screen name="profile" options={{ href: null }} />
-      </Tabs>
-    </SummusAppShell>
+          <Tabs.Screen name="ai-coach" options={{ href: null }} />
+          <Tabs.Screen name="learn" options={{ href: null }} />
+          <Tabs.Screen
+            name="opportunities"
+            options={{
+              title: 'Oportunidades',
+            }}
+          />
+          <Tabs.Screen
+            name="crm"
+            options={{
+              href: null,
+              title: 'CRM',
+            }}
+          />
+          <Tabs.Screen name="automations" options={{ href: null }} />
+          <Tabs.Screen name="treasure-vault" options={{ href: null }} />
+          <Tabs.Screen name="tasks" options={{ href: null }} />
+          <Tabs.Screen name="marketing" options={{ href: null }} />
+          <Tabs.Screen name="bookings" options={{ href: null }} />
+          <Tabs.Screen name="analytics" options={{ href: null }} />
+          <Tabs.Screen name="resources" options={{ href: null }} />
+          <Tabs.Screen name="clientes" options={{ href: null }} />
+          <Tabs.Screen name="settings" options={{ href: null }} />
+          <Tabs.Screen name="profile" options={{ href: null }} />
+        </Tabs>
+      </SummusAppShell>
+
+      {/* Fora do shell/Modal RN: cobre tudo após o plano e não pode ser pulado */}
+      <OnboardingModal visible={!isOnboardingComplete} />
+    </View>
   )
 }
