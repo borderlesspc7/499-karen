@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native'
 import { TrendingUp } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import type { CompanyStage } from '@shared/types/gamification'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -16,6 +17,7 @@ function resolveStagePercentile(score: number): number {
 }
 
 export function HomeGrowthScoreCard({ score, companyStage }: HomeGrowthScoreCardProps) {
+  const { t } = useTranslation()
   const tc = useThemeClasses()
   const percentile = resolveStagePercentile(score)
 
@@ -26,7 +28,7 @@ export function HomeGrowthScoreCard({ score, companyStage }: HomeGrowthScoreCard
           <TrendingUp size={16} color={premiumColors.emerald} strokeWidth={2} />
         </View>
         <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
-          Business Growth Score
+          {t('home.businessGrowthScore')}
         </Text>
       </View>
 
@@ -43,9 +45,10 @@ export function HomeGrowthScoreCard({ score, companyStage }: HomeGrowthScoreCard
 
       <View className={['mt-4 px-4 py-3', tc.highlightBox].join(' ')}>
         <Text className={['text-sm leading-6', tc.textLabel].join(' ')}>
-          Sua empresa está mais avançada que{' '}
-          <Text className={['font-semibold', tc.textPrimary].join(' ')}>{percentile}%</Text> das empresas do seu
-          estágio <Text className="font-semibold text-gold">{companyStage}</Text>.
+          {t('home.growthScorePercentile', {
+            percentile: String(percentile),
+            stage: companyStage,
+          })}
         </Text>
       </View>
     </View>

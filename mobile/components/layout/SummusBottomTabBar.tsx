@@ -2,6 +2,8 @@ import { Pressable, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs'
 import { BrainCircuit, Inbox, LayoutGrid, Link2, TrendingUp, Wand2 } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
@@ -18,19 +20,20 @@ type VisibleTabName = (typeof VISIBLE_TABS)[number]
 
 const TAB_CONFIG: Record<
   VisibleTabName,
-  { label: string; Icon: typeof LayoutGrid }
+  { labelKey: TranslationKey; Icon: typeof LayoutGrid }
 > = {
-  index: { label: 'Meridian', Icon: LayoutGrid },
-  opportunities: { label: 'Oportunidades', Icon: TrendingUp },
-  workforce: { label: 'Motores', Icon: BrainCircuit },
-  integrations: { label: 'Canais', Icon: Link2 },
-  'campaign-magic': { label: 'Campanhas', Icon: Wand2 },
-  inbox: { label: 'Inbox', Icon: Inbox },
+  index: { labelKey: 'nav.meridian', Icon: LayoutGrid },
+  opportunities: { labelKey: 'nav.opportunities', Icon: TrendingUp },
+  workforce: { labelKey: 'nav.engines', Icon: BrainCircuit },
+  integrations: { labelKey: 'nav.channels', Icon: Link2 },
+  'campaign-magic': { labelKey: 'nav.campaigns', Icon: Wand2 },
+  inbox: { labelKey: 'nav.inbox', Icon: Inbox },
 }
 
 export function SummusBottomTabBar({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets()
   const tc = useThemeClasses()
+  const { t } = useTranslation()
 
   return (
     <View
@@ -67,7 +70,7 @@ export function SummusBottomTabBar({ state, navigation }: BottomTabBarProps) {
                 <Icon size={20} color={iconColor} strokeWidth={isFocused ? 2 : 1.5} />
               </View>
               <Text className={['text-[10px] font-semibold tracking-wide', labelColor].join(' ')}>
-                {config.label}
+                {t(config.labelKey)}
               </Text>
             </Pressable>
           )

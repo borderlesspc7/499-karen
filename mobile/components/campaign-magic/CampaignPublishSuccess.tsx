@@ -1,11 +1,8 @@
 import { useEffect } from 'react'
 import { Modal, Pressable, Text, View } from 'react-native'
-import Animated, {
-  FadeIn,
-  FadeInDown,
-  ZoomIn,
-} from 'react-native-reanimated'
+import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated'
 import { CheckCircle2 } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -42,6 +39,7 @@ export function CampaignPublishSuccess({
 }: CampaignPublishSuccessProps) {
   const tc = useThemeClasses()
   const { isWebDesktop } = useResponsiveLayout()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (!visible) return
@@ -73,10 +71,12 @@ export function CampaignPublishSuccess({
               <CheckCircle2 size={48} color={premiumColors.emerald} strokeWidth={1.5} />
             </Animated.View>
             <Text className={['text-center text-2xl font-bold', tc.textPrimary].join(' ')}>
-              Campanha publicada com sucesso
+              {t('campaigns.successTitle')}
             </Text>
             <Text className={['text-center text-sm', tc.textSecondary].join(' ')}>
-              em {channels.filter((c) => c.published).length} canais
+              {t('campaigns.successChannels', {
+                count: channels.filter((c) => c.published).length,
+              })}
             </Text>
           </View>
 
@@ -87,9 +87,7 @@ export function CampaignPublishSuccess({
                 entering={platformEntering(FadeIn.delay(300 + index * 120).duration(350))}
                 className={[
                   'flex-row items-center gap-2 rounded-full border px-4 py-2',
-                  channel.published
-                    ? 'border-emerald/30 bg-emerald/10'
-                    : tc.filterInactive,
+                  channel.published ? 'border-emerald/30 bg-emerald/10' : tc.filterInactive,
                 ].join(' ')}
               >
                 <Text className={['text-sm font-medium', tc.textPrimary].join(' ')}>
@@ -106,21 +104,21 @@ export function CampaignPublishSuccess({
 
           <View className="flex-row gap-3">
             <KpiCard
-              label="Estimativa"
+              label={t('campaigns.kpiEstimate')}
               value={estimatedLeads}
-              suffix=" leads"
+              suffix={t('campaigns.leadsSuffix')}
               delay={600}
               tc={tc}
             />
             <KpiCard
-              label="Economia"
+              label={t('campaigns.kpiSavings')}
               value={hoursSaved}
-              suffix=" horas"
+              suffix={t('campaigns.hoursSuffix')}
               delay={750}
               tc={tc}
             />
             <KpiCard
-              label="ROI previsto"
+              label={t('campaigns.kpiRoi')}
               value={expectedRoi}
               suffix="x"
               delay={900}
@@ -132,18 +130,15 @@ export function CampaignPublishSuccess({
           <View className={['h-px w-full', tc.isDark ? 'bg-white/10' : 'bg-slate-200'].join(' ')} />
 
           <View className="gap-3">
-            <Pressable
-              onPress={onClose}
-              className="rounded-2xl bg-gold py-4 active:opacity-90"
-            >
+            <Pressable onPress={onClose} className="rounded-2xl bg-gold py-4 active:opacity-90">
               <Text className="text-center text-base font-bold text-deepBlue">
-                Ver campanhas ativas
+                {t('campaigns.viewActive')}
               </Text>
             </Pressable>
             {onGoHome ? (
               <Pressable onPress={onGoHome} className="rounded-2xl py-3 active:opacity-70">
                 <Text className={['text-center text-sm font-semibold', tc.textSecondary].join(' ')}>
-                  Ir para a Meridian
+                  {t('campaigns.goMeridian')}
                 </Text>
               </Pressable>
             ) : null}
@@ -179,10 +174,14 @@ function KpiCard({
         formatter={(v) => `${formatter ? formatter(v) : Math.round(v).toString()}${suffix}`}
         className="text-xl font-bold tabular-nums text-gold"
       />
-      <Text className={['text-center text-[10px] font-medium uppercase tracking-wider', tc.textMuted].join(' ')}>
+      <Text
+        className={[
+          'text-center text-[10px] font-medium uppercase tracking-wider',
+          tc.textMuted,
+        ].join(' ')}
+      >
         {label}
       </Text>
     </Animated.View>
   )
 }
-

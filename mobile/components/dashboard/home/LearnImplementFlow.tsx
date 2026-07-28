@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native'
 import { BarChart3, ChevronRight, Play, Sparkles, Wrench } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { SummusSheetModal } from '@/components/ui/modal'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
@@ -32,9 +33,9 @@ const INITIAL_FORM: BuilderForm = {
 }
 
 const STEPS = [
-  { id: 'learn', label: 'Learn', icon: Play },
-  { id: 'implement', label: 'Implement', icon: Wrench },
-  { id: 'grow', label: 'Grow', icon: BarChart3 },
+  { id: 'learn', labelKey: 'home.stepLearn' as const, icon: Play },
+  { id: 'implement', labelKey: 'home.stepImplement' as const, icon: Wrench },
+  { id: 'grow', labelKey: 'home.stepGrow' as const, icon: BarChart3 },
 ] as const
 
 type FlowView = 'lesson' | 'builder' | 'loading'
@@ -82,6 +83,7 @@ function FormField({
 
 export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImplementFlowProps>(
   function LearnImplementFlow({ onOpenBuilder }, ref) {
+  const { t } = useTranslation()
   const { width } = useResponsiveLayout()
   const isWideLayout = width >= 768
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -133,14 +135,11 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
       setIsModalOpen(false)
       setFlowView('lesson')
       setForm(INITIAL_FORM)
-      Alert.alert(
-        'Ecossistema Gerado!',
-        'Pronto! O seu ecossistema foi gerado e está pronto para personalização.',
-      )
+      Alert.alert(t('home.ecosystemGenerated'), t('home.ecosystemReady'))
     }, 2000)
 
     return () => clearTimeout(timer)
-  }, [flowView])
+  }, [flowView, t])
 
   return (
     <>
@@ -156,7 +155,7 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
         }}
       >
         <View className="flex-row items-center justify-between">
-          <Text className="text-lg font-bold text-deepBlue">Learn → Implement → Grow</Text>
+          <Text className="text-lg font-bold text-deepBlue">{t('home.learnImplementGrow')}</Text>
           <ChevronRight size={20} color="#F59E0B" />
         </View>
 
@@ -184,7 +183,7 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
                     isActive ? 'text-gold' : 'text-deepBlue/50',
                   ].join(' ')}
                 >
-                  {step.label}
+                  {t(step.labelKey)}
                 </Text>
               </View>
             )
@@ -193,16 +192,16 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
 
         <View className="mt-5 flex-row items-center justify-center gap-2 rounded-2xl bg-gold/10 py-3">
           <Sparkles size={14} color="#F59E0B" />
-          <Text className="text-sm font-semibold text-gold">Toque para aprender e executar</Text>
+          <Text className="text-sm font-semibold text-gold">{t('home.tapToLearn')}</Text>
         </View>
       </Pressable>
 
       <SummusSheetModal
         visible={isModalOpen}
         onClose={closeModal}
-        badge="Growth Flow"
+        badge={t('home.growthFlow')}
         badgeIcon={Sparkles}
-        title={flowView === 'builder' ? 'Construtor Mágico' : 'Learn + Implement'}
+        title={flowView === 'builder' ? t('home.magicBuilder') : t('home.learnImplement')}
       >
         <KeyboardAvoidingView
           className="flex-1"
@@ -215,7 +214,7 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
                 <ActivityIndicator size="large" color="#F59E0B" />
               </View>
               <Text className="text-center text-base font-medium text-white/80">
-                A IA está a construir o seu negócio...
+                {t('home.aiBuilding')}
               </Text>
             </View>
           ) : flowView === 'builder' ? (
@@ -226,35 +225,35 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
               showsVerticalScrollIndicator={false}
             >
                 <FormField
-                  label="Nome da Empresa"
+                  label={t('home.fieldCompanyName')}
                   value={form.companyName}
                   onChangeText={(text) => updateField('companyName', text)}
-                  placeholder="Ex: Summus Edge"
+                  placeholder={t('home.phCompanyName')}
                 />
                 <FormField
-                  label="Segmento"
+                  label={t('home.fieldSegment')}
                   value={form.segment}
                   onChangeText={(text) => updateField('segment', text)}
-                  placeholder="Ex: Consultoria de crescimento"
+                  placeholder={t('home.phSegment')}
                 />
                 <FormField
-                  label="Cidade"
+                  label={t('home.fieldCity')}
                   value={form.city}
                   onChangeText={(text) => updateField('city', text)}
-                  placeholder="Ex: São Paulo"
+                  placeholder={t('home.phCity')}
                 />
                 <FormField
-                  label="Serviços"
+                  label={t('home.fieldServices')}
                   value={form.services}
                   onChangeText={(text) => updateField('services', text)}
-                  placeholder="Descreva os seus principais serviços"
+                  placeholder={t('home.phServices')}
                   multiline
                 />
                 <FormField
-                  label="Objetivos"
+                  label={t('home.fieldGoals')}
                   value={form.goals}
                   onChangeText={(text) => updateField('goals', text)}
-                  placeholder="O que quer alcançar nos próximos 90 dias?"
+                  placeholder={t('home.phGoals')}
                   multiline
                 />
 
@@ -270,7 +269,7 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
                 }}
               >
                 <Sparkles size={18} color="#0F172A" />
-                <Text className="text-base font-bold text-deepBlue">Criar Magia</Text>
+                <Text className="text-base font-bold text-deepBlue">{t('home.createMagic')}</Text>
               </AnimatedPressable>
             </ScrollView>
           ) : (
@@ -281,19 +280,19 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
                     <Play size={28} color="#F59E0B" fill="#F59E0B" />
                   </View>
                   <Text className="mt-4 text-center text-lg font-bold text-white">
-                    O que é uma Landing Page?
+                    {t('home.whatIsLanding')}
                   </Text>
                   <Text className="mt-2 text-center text-sm text-white/50">
-                    Vídeo da lição · 4 min
+                    {t('home.lessonVideo')}
                   </Text>
                 </View>
               </View>
 
               <View className={isWideLayout ? 'flex-1 p-5' : 'p-5'}>
                 <View className="flex-1 justify-center rounded-3xl border border-gold/30 bg-gold/5 p-6">
-                  <Text className="text-xl font-bold text-white">Vamos criar a sua agora</Text>
+                  <Text className="text-xl font-bold text-white">{t('home.createYoursNow')}</Text>
                   <Text className="mt-2 text-sm leading-5 text-white/60">
-                    Aplique o que aprendeu e deixe a IA gerar a primeira versão em segundos.
+                    {t('home.applyWhatLearned')}
                   </Text>
 
                   <AnimatedPressable
@@ -309,7 +308,7 @@ export const LearnImplementFlow = forwardRef<LearnImplementFlowRef, LearnImpleme
                   >
                     <Sparkles size={18} color="#0F172A" />
                     <Text className="text-base font-bold text-deepBlue">
-                      Gerar Estrutura com IA
+                      {t('home.generateStructure')}
                     </Text>
                   </AnimatedPressable>
                 </View>

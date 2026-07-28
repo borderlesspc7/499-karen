@@ -1,4 +1,5 @@
 import type { KanbanCardWithClient } from '@shared/types'
+import type { TranslationKey } from '@shared/i18n'
 
 const HOT_COLUMN_IDS = new Set(['col-proposta', 'col-negociacao'])
 const INACTIVE_COLUMN_IDS = new Set(['col-leads'])
@@ -91,11 +92,12 @@ export function resolveHealthColor(score: number): string {
   return '#EF4444'
 }
 
-const NEXT_ACTION_BY_COLUMN: Record<string, string> = {
-  'col-leads': 'Reativar com mensagem personalizada',
-  'col-contato': 'Agendar follow-up esta semana',
-  'col-proposta': 'Enviar proposta com urgência suave',
-  'col-negociacao': 'Resolver objeção e fechar negócio',
+/** i18n keys — translate at call site with `t(lead.nextBestAction)`. */
+const NEXT_ACTION_KEY_BY_COLUMN: Record<string, TranslationKey> = {
+  'col-leads': 'opportunities.sendPersonalized',
+  'col-contato': 'opportunities.followUpWeek',
+  'col-proposta': 'opportunities.sendProposal',
+  'col-negociacao': 'opportunities.resolveObjection',
 }
 
 const PRIORITY_BASE_IMPACT: Record<KanbanCardWithClient['priority'], number> = {
@@ -113,12 +115,13 @@ const COLUMN_IMPACT_MULTIPLIER: Record<string, number> = {
 
 export type GrowthFlowLead = KanbanCardWithClient & {
   healthScore: number
-  nextBestAction: string
+  /** Translation key — use `t(lead.nextBestAction)` in UI. */
+  nextBestAction: TranslationKey
   dealImpact: number
 }
 
-export function resolveNextBestAction(card: KanbanCardWithClient): string {
-  return NEXT_ACTION_BY_COLUMN[card.columnId] ?? 'Definir próximo passo com a IA'
+export function resolveNextBestAction(card: KanbanCardWithClient): TranslationKey {
+  return NEXT_ACTION_KEY_BY_COLUMN[card.columnId] ?? 'opportunities.defineNextAi'
 }
 
 export function estimateDealImpact(

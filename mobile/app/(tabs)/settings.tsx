@@ -13,7 +13,8 @@ import {
   Shield,
   Users,
 } from 'lucide-react-native'
-import { useAuth, useGamification, useSubscription } from '@shared/contexts'
+import { useAuth, useGamification, useSubscription, useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import {
   formatPlanPriceBrl,
   getSubscriptionPlan,
@@ -27,22 +28,23 @@ import { useUserSettings } from '@/hooks/useUserSettings'
 
 type SettingsSection = 'geral' | 'marca' | 'seguranca' | 'integracoes' | 'equipe' | 'faturamento'
 
-const sections: { id: SettingsSection; label: string; icon: typeof Building2 }[] = [
-  { id: 'geral', label: 'Geral', icon: Building2 },
-  { id: 'marca', label: 'Identidade', icon: Palette },
-  { id: 'seguranca', label: 'Segurança', icon: Shield },
-  { id: 'integracoes', label: 'Integrações', icon: Link2 },
-  { id: 'equipe', label: 'Equipe', icon: Users },
-  { id: 'faturamento', label: 'Faturamento', icon: CreditCard },
+const SECTIONS: { id: SettingsSection; labelKey: TranslationKey; icon: typeof Building2 }[] = [
+  { id: 'geral', labelKey: 'settings.navGeneral', icon: Building2 },
+  { id: 'marca', labelKey: 'settings.navBrand', icon: Palette },
+  { id: 'seguranca', labelKey: 'settings.navSecurity', icon: Shield },
+  { id: 'integracoes', labelKey: 'settings.navIntegrations', icon: Link2 },
+  { id: 'equipe', labelKey: 'settings.navTeam', icon: Users },
+  { id: 'faturamento', labelKey: 'settings.navBilling', icon: CreditCard },
 ]
 
 const SETTINGS_INTEGRATIONS = [
-  { id: 'whatsapp' as const, name: 'WhatsApp Business', icon: MessageCircle },
-  { id: 'email' as const, name: 'E-mail Marketing', icon: Mail },
+  { id: 'whatsapp' as const, nameKey: 'settings.whatsappBusiness' as TranslationKey, icon: MessageCircle },
+  { id: 'email' as const, nameKey: 'settings.emailMarketing' as TranslationKey, icon: Mail },
 ]
 
 export default function SettingsScreen() {
   const { isWebDesktop } = useResponsiveLayout()
+  const { t, locale } = useTranslation()
   const { currentUser, signOutUser } = useAuth()
   const { brandIdentity, userProfile, setBrandIdentity } = useGamification()
   const { subscription, openCustomerPortal } = useSubscription()
@@ -73,13 +75,13 @@ export default function SettingsScreen() {
     return [
       {
         id: currentUser.id,
-        name: currentUser.email.split('@')[0] ?? 'Administrador',
-        role: 'Administrador',
-        status: 'Ativo' as const,
+        name: currentUser.email.split('@')[0] ?? t('settings.roleAdmin'),
+        role: t('settings.roleAdmin'),
+        status: t('common.active'),
         email: currentUser.email,
       },
     ]
-  }, [currentUser?.email, currentUser?.id, settings?.teamMembers])
+  }, [currentUser?.email, currentUser?.id, settings?.teamMembers, t])
 
   function handleSave() {
     if (activeSection === 'marca') {
@@ -102,9 +104,24 @@ export default function SettingsScreen() {
     await signOutUser()
   }
 
+  const billingPriceLabel = useMemo(() => {
+    if (!subscription) {
+      return t('settings.priceFallback')
+    }
+    const plan = getSubscriptionPlan(subscription.planId)
+    if (subscription.billingInterval === 'year') {
+      return t('plans.perYear', {
+        price: formatPlanPriceBrl(plan.priceYearlyCents, locale),
+      })
+    }
+    return t('plans.perMonth', {
+      price: formatPlanPriceBrl(plan.priceMonthlyCents, locale),
+    })
+  }, [locale, subscription, t])
+
   const sectionNav = (
     <View className={isWebDesktop ? 'w-56 shrink-0 gap-1' : 'flex-row gap-2'}>
-      {sections.map((section) => {
+      {SECTIONS.map((section) => {
         const Icon = section.icon
         const isActive = activeSection === section.id
 
@@ -125,7 +142,7 @@ export default function SettingsScreen() {
                 isActive ? 'text-violet-700' : 'text-slate-600',
               ].join(' ')}
             >
-              {section.label}
+              {t(section.labelKey)}
             </Text>
           </Pressable>
         )
@@ -137,19 +154,19 @@ export default function SettingsScreen() {
     <View className="flex-1 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
       {activeSection === 'geral' ? (
         <View className="gap-4">
-          <Text className="text-lg font-semibold text-slate-900">Informações gerais</Text>
+          <Text className="text-lg font-semibold text-slate-900">{t('settings.generalTitle')}</Text>
           <View>
-            <Text className="text-sm font-medium text-slate-700">Nome da empresa</Text>
+            <Text className="text-sm font-medium text-slate-700">{t('settings.companyName')}</Text>
             <View className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
               <Text className="text-slate-900">
-                {brandIdentity?.companyName ?? 'Não configurado'}
+                {brandIdentity?.companyName ?? t('settings.notConfigured')}
               </Text>
             </View>
           </View>
           <View>
-            <Text className="text-sm font-medium text-slate-700">Fuso horário</Text>
+            <Text className="text-sm font-medium text-slate-700">{t('settings.timezone')}</Text>
             <View className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-              <Text className="text-slate-900">América/São Paulo (GMT-3)</Text>
+              <Text className="text-slate-900">{t('settings.timezoneValue')}</Text>
             </View>
           </View>
         </View>
@@ -167,20 +184,22 @@ export default function SettingsScreen() {
 
       {activeSection === 'seguranca' ? (
         <View className="gap-4">
-          <Text className="text-lg font-semibold text-slate-900">Segurança</Text>
+          <Text className="text-lg font-semibold text-slate-900">{t('settings.navSecurity')}</Text>
           <Pressable className="rounded-2xl border border-slate-200 py-3">
-            <Text className="text-center text-sm font-semibold text-slate-700">Trocar senha</Text>
+            <Text className="text-center text-sm font-semibold text-slate-700">
+              {t('settings.changePassword')}
+            </Text>
           </Pressable>
           <View className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
             <Text className="font-medium text-slate-900">Chrome · Windows</Text>
-            <Text className="mt-1 text-sm text-slate-500">São Paulo, BR · Sessão atual</Text>
+            <Text className="mt-1 text-sm text-slate-500">{t('settings.sessionMeta')}</Text>
           </View>
         </View>
       ) : null}
 
       {activeSection === 'integracoes' ? (
         <View className="gap-3">
-          <Text className="text-lg font-semibold text-slate-900">Integrações</Text>
+          <Text className="text-lg font-semibold text-slate-900">{t('settings.navIntegrations')}</Text>
           {SETTINGS_INTEGRATIONS.map((integration) => {
             const Icon = integration.icon
             const isConnected = connected[integration.id]
@@ -194,7 +213,7 @@ export default function SettingsScreen() {
                   <View className="rounded-xl bg-white p-2">
                     <Icon size={18} color="#7c3aed" />
                   </View>
-                  <Text className="font-medium text-slate-900">{integration.name}</Text>
+                  <Text className="font-medium text-slate-900">{t(integration.nameKey)}</Text>
                 </View>
                 <Pressable
                   onPress={() =>
@@ -214,7 +233,7 @@ export default function SettingsScreen() {
                       isConnected ? 'text-slate-700' : 'text-white',
                     ].join(' ')}
                   >
-                    {isConnected ? 'Conectado' : 'Conectar'}
+                    {isConnected ? t('common.connected') : t('common.connect')}
                   </Text>
                 </Pressable>
               </View>
@@ -225,7 +244,7 @@ export default function SettingsScreen() {
 
       {activeSection === 'equipe' ? (
         <View className="gap-3">
-          <Text className="text-lg font-semibold text-slate-900">Equipe</Text>
+          <Text className="text-lg font-semibold text-slate-900">{t('settings.navTeam')}</Text>
           {isLoading ? (
             <ActivityIndicator size="small" color="#7c3aed" />
           ) : null}
@@ -242,7 +261,7 @@ export default function SettingsScreen() {
       {activeSection === 'faturamento' ? (
         <View className="gap-4">
           <View className="rounded-3xl bg-violet-600 p-5">
-            <Text className="text-sm text-violet-100">Plano atual</Text>
+            <Text className="text-sm text-violet-100">{t('settings.currentPlan')}</Text>
             <Text className="mt-2 text-2xl font-semibold text-white">
               {subscription
                 ? getSubscriptionPlan(subscription.planId).productName
@@ -250,22 +269,16 @@ export default function SettingsScreen() {
             </Text>
             <Text className="mt-1 text-sm text-violet-100">
               {subscription
-                ? `Plano ${getSubscriptionPlan(subscription.planId).name}`
+                ? t('plans.planLabel', { name: getSubscriptionPlan(subscription.planId).name })
                 : 'Meridian'}
             </Text>
-            <Text className="mt-2 text-sm text-violet-100">
-              {subscription
-                ? subscription.billingInterval === 'year'
-                  ? `${formatPlanPriceBrl(getSubscriptionPlan(subscription.planId).priceYearlyCents)} / ano`
-                  : `${formatPlanPriceBrl(getSubscriptionPlan(subscription.planId).priceMonthlyCents)} / mês`
-                : 'R$ 297 / mês'}
-            </Text>
+            <Text className="mt-2 text-sm text-violet-100">{billingPriceLabel}</Text>
             <Text className="mt-3 text-xs text-violet-200">
-              Status:{' '}
+              {t('settings.statusLabel')}{' '}
               {subscription?.status === 'active'
-                ? 'Ativo'
-                : subscription?.status ?? 'Sem assinatura'}
-              {subscription?.mode === 'mock' ? ' · Demo Stripe' : ''}
+                ? t('common.active')
+                : subscription?.status ?? t('settings.noSubscription')}
+              {subscription?.mode === 'mock' ? ` ${t('settings.mockStripe')}` : ''}
             </Text>
             <Pressable
               disabled={isOpeningPortal}
@@ -280,14 +293,11 @@ export default function SettingsScreen() {
               className="mt-4 rounded-2xl bg-white py-3"
             >
               <Text className="text-center text-sm font-semibold text-violet-700">
-                {isOpeningPortal ? 'Abrindo…' : 'Gerenciar assinatura'}
+                {isOpeningPortal ? t('common.opening') : t('settings.manageSubscription')}
               </Text>
             </Pressable>
           </View>
-          <Text className="text-xs leading-5 text-slate-500">
-            Em produção, o portal Stripe Billing permite trocar cartão, baixar faturas e cancelar.
-            Neste ambiente o fluxo está em modo demonstração.
-          </Text>
+          <Text className="text-xs leading-5 text-slate-500">{t('settings.portalHint')}</Text>
         </View>
       ) : null}
     </View>
@@ -298,7 +308,7 @@ export default function SettingsScreen() {
       <PageScroll>
         <View className="flex-row items-start justify-between gap-3">
           <View className="flex-1">
-            <ScreenHeader badge="Administração" title="Configurações" />
+            <ScreenHeader badge={t('settings.badge')} title={t('settings.title')} />
           </View>
           <Pressable
             onPress={handleSave}
@@ -314,7 +324,7 @@ export default function SettingsScreen() {
                 <Save size={14} color="#ffffff" />
               )}
               <Text className="text-sm font-semibold text-white">
-                {saveStatus === 'saved' ? 'Salvo' : 'Salvar'}
+                {saveStatus === 'saved' ? t('common.saved') : t('common.save')}
               </Text>
             </View>
           </Pressable>
@@ -339,7 +349,7 @@ export default function SettingsScreen() {
           className="flex-row items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white py-3 active:bg-slate-50"
         >
           <LogOut size={16} color="#64748b" />
-          <Text className="text-sm font-semibold text-slate-700">Sair da conta</Text>
+          <Text className="text-sm font-semibold text-slate-700">{t('common.signOut')}</Text>
         </Pressable>
       </PageScroll>
     </AppScreen>

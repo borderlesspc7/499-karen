@@ -4,6 +4,9 @@ import { INITIAL_GAMIFICATION_STATE, mergeGamificationState, toPersistedGamifica
 import { getGamificationPersistence } from '../services/gamification-persistence'
 import { GamificationContext, type GamificationContextValue } from './gamification-context'
 import { useAuth } from './useAuth'
+import { useLocale } from './useLocale'
+import { translate } from '../i18n'
+import type { TranslationKey } from '../i18n'
 import type {
   MissionImpactCategory,
   RecentActivityItem,
@@ -29,12 +32,12 @@ type GamificationProviderProps = {
   initialState?: UserGamificationState
 }
 
-const MISSION_ACTIVITY_LABELS: Record<MissionImpactCategory, string> = {
-  marketing: 'Missão de Marketing concluída',
-  vendas: 'Missão de Vendas concluída',
-  automacao: 'Fluxo de Automação ativado',
-  credibilidade: 'Ativo de Credibilidade publicado',
-  posicionamento: 'Posicionamento de marca reforçado',
+const MISSION_ACTIVITY_KEYS: Record<MissionImpactCategory, TranslationKey> = {
+  marketing: 'gamification.missionMarketing',
+  vendas: 'gamification.missionSales',
+  automacao: 'gamification.missionAutomation',
+  credibilidade: 'gamification.missionCredibility',
+  posicionamento: 'gamification.missionPositioning',
 }
 
 function resolveXpProgress(currentXp: number, nextLevelXp: number): number {
@@ -45,18 +48,15 @@ function resolveXpProgress(currentXp: number, nextLevelXp: number): number {
   return Math.min(1, Math.max(0, currentXp / nextLevelXp))
 }
 
-function resolveActivityDateLabel(): string {
-  return 'Hoje'
-}
-
 function createActivityEntry(
   impactCategory: MissionImpactCategory,
   impactValue: number,
+  locale: Parameters<typeof translate>[0],
 ): RecentActivityItem {
   return {
     id: generateId(),
-    date: resolveActivityDateLabel(),
-    action: `${MISSION_ACTIVITY_LABELS[impactCategory]} (+${impactValue} pts)`,
+    date: translate(locale, 'gamification.today'),
+    action: `${translate(locale, MISSION_ACTIVITY_KEYS[impactCategory])} (+${impactValue} pts)`,
     type: impactCategory,
   }
 }
@@ -67,12 +67,13 @@ function createTimelineEntry(
   xpGained: number,
   revenueGained: number,
   type: TimelineActionItem['type'],
+  locale: Parameters<typeof translate>[0],
 ): TimelineActionItem {
   return {
     id: generateId(),
     actionId,
     title,
-    executedAt: resolveActivityDateLabel(),
+    executedAt: translate(locale, 'gamification.today'),
     xpGained,
     revenueGained,
     type,
@@ -113,6 +114,7 @@ export function GamificationProvider({
   initialState = INITIAL_GAMIFICATION_STATE,
 }: GamificationProviderProps) {
   const { currentUser, isAuthLoading } = useAuth()
+  const { locale } = useLocale()
   const userId = currentUser?.id ?? null
 
   const [state, setState] = useState<UserGamificationState>(initialState)
@@ -269,13 +271,13 @@ export function GamificationProvider({
           completedActions: withXp.completedActions + 1,
           influencePoints: withXp.influencePoints + Math.round(xpReward * 0.5),
           recentActivity: [
-            createActivityEntry(impactCategory, impactValue),
+            createActivityEntry(impactCategory, impactValue, locale),
             ...withXp.recentActivity,
           ].slice(0, 20),
         }
       }, { flush: true })
     },
-    [applyOptimisticUpdate],
+    [applyOptimisticUpdate, locale],
   )
 
   const incrementCompletedActions = useCallback(
@@ -355,7 +357,9 @@ export function GamificationProvider({
       const action = GROWTH_ACTIONS[actionId] ?? {
         ...DEFAULT_GROWTH_ACTION,
         title: `${DEFAULT_GROWTH_ACTION.title} (${actionId})`,
+        titleKey: DEFAULT_GROWTH_ACTION.titleKey,
       }
+      const actionTitle = translate(locale, action.titleKey)
 
       applyOptimisticUpdate((current) => {
         const withXp = applyXpReward(current, action.xpReward)
@@ -376,18 +380,22 @@ export function GamificationProvider({
           timeline: [
             createTimelineEntry(
               actionId,
-              action.title,
+              actionTitle,
               action.xpReward,
               action.revenueGain,
               action.impactCategory,
+              locale,
             ),
             ...withXp.timeline,
           ].slice(0, 30),
           recentActivity: [
             {
               id: generateId(),
-              date: resolveActivityDateLabel(),
-              action: `IA executou: ${action.title} (+R$ ${action.revenueGain.toLocaleString('pt-BR')})`,
+              date: translate(locale, 'gamification.today'),
+              action: translate(locale, 'gamification.aiExecuted', {
+                action: actionTitle,
+                amount: action.revenueGain.toLocaleString(locale),
+              }),
               type: action.impactCategory,
             },
             ...withXp.recentActivity,
@@ -395,7 +403,7 @@ export function GamificationProvider({
         }
       }, { flush: true })
     },
-    [applyOptimisticUpdate],
+    [applyOptimisticUpdate, locale],
   )
 
   const contextValue = useMemo<GamificationContextValue>(() => {

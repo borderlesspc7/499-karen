@@ -8,6 +8,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated'
 import { ChevronDown, ChevronUp } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
+import { getKanbanColumnTitle } from '@shared/data'
 import type { KanbanCardWithClient, KanbanColumn } from '@shared/types'
 import { dedupeCardsById } from '@shared/utils/link-crm-clients'
 import { CrmOpportunityCard } from './CrmOpportunityCard'
@@ -190,6 +192,7 @@ export function CrmKanbanMobile({
   onCardPress,
   onMoveCard,
 }: CrmKanbanMobileProps) {
+  const { t } = useTranslation()
   const columnLayoutsRef = useRef(new Map<string, ColumnLayout>())
   const columnRefs = useRef(new Map<string, View>())
   const [expandedColumns, setExpandedColumns] = useState<Record<string, boolean>>({
@@ -270,9 +273,7 @@ export function CrmKanbanMobile({
     <View className="gap-4">
       {draggingCardId ? (
         <View className="rounded-2xl border border-violet-200 bg-violet-50 px-4 py-3">
-          <Text className="text-sm font-medium text-violet-700">
-            Segure o card, depois arraste para cima ou para baixo entre as etapas
-          </Text>
+          <Text className="text-sm font-medium text-violet-700">{t('crm.dragHint')}</Text>
         </View>
       ) : null}
 
@@ -303,7 +304,9 @@ export function CrmKanbanMobile({
             >
               <View className="flex-row items-center gap-3">
                 <View className="h-2.5 w-2.5 rounded-full bg-violet-500" />
-                <Text className="text-base font-semibold text-slate-900">{column.title}</Text>
+                <Text className="text-base font-semibold text-slate-900">
+                  {getKanbanColumnTitle(t, column.id, column.title)}
+                </Text>
                 <View className="rounded-full bg-slate-100 px-2.5 py-0.5">
                   <Text className="text-xs font-medium text-slate-600">{columnCards.length}</Text>
                 </View>
@@ -319,7 +322,7 @@ export function CrmKanbanMobile({
               <View style={styles.columnCards}>
                 {columnCards.length === 0 ? (
                   <Text className="py-4 text-center text-sm text-slate-400">
-                    {isHovered ? 'Solte aqui' : 'Nenhuma oportunidade nesta etapa.'}
+                    {isHovered ? t('crm.dropHere') : t('crm.dropEmpty')}
                   </Text>
                 ) : (
                   <FlatList

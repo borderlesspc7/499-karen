@@ -18,12 +18,14 @@ import type { LucideIcon } from 'lucide-react-native'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { ThemedScreen } from '@/components/layout/AppScreen'
 import { DesktopContent } from '@/components/layout/DesktopContent'
+import { LanguageSelector } from '@/components/ui/LanguageSelector'
 import { ThemeSelector } from '@/components/ui/ThemeSelector'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { premiumColors } from '@/constants/premium-theme'
 import { platformEntering } from '@/lib/platform-animation'
-import { useAuth, useGamification, useSubscription } from '@shared/contexts'
+import { useAuth, useGamification, useSubscription, useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import { getSubscriptionPlan } from '@shared/constants/subscription-plans'
 
 const STAGGER_MS = 70
@@ -31,8 +33,8 @@ const ENTER_DURATION_MS = 420
 
 type MenuItem = {
   id: string
-  label: string
-  description: string
+  labelKey: TranslationKey
+  descriptionKey: TranslationKey
   icon: LucideIcon
   accentColor: string
   href: Href
@@ -41,36 +43,36 @@ type MenuItem = {
 const ACCOUNT_MENU: MenuItem[] = [
   {
     id: 'settings',
-    label: 'Configurações',
-    description: 'Empresa, segurança, equipe e faturamento',
+    labelKey: 'profile.menuSettings',
+    descriptionKey: 'profile.menuSettingsHint',
     icon: Settings,
     accentColor: '#3B82F6',
     href: '/(tabs)/settings',
   },
   {
     id: 'integrations',
-    label: 'Canais conectados',
-    description: 'Instagram, Facebook, LinkedIn e Google',
+    labelKey: 'profile.menuChannels',
+    descriptionKey: 'profile.menuChannelsHint',
     icon: Link2,
     accentColor: '#10B981',
     href: '/(tabs)/integrations',
   },
   {
     id: 'security',
-    label: 'Segurança da conta',
-    description: 'Senha, sessões e autenticação',
+    labelKey: 'profile.menuSecurity',
+    descriptionKey: 'profile.menuSecurityHint',
     icon: Shield,
     accentColor: '#8B5CF6',
     href: '/(tabs)/settings',
   },
 ]
 
-function resolveDisplayName(email?: string | null): string {
+function resolveDisplayName(email: string | null | undefined, fallback: string): string {
   if (!email) {
-    return 'Usuário'
+    return fallback
   }
 
-  const localPart = email.split('@')[0] ?? 'Usuário'
+  const localPart = email.split('@')[0] ?? fallback
   return localPart.charAt(0).toUpperCase() + localPart.slice(1)
 }
 
@@ -83,13 +85,10 @@ function resolveInitials(displayName: string): string {
     .toUpperCase()
 }
 
-function formatXp(value: number): string {
-  return value.toLocaleString('pt-BR')
-}
-
 export default function ProfileScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const tc = useThemeClasses()
+  const { t, locale } = useTranslation()
   const { currentUser, signOutUser } = useAuth()
   const { subscription } = useSubscription()
   const {
@@ -109,11 +108,19 @@ export default function ProfileScreen() {
 
   const planLabel = subscription
     ? `${getSubscriptionPlan(subscription.planId).name} Plan`
-    : 'Sem plano'
+    : t('common.noPlan')
 
-  const displayName = useMemo(() => resolveDisplayName(currentUser?.email), [currentUser?.email])
+  const displayName = useMemo(
+    () => resolveDisplayName(currentUser?.email, t('common.user')),
+    [currentUser?.email, t],
+  )
   const initials = useMemo(() => resolveInitials(displayName), [displayName])
-  const email = currentUser?.email ?? '—'
+  const email = currentUser?.email ?? t('common.emDash')
+
+  const formatXp = useCallback(
+    (value: number) => value.toLocaleString(locale),
+    [locale],
+  )
 
   const handleNavigate = useCallback((href: Href) => {
     router.push(href)
@@ -122,6 +129,25 @@ export default function ProfileScreen() {
   const handleSignOut = useCallback(async () => {
     await signOutUser()
   }, [signOutUser])
+
+  const stats = useMemo(
+    () => [
+      { icon: Flame, label: t('profile.streak'), value: `${streakDays}d`, color: premiumColors.gold },
+      {
+        icon: Trophy,
+        label: t('profile.actions'),
+        value: String(completedActions),
+        color: '#3B82F6',
+      },
+      {
+        icon: Sparkles,
+        label: t('profile.influence'),
+        value: String(influencePoints),
+        color: '#10B981',
+      },
+    ],
+    [completedActions, influencePoints, streakDays, t],
+  )
 
   return (
     <ThemedScreen>
@@ -142,19 +168,23 @@ export default function ProfileScreen() {
               className="mb-1 flex-row items-center gap-1 self-start"
             >
               <ChevronLeft size={18} color={tc.chevron} />
-              <Text className={['text-sm font-medium', tc.backText].join(' ')}>Voltar</Text>
+              <Text className={['text-sm font-medium', tc.backText].join(' ')}>
+                {t('common.back')}
+              </Text>
             </AnimatedPressable>
           ) : null}
 
           <View className="flex-row items-center gap-2 self-start rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5">
             <User size={12} color={premiumColors.gold} />
             <Text className="text-[11px] font-bold uppercase tracking-wider text-gold">
-              Minha Conta
+              {t('profile.badge')}
             </Text>
           </View>
-          <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>Área do Usuário</Text>
+          <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>
+            {t('profile.title')}
+          </Text>
           <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
-            Gerencie seu perfil, progresso e preferências da plataforma.
+            {t('profile.subtitle')}
           </Text>
         </Animated.View>
 
@@ -199,7 +229,7 @@ export default function ProfileScreen() {
           <View className="mt-5 gap-2">
             <View className="flex-row items-center justify-between">
               <Text className={['text-xs font-semibold', tc.textLabel].join(' ')}>
-                Level {level} · {title}
+                {t('profile.levelXp', { level, title })}
               </Text>
               <Text className={['text-xs font-medium', tc.textMuted].join(' ')}>
                 {formatXp(currentXp)} / {formatXp(maxXp)} XP
@@ -223,11 +253,7 @@ export default function ProfileScreen() {
           entering={platformEntering(FadeInDown.delay(STAGGER_MS * 2).duration(ENTER_DURATION_MS))}
           className="flex-row gap-3"
         >
-          {[
-            { icon: Flame, label: 'Streak', value: `${streakDays}d`, color: premiumColors.gold },
-            { icon: Trophy, label: 'Ações', value: String(completedActions), color: '#3B82F6' },
-            { icon: Sparkles, label: 'Influência', value: String(influencePoints), color: '#10B981' },
-          ].map((stat) => {
+          {stats.map((stat) => {
             const Icon = stat.icon
 
             return (
@@ -248,27 +274,35 @@ export default function ProfileScreen() {
         </Animated.View>
 
         <Animated.View entering={platformEntering(FadeInDown.delay(STAGGER_MS * 3).duration(ENTER_DURATION_MS))}>
+          <LanguageSelector />
+        </Animated.View>
+
+        <Animated.View entering={platformEntering(FadeInDown.delay(STAGGER_MS * 4).duration(ENTER_DURATION_MS))}>
           <ThemeSelector />
         </Animated.View>
 
         <Animated.View
-          entering={platformEntering(FadeInDown.delay(STAGGER_MS * 4).duration(ENTER_DURATION_MS))}
+          entering={platformEntering(FadeInDown.delay(STAGGER_MS * 5).duration(ENTER_DURATION_MS))}
           className={['p-4', tc.card].join(' ')}
         >
           <Text className={['text-xs font-bold uppercase tracking-wider', tc.textSection].join(' ')}>
-            Empresa
+            {t('profile.company')}
           </Text>
           <Text className={['mt-2 text-base font-semibold', tc.textPrimary].join(' ')}>
             {companyStage}
           </Text>
-          <Text className={['mt-1 text-sm', tc.textMuted].join(' ')}>Tier {companyTier}</Text>
+          <Text className={['mt-1 text-sm', tc.textMuted].join(' ')}>
+            {t('profile.tier', { tier: companyTier })}
+          </Text>
         </Animated.View>
 
         <Animated.View
-          entering={platformEntering(FadeInDown.delay(STAGGER_MS * 5).duration(ENTER_DURATION_MS))}
+          entering={platformEntering(FadeInDown.delay(STAGGER_MS * 6).duration(ENTER_DURATION_MS))}
           className="gap-2"
         >
-          <Text className={['text-sm font-semibold', tc.textLabel].join(' ')}>Acesso rápido</Text>
+          <Text className={['text-sm font-semibold', tc.textLabel].join(' ')}>
+            {t('profile.quickAccess')}
+          </Text>
 
           {ACCOUNT_MENU.map((item) => {
             const Icon = item.icon
@@ -288,10 +322,10 @@ export default function ProfileScreen() {
                 </View>
                 <View className="flex-1">
                   <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
-                    {item.label}
+                    {t(item.labelKey)}
                   </Text>
                   <Text className={['mt-0.5 text-xs', tc.textMuted].join(' ')}>
-                    {item.description}
+                    {t(item.descriptionKey)}
                   </Text>
                 </View>
                 <ChevronRight size={18} color={tc.chevron} />
@@ -300,14 +334,14 @@ export default function ProfileScreen() {
           })}
         </Animated.View>
 
-        <Animated.View entering={platformEntering(FadeInDown.delay(STAGGER_MS * 6).duration(ENTER_DURATION_MS))}>
+        <Animated.View entering={platformEntering(FadeInDown.delay(STAGGER_MS * 7).duration(ENTER_DURATION_MS))}>
           <AnimatedPressable
             onPress={handleSignOut}
             haptic={false}
             className="flex-row items-center justify-center gap-2 rounded-2xl border border-red-500/30 bg-red-500/10 py-4"
           >
             <LogOut size={18} color="#F87171" />
-            <Text className="text-sm font-bold text-red-400">Sair da conta</Text>
+            <Text className="text-sm font-bold text-red-400">{t('common.signOut')}</Text>
           </AnimatedPressable>
         </Animated.View>
         </DesktopContent>

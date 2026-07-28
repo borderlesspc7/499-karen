@@ -42,7 +42,11 @@ export type {
   TaskPriority,
 } from './crm'
 export type { LeadAttribution, LeadSource } from './lead-source'
-export { LEAD_SOURCE_LABELS } from './lead-source'
+export {
+  LEAD_SOURCE_LABELS,
+  LEAD_SOURCE_LABEL_KEYS,
+  getLeadSourceLabel,
+} from './lead-source'
 export type {
   BusinessHealthCategoryKey,
   BusinessHealthScores,
@@ -91,3 +95,10 @@ export type {
   MessagingChannel,
 } from './channel-connection'
 export { DEFAULT_CHANNEL_CONNECTIONS } from './channel-connection'
+export type { AppLocale } from './locale'
+export {
+  DEFAULT_LOCALE,
+  LOCALE_STORAGE_KEY,
+  SUPPORTED_LOCALES,
+  isAppLocale,
+} from './locale'

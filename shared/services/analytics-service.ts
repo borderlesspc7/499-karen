@@ -1,6 +1,9 @@
 import type { Client, SavedCampaign } from '../types'
 import type { KanbanCardWithClient } from '../utils/link-crm-clients'
 import { GROWTH_ACTIONS } from '../constants/growth-actions'
+import { translate } from '../i18n'
+import type { AppLocale } from '../types/locale'
+import { DEFAULT_LOCALE } from '../types/locale'
 import type {
   GrowthDataPoint,
   ProgressMetric,
@@ -19,7 +22,20 @@ const WON_COLUMN_ID = 'col-fechado'
 const INACTIVE_COLUMN_IDS = new Set(['col-leads'])
 const NEGOTIATION_COLUMN_IDS = new Set(['col-proposta', 'col-negociacao'])
 
-const MONTH_LABELS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+const MONTH_KEYS = [
+  'reports.monthJan',
+  'reports.monthFeb',
+  'reports.monthMar',
+  'reports.monthApr',
+  'reports.monthMay',
+  'reports.monthJun',
+  'reports.monthJul',
+  'reports.monthAug',
+  'reports.monthSep',
+  'reports.monthOct',
+  'reports.monthNov',
+  'reports.monthDec',
+] as const
 
 const PRIORITY_VALUE: Record<KanbanCardWithClient['priority'], number> = {
   alta: 4800,
@@ -27,11 +43,11 @@ const PRIORITY_VALUE: Record<KanbanCardWithClient['priority'], number> = {
   baixa: 1200,
 }
 
-const CATEGORY_LOSS_LABELS: Record<string, string> = {
-  vendas: 'Preço acima do budget',
-  'follow-up': 'Timing inadequado',
-  marketing: 'Concorrência direta',
-  suporte: 'Falta de fit com produto',
+const CATEGORY_LOSS_KEYS: Record<string, string> = {
+  vendas: 'reports.lossPrice',
+  'follow-up': 'reports.lossTiming',
+  marketing: 'reports.lossCompetition',
+  suporte: 'reports.lossFit',
 }
 
 const CHANNEL_BAR_COLORS = ['bg-violet-500', 'bg-emerald-500', 'bg-sky-500', 'bg-amber-500', 'bg-rose-500']
@@ -96,7 +112,7 @@ function parseDueDateMonth(dueDate: string): number | null {
   return Number.isFinite(month) && month >= 1 && month <= 12 ? month - 1 : null
 }
 
-function buildGrowthChart(cards: KanbanCardWithClient[]): GrowthDataPoint[] {
+function buildGrowthChart(cards: KanbanCardWithClient[], locale: AppLocale): GrowthDataPoint[] {
   const now = new Date()
   const months: GrowthDataPoint[] = []
 
@@ -124,7 +140,7 @@ function buildGrowthChart(cards: KanbanCardWithClient[]): GrowthDataPoint[] {
     }).length
 
     months.push({
-      month: MONTH_LABELS[monthIndex] ?? '—',
+      month: translate(locale, MONTH_KEYS[monthIndex] ?? 'common.emDash'),
       oportunidades: Math.max(oportunidades, offset === 0 ? cards.length : oportunidades),
       fechamentos,
     })
@@ -133,18 +149,19 @@ function buildGrowthChart(cards: KanbanCardWithClient[]): GrowthDataPoint[] {
   return months
 }
 
-function buildLossReasons(cards: KanbanCardWithClient[]): ProgressMetric[] {
+function buildLossReasons(cards: KanbanCardWithClient[], locale: AppLocale): ProgressMetric[] {
   const stalledCards = cards.filter(
     (card) => card.columnId !== WON_COLUMN_ID && INACTIVE_COLUMN_IDS.has(card.columnId),
   )
 
   if (stalledCards.length === 0) {
-    return [{ label: 'Sem dados de perda', value: 0, barClassName: 'bg-slate-400' }]
+    return [{ label: translate(locale, 'reports.noLossData'), value: 0, barClassName: 'bg-slate-400' }]
   }
 
   const counts = new Map<string, number>()
   for (const card of stalledCards) {
-    const label = CATEGORY_LOSS_LABELS[card.category] ?? 'Outros motivos'
+    const key = CATEGORY_LOSS_KEYS[card.category] ?? 'reports.lossOther'
+    const label = translate(locale, key)
     counts.set(label, (counts.get(label) ?? 0) + 1)
   }
 
@@ -158,7 +175,7 @@ function buildLossReasons(cards: KanbanCardWithClient[]): ProgressMetric[] {
     }))
 }
 
-function buildChannelPerformance(campaigns: SavedCampaign[]): ProgressMetric[] {
+function buildChannelPerformance(campaigns: SavedCampaign[], locale: AppLocale): ProgressMetric[] {
   const channelCounts = new Map<string, number>()
 
   for (const campaign of campaigns) {
@@ -169,7 +186,7 @@ function buildChannelPerformance(campaigns: SavedCampaign[]): ProgressMetric[] {
   }
 
   if (channelCounts.size === 0) {
-    return [{ label: 'Sem campanhas ativas', value: 0, barClassName: 'bg-slate-400' }]
+    return [{ label: translate(locale, 'reports.noActiveCampaigns'), value: 0, barClassName: 'bg-slate-400' }]
   }
 
   const total = Array.from(channelCounts.values()).reduce((sum, value) => sum + value, 0)
@@ -212,6 +229,8 @@ export function computeDailyMetrics(input: AnalyticsInput): RevenueDailyMetrics 
       ? Number((revenueGenerated / (avgCostPerLead * Math.max(campaignLeads, 1))).toFixed(1))
       : 0
 
+  void campaignViews
+
   return {
     revenueGenerated,
     revenuePotential,
@@ -230,7 +249,10 @@ export function computeDailyMetrics(input: AnalyticsInput): RevenueDailyMetrics 
   }
 }
 
-export function computeRevenueOpportunities(input: AnalyticsInput): RevenueOpportunity[] {
+export function computeRevenueOpportunities(
+  input: AnalyticsInput,
+  locale: AppLocale = DEFAULT_LOCALE,
+): RevenueOpportunity[] {
   const inactiveCount = countInactiveLeads(input.cards)
   const upsellCount = countUpsellOpportunities(input.clients, input.cards)
   const draftCampaign = input.campaigns.find((campaign) => campaign.status === 'draft')
@@ -244,11 +266,11 @@ export function computeRevenueOpportunities(input: AnalyticsInput): RevenueOppor
     opportunities.push({
       id: 'opp-reactivate',
       type: 'reactivate-leads',
-      title: `Reativar ${inactiveCount} leads inativos`,
-      subtitle: 'Leads esquecidos com alto potencial de conversão',
-      impactLabel: 'Impacto estimado',
+      title: translate(locale, 'reports.reactivateTitle', { count: inactiveCount }),
+      subtitle: translate(locale, 'reports.reactivateSubtitle'),
+      impactLabel: translate(locale, 'reports.estimatedImpact'),
       impactValue: GROWTH_ACTIONS['reactivate-inactive-leads'].revenueGain,
-      ctaLabel: 'Reativar Agora',
+      ctaLabel: translate(locale, 'reports.reactivateCta'),
       actionId: 'reactivate-inactive-leads',
     })
   }
@@ -258,13 +280,13 @@ export function computeRevenueOpportunities(input: AnalyticsInput): RevenueOppor
     opportunities.push({
       id: 'opp-campaign',
       type: 'approve-campaign',
-      title: 'Campanha pronta para publicação',
+      title: translate(locale, 'reports.campaignReadyTitle'),
       subtitle: campaign.title,
-      impactLabel: 'Previsão',
+      impactLabel: translate(locale, 'reports.forecast'),
       impactValue: 0,
-      secondaryLabel: 'Novos leads',
+      secondaryLabel: translate(locale, 'reports.newLeadsLabel'),
       secondaryValue: String(campaign.estimatedLeads),
-      ctaLabel: 'Aprovar',
+      ctaLabel: translate(locale, 'reports.approveCta'),
     })
   }
 
@@ -272,11 +294,11 @@ export function computeRevenueOpportunities(input: AnalyticsInput): RevenueOppor
     opportunities.push({
       id: 'opp-upsell',
       type: 'upsell',
-      title: `${upsellCount} oportunidades de upsell identificadas`,
-      subtitle: 'Clientes ativos prontos para upgrade',
-      impactLabel: 'Impacto estimado',
+      title: translate(locale, 'reports.upsellTitle', { count: upsellCount }),
+      subtitle: translate(locale, 'reports.upsellSubtitle'),
+      impactLabel: translate(locale, 'reports.estimatedImpact'),
       impactValue: GROWTH_ACTIONS['send-proposal'].revenueGain,
-      ctaLabel: 'Ver',
+      ctaLabel: translate(locale, 'reports.viewCta'),
       actionId: 'send-proposal',
     })
   }
@@ -284,9 +306,12 @@ export function computeRevenueOpportunities(input: AnalyticsInput): RevenueOppor
   return opportunities
 }
 
-export function computeRevenueCenterSnapshot(input: AnalyticsInput): RevenueCenterSnapshot {
+export function computeRevenueCenterSnapshot(
+  input: AnalyticsInput,
+  locale: AppLocale = DEFAULT_LOCALE,
+): RevenueCenterSnapshot {
   const dailyMetrics = computeDailyMetrics(input)
-  const opportunities = computeRevenueOpportunities(input)
+  const opportunities = computeRevenueOpportunities(input, locale)
 
   return {
     totalOpportunitiesToday: dailyMetrics.revenuePotential,
@@ -295,7 +320,10 @@ export function computeRevenueCenterSnapshot(input: AnalyticsInput): RevenueCent
   }
 }
 
-export function computeReportsSnapshot(input: AnalyticsInput): ReportsSnapshot {
+export function computeReportsSnapshot(
+  input: AnalyticsInput,
+  locale: AppLocale = DEFAULT_LOCALE,
+): ReportsSnapshot {
   const { clients, cards, campaigns } = input
   const wonCount = cards.filter((card) => card.columnId === WON_COLUMN_ID).length
   const pipelineRevenue = computePipelineRevenue(cards) + computeWonRevenue(cards)
@@ -306,77 +334,84 @@ export function computeReportsSnapshot(input: AnalyticsInput): ReportsSnapshot {
   const kpis: ReportKpi[] = [
     {
       id: 'revenue',
-      label: 'Receita Estimada',
-      value: formatCurrencyBrl(pipelineRevenue),
-      change: pipelineRevenue > 0 ? 'Baseado no pipeline' : 'Sem oportunidades',
+      label: translate(locale, 'reports.estimatedRevenue'),
+      value: formatCurrencyBrl(pipelineRevenue, locale),
+      change: pipelineRevenue > 0
+        ? translate(locale, 'reports.basedOnPipeline')
+        : translate(locale, 'reports.noOpportunities'),
       changeType: pipelineRevenue > 0 ? 'positive' : 'neutral',
     },
     {
       id: 'leads',
-      label: 'Novos Leads',
+      label: translate(locale, 'reports.newLeads'),
       value: String(prospectCount + cards.filter((c) => c.columnId === 'col-leads').length),
-      change: `${clients.length} clientes no CRM`,
+      change: translate(locale, 'reports.clientsInCrm', { count: clients.length }),
       changeType: 'positive',
     },
     {
       id: 'conversion',
-      label: 'Taxa de Conversão',
+      label: translate(locale, 'reports.conversionRate'),
       value: `${conversionRate}%`,
-      change: `${wonCount} fechamentos`,
+      change: translate(locale, 'reports.closings', { count: wonCount }),
       changeType: conversionRate >= 20 ? 'positive' : conversionRate > 0 ? 'negative' : 'neutral',
     },
     {
       id: 'closing-time',
-      label: 'Campanhas Ativas',
+      label: translate(locale, 'reports.activeCampaigns'),
       value: String(campaigns.filter((c) => c.status === 'active').length),
-      change: `${campaigns.reduce((sum, c) => sum + c.metrics.leads, 0)} leads gerados`,
+      change: translate(locale, 'reports.leadsGenerated', {
+        count: campaigns.reduce((sum, c) => sum + c.metrics.leads, 0),
+      }),
       changeType: 'neutral',
     },
   ]
 
   return {
     kpis,
-    growthChart: buildGrowthChart(cards),
-    lossReasons: buildLossReasons(cards),
-    channelPerformance: buildChannelPerformance(campaigns),
+    growthChart: buildGrowthChart(cards, locale),
+    lossReasons: buildLossReasons(cards, locale),
+    channelPerformance: buildChannelPerformance(campaigns, locale),
   }
 }
 
-export function buildRevenueKpisFromMetrics(metrics: RevenueDailyMetrics) {
+export function buildRevenueKpisFromMetrics(
+  metrics: RevenueDailyMetrics,
+  locale: AppLocale = DEFAULT_LOCALE,
+) {
   return [
     {
       id: 'potential-revenue',
-      label: 'Receita Potencial',
-      displayValue: formatCurrencyBrlCompact(metrics.revenuePotential),
+      label: translate(locale, 'reports.potentialRevenue'),
+      displayValue: formatCurrencyBrlCompact(metrics.revenuePotential, locale),
       changePercent: metrics.revenuePotential > 0 ? 18 : 0,
-      changeLabel: 'pipeline atual',
+      changeLabel: translate(locale, 'reports.pipelineCurrent'),
       sparkline: buildSparkline(metrics.revenuePotential),
       accentColor: '#10B981' as const,
     },
     {
       id: 'leads-identified',
-      label: 'Leads Identificados',
+      label: translate(locale, 'reports.leadsIdentified'),
       displayValue: String(metrics.leadsIdentified),
       changePercent: metrics.leadsIdentified > 0 ? 32 : 0,
-      changeLabel: 'total CRM + campanhas',
+      changeLabel: translate(locale, 'reports.totalCrmCampaigns'),
       sparkline: buildSparkline(metrics.leadsIdentified),
       accentColor: '#3B82F6' as const,
     },
     {
       id: 'hours-saved',
-      label: 'Tempo Economizado',
+      label: translate(locale, 'reports.hoursSaved'),
       displayValue: `${metrics.hoursSaved}h`,
       changePercent: metrics.hoursSaved > 0 ? 40 : 0,
-      changeLabel: 'automações ativas',
+      changeLabel: translate(locale, 'reports.activeAutomations'),
       sparkline: buildSparkline(metrics.hoursSaved),
       accentColor: '#3B82F6' as const,
     },
     {
       id: 'clients-recovered',
-      label: 'Clientes Recuperados',
+      label: translate(locale, 'reports.recoveredCustomers'),
       displayValue: String(metrics.leadsRecovered),
       changePercent: metrics.leadsRecovered > 0 ? 12 : 0,
-      changeLabel: 'leads inativos',
+      changeLabel: translate(locale, 'reports.inactiveLeads'),
       sparkline: buildSparkline(metrics.leadsRecovered),
       accentColor: '#10B981' as const,
     },

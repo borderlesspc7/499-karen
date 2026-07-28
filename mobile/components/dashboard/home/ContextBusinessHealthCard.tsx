@@ -1,18 +1,19 @@
 import { Text, View } from 'react-native'
 import { Activity } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import type { BusinessHealthScores } from '@shared/types/gamification'
 
 type HealthCategory = {
   key: keyof Omit<BusinessHealthScores, 'totalScore'>
-  label: string
+  labelKey: 'home.marketing' | 'home.sales' | 'home.automation' | 'home.credibility' | 'home.positioning'
 }
 
 const HEALTH_CATEGORIES: HealthCategory[] = [
-  { key: 'marketing', label: 'Marketing' },
-  { key: 'vendas', label: 'Vendas' },
-  { key: 'automacao', label: 'Automação' },
-  { key: 'credibilidade', label: 'Credibilidade' },
-  { key: 'posicionamento', label: 'Posicionamento' },
+  { key: 'marketing', labelKey: 'home.marketing' },
+  { key: 'vendas', labelKey: 'home.sales' },
+  { key: 'automacao', labelKey: 'home.automation' },
+  { key: 'credibilidade', labelKey: 'home.credibility' },
+  { key: 'posicionamento', labelKey: 'home.positioning' },
 ]
 
 function resolveBarColor(value: number): string {
@@ -32,6 +33,8 @@ type ContextBusinessHealthCardProps = {
 }
 
 export function ContextBusinessHealthCard({ businessHealth }: ContextBusinessHealthCardProps) {
+  const { t } = useTranslation()
+
   return (
     <View
       className="rounded-3xl bg-white/95 p-6"
@@ -45,7 +48,7 @@ export function ContextBusinessHealthCard({ businessHealth }: ContextBusinessHea
     >
       <View className="flex-row items-center gap-2">
         <Activity size={18} color="#3B82F6" />
-        <Text className="text-base font-bold text-deepBlue">Business Health Score</Text>
+        <Text className="text-base font-bold text-deepBlue">{t('home.businessHealthScore')}</Text>
       </View>
 
       <View className="mt-5 items-center">
@@ -62,7 +65,7 @@ export function ContextBusinessHealthCard({ businessHealth }: ContextBusinessHea
           return (
             <View key={category.key}>
               <View className="mb-1 flex-row items-center justify-between">
-                <Text className="text-xs font-medium text-deepBlue/70">{category.label}</Text>
+                <Text className="text-xs font-medium text-deepBlue/70">{t(category.labelKey)}</Text>
                 <Text className="text-xs font-bold text-deepBlue">{value}%</Text>
               </View>
               <View className="h-1.5 overflow-hidden rounded-full bg-deepBlue/10">

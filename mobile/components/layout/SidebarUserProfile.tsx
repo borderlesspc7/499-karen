@@ -1,14 +1,14 @@
 import { Pressable, Text, View } from 'react-native'
 import { router } from 'expo-router'
-import { useAuth } from '@shared/contexts'
+import { useAuth, useTranslation } from '@shared/contexts'
 
 type SidebarUserProfileProps = {
   displayName?: string
 }
 
-function resolveUserName(email?: string | null): string {
-  if (!email) return 'Usuário'
-  const localPart = email.split('@')[0] ?? 'Usuário'
+function resolveUserName(email: string | null | undefined, fallback: string): string {
+  if (!email) return fallback
+  const localPart = email.split('@')[0] ?? fallback
   const formatted = localPart.charAt(0).toUpperCase() + localPart.slice(1)
   return formatted.includes(' ') ? formatted : `${formatted} Lee`
 }
@@ -24,7 +24,8 @@ function resolveInitials(name: string): string {
 
 export function SidebarUserProfile({ displayName }: SidebarUserProfileProps) {
   const { currentUser } = useAuth()
-  const name = displayName ?? resolveUserName(currentUser?.email)
+  const { t } = useTranslation()
+  const name = displayName ?? resolveUserName(currentUser?.email, t('common.user'))
   const initials = resolveInitials(name)
 
   return (
@@ -32,7 +33,7 @@ export function SidebarUserProfile({ displayName }: SidebarUserProfileProps) {
       onPress={() => router.push('/(tabs)/profile')}
       className="flex-row items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 active:opacity-90"
       accessibilityRole="button"
-      accessibilityLabel="Abrir perfil"
+      accessibilityLabel={t('profile.openProfileA11y')}
     >
       <View className="h-10 w-10 items-center justify-center rounded-full border border-gold/30 bg-gold/10">
         <Text className="text-xs font-bold text-gold">{initials}</Text>

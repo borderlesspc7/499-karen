@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { StyleSheet, View } from 'react-native'
 import Animated, {
   Easing,
@@ -11,16 +11,18 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { Brain } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import { triggerSuccessHaptic } from '@/lib/haptics'
 import { platformEntering } from '@/lib/platform-animation'
 
-const LOADING_MESSAGES = [
-  'Analisando concorrência e posicionamento…',
-  'Identificando leads com maior chance de conversão…',
-  'Content Director criando copys de alta conversão…',
-  'Design AI gerando criativos para cada canal…',
-  'Preparando campanha omnichannel…',
-] as const
+const LOADING_MESSAGE_KEYS = [
+  'campaigns.loadingCompetition',
+  'campaigns.loadingLeads',
+  'campaigns.loadingCopy',
+  'campaigns.loadingCreatives',
+  'campaigns.loadingOmni',
+] as const satisfies readonly TranslationKey[]
 
 const MESSAGE_INTERVAL_MS = 1500
 const FADE_DURATION_MS = 350
@@ -119,14 +121,19 @@ function FadingStatusText({ text }: { text: string }) {
 }
 
 export function CampaignMagicLoadingOverlay({ onComplete }: CampaignMagicLoadingOverlayProps) {
+  const { t } = useTranslation()
   const [messageIndex, setMessageIndex] = useState(0)
+  const loadingMessages = useMemo(
+    () => LOADING_MESSAGE_KEYS.map((key) => t(key)),
+    [t],
+  )
 
   useEffect(() => {
     setMessageIndex(0)
 
     const messageInterval = setInterval(() => {
       setMessageIndex((current) => {
-        if (current >= LOADING_MESSAGES.length - 1) {
+        if (current >= loadingMessages.length - 1) {
           return current
         }
         return current + 1
@@ -136,13 +143,13 @@ export function CampaignMagicLoadingOverlay({ onComplete }: CampaignMagicLoading
     const completeTimer = setTimeout(() => {
       triggerSuccessHaptic()
       onComplete()
-    }, MESSAGE_INTERVAL_MS * LOADING_MESSAGES.length)
+    }, MESSAGE_INTERVAL_MS * loadingMessages.length)
 
     return () => {
       clearInterval(messageInterval)
       clearTimeout(completeTimer)
     }
-  }, [onComplete])
+  }, [loadingMessages.length, onComplete])
 
   return (
     <Animated.View
@@ -153,11 +160,11 @@ export function CampaignMagicLoadingOverlay({ onComplete }: CampaignMagicLoading
       <PulsingBrainIcon />
 
       <View className="mt-10 min-h-[56px] items-center justify-center">
-        <FadingStatusText text={LOADING_MESSAGES[messageIndex]} />
+        <FadingStatusText text={loadingMessages[messageIndex]} />
       </View>
 
       <View className="mt-8 flex-row gap-2">
-        {LOADING_MESSAGES.map((message, index) => (
+        {loadingMessages.map((message, index) => (
           <View
             key={message}
             className={[

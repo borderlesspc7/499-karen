@@ -7,7 +7,7 @@ import {
 } from 'react-native'
 import { Redirect } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useAuth, useGamification, useSubscription } from '@shared/contexts'
+import { useAuth, useGamification, useSubscription, useTranslation } from '@shared/contexts'
 import { getAuthErrorMessage } from '@shared/services'
 import { requiresEmailVerification } from '@shared/utils/auth-guards'
 import { SummusLogo } from '@/components/ui/SummusLogo'
@@ -23,6 +23,7 @@ export default function VerifyEmailScreen() {
   } = useAuth()
   const { isHydrated, isOnboardingComplete } = useGamification()
   const { hasActiveSubscription, isSubscriptionLoading } = useSubscription()
+  const { t, locale } = useTranslation()
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [isResending, setIsResending] = useState(false)
@@ -72,9 +73,9 @@ export default function VerifyEmailScreen() {
 
     try {
       await sendEmailVerification()
-      setSuccessMessage('Reenviamos o e-mail de confirmação.')
+      setSuccessMessage(t('auth.verifyResendSuccess'))
     } catch (error) {
-      setErrorMessage(getAuthErrorMessage(error))
+      setErrorMessage(getAuthErrorMessage(error, locale))
     } finally {
       setIsResending(false)
     }
@@ -88,12 +89,12 @@ export default function VerifyEmailScreen() {
     try {
       const user = await reloadCurrentUser()
       if (user && !requiresEmailVerification(user)) {
-        setSuccessMessage('E-mail confirmado. Entrando…')
+        setSuccessMessage(t('auth.verifyConfirmedSuccess'))
       } else {
-        setErrorMessage('Ainda não detectamos a confirmação. Abra o link do e-mail e tente de novo.')
+        setErrorMessage(t('auth.verifyNotYet'))
       }
     } catch (error) {
-      setErrorMessage(getAuthErrorMessage(error))
+      setErrorMessage(getAuthErrorMessage(error, locale))
     } finally {
       setIsChecking(false)
     }
@@ -108,11 +109,11 @@ export default function VerifyEmailScreen() {
         <SummusLogo centered />
 
         <View className="mx-auto w-full max-w-md rounded-3xl border border-white/10 bg-white p-6 shadow-sm">
-          <Text className="text-2xl font-semibold text-navy">Confirme seu e-mail</Text>
+          <Text className="text-2xl font-semibold text-navy">{t('auth.verifyTitle')}</Text>
           <Text className="mt-2 text-sm leading-5 text-slate-500">
-            Enviamos um link de ativação para{' '}
-            <Text className="font-semibold text-navy">{currentUser.email}</Text>. Sua conta
-            só é liberada depois da confirmação.
+            {t('auth.verifyBodyBefore')}{' '}
+            <Text className="font-semibold text-navy">{currentUser.email}</Text>
+            {t('auth.verifyBodyAfter')}
           </Text>
 
           <View className="mt-6 gap-3">
@@ -129,7 +130,7 @@ export default function VerifyEmailScreen() {
               className="rounded-2xl bg-gold py-3.5 active:opacity-90 disabled:opacity-70"
             >
               <Text className="text-center text-sm font-bold text-deepBlue">
-                {isChecking ? 'Verificando…' : 'Já confirmei'}
+                {isChecking ? t('auth.verifyChecking') : t('auth.verifyConfirmed')}
               </Text>
             </Pressable>
 
@@ -139,12 +140,14 @@ export default function VerifyEmailScreen() {
               className="rounded-2xl border border-slate-200 py-3.5 active:opacity-90 disabled:opacity-70"
             >
               <Text className="text-center text-sm font-semibold text-navy">
-                {isResending ? 'Reenviando…' : 'Reenviar e-mail'}
+                {isResending ? t('auth.verifyResending') : t('auth.verifyResend')}
               </Text>
             </Pressable>
 
             <Pressable onPress={() => void signOutUser()}>
-              <Text className="text-center text-sm text-slate-500">Usar outra conta</Text>
+              <Text className="text-center text-sm text-slate-500">
+                {t('auth.verifyUseOtherAccount')}
+              </Text>
             </Pressable>
           </View>
         </View>

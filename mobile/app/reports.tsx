@@ -1,5 +1,6 @@
 import { ActivityIndicator, Platform, Text, View } from 'react-native'
 import { ArrowDownRight, ArrowUpRight, TrendingUp } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { AppScreen } from '@/components/layout/AppScreen'
 import { PageScroll } from '@/components/layout/PageScroll'
 import { WebAppShell } from '@/components/layout/WebAppShell'
@@ -10,6 +11,7 @@ import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
 export default function ReportsScreen() {
   const { isWebDesktop } = useResponsiveLayout()
+  const { t } = useTranslation()
   const { reports, isLoading, error } = useAnalyticsData()
 
   if (isLoading) {
@@ -27,7 +29,7 @@ export default function ReportsScreen() {
       <AppScreen>
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-center text-sm text-slate-500">
-            {error ?? 'Não foi possível carregar os relatórios.'}
+            {error ?? t('reports.loadError')}
           </Text>
         </View>
       </AppScreen>
@@ -43,9 +45,9 @@ export default function ReportsScreen() {
     <AppScreen>
       <PageScroll>
         <ScreenHeader
-          badge="Inteligência de dados"
-          title="Relatórios e Performance"
-          description="KPIs, funil e métricas estratégicas da operação comercial."
+          badge={t('reports.badge')}
+          title={t('reports.title')}
+          description={t('reports.description')}
         />
 
         <View className={isWebDesktop ? 'flex-row flex-wrap gap-3' : 'flex-row flex-wrap gap-3'}>
@@ -82,7 +84,7 @@ export default function ReportsScreen() {
             <View className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
               <View className="mb-4 flex-row items-center justify-between">
                 <Text className="text-lg font-semibold text-slate-900">
-                  Oportunidades vs Fechamentos
+                  {t('reports.chartTitle')}
                 </Text>
                 <TrendingUp size={18} color="#7c3aed" />
               </View>
@@ -105,7 +107,10 @@ export default function ReportsScreen() {
                       </View>
                     </View>
                     <Text className="mt-1 text-xs text-slate-400">
-                      {item.oportunidades} oport. · {item.fechamentos} fech.
+                      {t('reports.chartLegend', {
+                        opportunities: item.oportunidades,
+                        closings: item.fechamentos,
+                      })}
                     </Text>
                   </View>
                 ))}
@@ -115,13 +120,13 @@ export default function ReportsScreen() {
 
           <View className={isWebDesktop ? 'w-[420px] shrink-0 gap-5' : 'gap-5'}>
             <ProgressList
-              title="Motivos de Perda"
-              description="Principais fatores que impediram o fechamento."
+              title={t('reports.lossTitle')}
+              description={t('reports.lossDesc')}
               items={reports.lossReasons}
             />
             <ProgressList
-              title="Performance por Canal"
-              description="Contribuição de cada canal no funil."
+              title={t('reports.channelTitle')}
+              description={t('reports.channelDesc')}
               items={reports.channelPerformance}
             />
           </View>

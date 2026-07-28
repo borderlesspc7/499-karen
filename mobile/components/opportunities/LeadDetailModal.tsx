@@ -17,20 +17,19 @@ import {
   Sparkles,
   Tag,
 } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
+import {
+  getCategoryLabel,
+  getKanbanColumnTitle,
+  getPriorityLabel,
+} from '@shared/data'
+import { getLeadSourceLabel } from '@shared/types'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { SummusSheetModal } from '@/components/ui/modal'
-import { categoryLabels, priorityLabels } from '@shared/data'
-import { LEAD_SOURCE_LABELS } from '@shared/types'
 import type { GrowthFlowLead } from '@/lib/crm-lead-insights'
 import { isForgottenLead, isHotLead, resolveHealthColor } from '@/lib/crm-lead-insights'
 
 type DetailTab = 'perfil' | 'historico' | 'acoes'
-
-const TAB_OPTIONS: Array<{ id: DetailTab; label: string }> = [
-  { id: 'perfil', label: 'Perfil' },
-  { id: 'historico', label: 'Histórico' },
-  { id: 'acoes', label: 'Ações Rápidas' },
-]
 
 type LeadDetailModalProps = {
   lead: GrowthFlowLead | null
@@ -41,58 +40,6 @@ type LeadDetailModalProps = {
   onDelete?: (lead: GrowthFlowLead) => void
 }
 
-function resolveLeadTags(lead: GrowthFlowLead): string[] {
-  const tags: string[] = [
-    categoryLabels[lead.category],
-    priorityLabels[lead.priority],
-    LEAD_SOURCE_LABELS[lead.source],
-  ]
-
-  if (lead.columnId === 'col-fechado') {
-    tags.push('Ganho')
-  } else if (isHotLead(lead, lead.healthScore)) {
-    tags.push('Quente')
-  } else if (isForgottenLead(lead, lead.healthScore)) {
-    tags.push('Esquecido')
-  }
-
-  if (lead.client?.status === 'inativo') {
-    tags.push('Inativo')
-  }
-
-  return tags
-}
-
-function buildActivityTimeline(lead: GrowthFlowLead) {
-  const client = lead.client
-
-  return [
-    {
-      id: '1',
-      type: 'nota',
-      title: 'Próximo passo sugerido',
-      body: lead.nextBestAction,
-      date: 'Hoje',
-    },
-    {
-      id: '2',
-      type: 'atividade',
-      title: lead.title,
-      body: lead.description,
-      date: lead.dueDate,
-    },
-    {
-      id: '3',
-      type: 'contato',
-      title: 'Último contato',
-      body: client
-        ? `Interação registrada com ${client.name}`
-        : `Contato com ${lead.clientName}`,
-      date: client?.lastContact ?? '—',
-    },
-  ]
-}
-
 export function LeadDetailModal({
   lead,
   visible,
@@ -101,6 +48,7 @@ export function LeadDetailModal({
   onEdit,
   onDelete,
 }: LeadDetailModalProps) {
+  const { t, locale } = useTranslation()
   const [activeTab, setActiveTab] = useState<DetailTab>('perfil')
 
   if (!lead) {
@@ -109,16 +57,67 @@ export function LeadDetailModal({
 
   const currentLead = lead
   const healthColor = resolveHealthColor(currentLead.healthScore)
-  const tags = resolveLeadTags(currentLead)
-  const activities = buildActivityTimeline(currentLead)
+  const nextActionLabel = t(currentLead.nextBestAction)
+  const dash = t('common.emDash')
+
+  const tags: string[] = [
+    getCategoryLabel(t, currentLead.category),
+    getPriorityLabel(t, currentLead.priority),
+    getLeadSourceLabel(t, currentLead.source),
+  ]
+
+  if (currentLead.columnId === 'col-fechado') {
+    tags.push(t('opportunities.tagWon'))
+  } else if (isHotLead(currentLead, currentLead.healthScore)) {
+    tags.push(t('opportunities.tagHot'))
+  } else if (isForgottenLead(currentLead, currentLead.healthScore)) {
+    tags.push(t('opportunities.tagForgotten'))
+  }
+
+  if (currentLead.client?.status === 'inativo') {
+    tags.push(t('opportunities.tagInactive'))
+  }
+
   const client = currentLead.client
   const phone = client?.phone?.replace(/\D/g, '') ?? null
+
+  const activities = [
+    {
+      id: '1',
+      type: 'nota' as const,
+      title: t('opportunities.nextStepSuggested'),
+      body: nextActionLabel,
+      date: t('opportunities.today'),
+    },
+    {
+      id: '2',
+      type: 'atividade' as const,
+      title: currentLead.title,
+      body: currentLead.description,
+      date: currentLead.dueDate,
+    },
+    {
+      id: '3',
+      type: 'contato' as const,
+      title: t('opportunities.lastContact'),
+      body: t('opportunities.interactionWith', {
+        name: client?.name ?? currentLead.clientName,
+      }),
+      date: client?.lastContact ?? dash,
+    },
+  ]
+
+  const tabOptions: Array<{ id: DetailTab; label: string }> = [
+    { id: 'perfil', label: t('opportunities.tabProfile') },
+    { id: 'historico', label: t('opportunities.tabHistory') },
+    { id: 'acoes', label: t('opportunities.tabActions') },
+  ]
 
   async function openUrl(url: string, fallbackMessage: string) {
     const canOpen = await Linking.canOpenURL(url)
 
     if (!canOpen) {
-      Alert.alert('Indisponível', fallbackMessage)
+      Alert.alert(t('opportunities.unavailable'), fallbackMessage)
       return
     }
 
@@ -127,44 +126,56 @@ export function LeadDetailModal({
 
   function handleCall() {
     if (!phone) {
-      Alert.alert('Sem telefone', 'Este lead não possui telefone cadastrado no Firestore.')
+      Alert.alert(t('opportunities.noPhoneTitle'), t('opportunities.noPhoneBody'))
       return
     }
 
-    void openUrl(`tel:+${phone}`, 'Não foi possível iniciar a chamada neste dispositivo.')
+    void openUrl(`tel:+${phone}`, t('opportunities.callFailed'))
   }
 
   function handleWhatsApp() {
     if (!phone) {
-      Alert.alert('Sem telefone', 'Este lead não possui telefone cadastrado no Firestore.')
+      Alert.alert(t('opportunities.noPhoneTitle'), t('opportunities.noPhoneBody'))
       return
     }
 
     const message = encodeURIComponent(
-      `Olá ${currentLead.clientName}, tudo bem? Gostaria de dar continuidade em "${currentLead.title}".`,
+      t('opportunities.whatsappPrefill', {
+        name: currentLead.clientName,
+        title: currentLead.title,
+      }),
     )
     void openUrl(
       `https://wa.me/${phone}?text=${message}`,
-      'WhatsApp não está disponível neste dispositivo.',
+      t('opportunities.whatsappUnavailable'),
     )
   }
 
   function handleEmail() {
     const email = client?.email ?? ''
     if (!email) {
-      Alert.alert('Sem e-mail', 'Este lead não possui e-mail cadastrado.')
+      Alert.alert(t('opportunities.noEmailTitle'), t('opportunities.noEmailBody'))
       return
     }
 
-    const subject = encodeURIComponent(`Follow-up: ${currentLead.title}`)
-    void openUrl(`mailto:${email}?subject=${subject}`, 'Não foi possível abrir o cliente de e-mail.')
+    const subject = encodeURIComponent(
+      t('opportunities.emailSubject', { title: currentLead.title }),
+    )
+    void openUrl(`mailto:${email}?subject=${subject}`, t('opportunities.emailClientFailed'))
   }
+
+  const dealValueLabel =
+    currentLead.dealValue > 0
+      ? `R$ ${currentLead.dealValue.toLocaleString(locale)}`
+      : t('opportunities.dealEstimated', {
+          amount: currentLead.dealImpact.toLocaleString(locale),
+        })
 
   return (
     <SummusSheetModal
       visible={visible}
       onClose={onClose}
-      badge="Detalhe do Lead"
+      badge={t('opportunities.detailBadge')}
       badgeIcon={Sparkles}
       title={currentLead.clientName}
       subtitle={currentLead.title}
@@ -173,21 +184,23 @@ export function LeadDetailModal({
       <View className="flex-1 px-5">
         <View className="mb-4 flex-row items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
           <View>
-            <Text className="text-xs font-medium text-white/45">Health Score</Text>
+            <Text className="text-xs font-medium text-white/45">{t('opportunities.healthScore')}</Text>
             <Text className="text-lg font-bold" style={{ color: healthColor }}>
               {currentLead.healthScore}%
             </Text>
           </View>
           <View className="items-end">
-            <Text className="text-xs font-medium text-white/45">Impacto potencial</Text>
+            <Text className="text-xs font-medium text-white/45">
+              {t('opportunities.potentialImpact')}
+            </Text>
             <Text className="text-lg font-bold text-emerald">
-              +R$ {currentLead.dealImpact.toLocaleString('pt-BR')}
+              +R$ {currentLead.dealImpact.toLocaleString(locale)}
             </Text>
           </View>
         </View>
 
         <View className="mb-4 flex-row rounded-2xl border border-white/10 bg-white/5 p-1">
-          {TAB_OPTIONS.map((tab) => {
+          {tabOptions.map((tab) => {
             const isActive = activeTab === tab.id
 
             return (
@@ -213,160 +226,162 @@ export function LeadDetailModal({
         </View>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-            {activeTab === 'perfil' ? (
-              <View className="gap-4 pb-6">
-                <View className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <Text className="text-xs font-bold uppercase tracking-wider text-white/40">
-                    Campos customizados
-                  </Text>
-                  <View className="mt-3 gap-3">
-                    <ProfileField
-                      icon={<Building2 size={14} color="#94A3B8" />}
-                      label="Empresa"
-                      value={client?.company ?? '—'}
-                    />
-                    <ProfileField
-                      icon={<Mail size={14} color="#94A3B8" />}
-                      label="E-mail"
-                      value={client?.email ?? '—'}
-                    />
-                    <ProfileField
-                      icon={<Calendar size={14} color="#94A3B8" />}
-                      label="Etapa"
-                      value={currentLead.columnTitle ?? '—'}
-                    />
-                    <ProfileField
-                      icon={<Tag size={14} color="#94A3B8" />}
-                      label="Prioridade"
-                      value={priorityLabels[currentLead.priority]}
-                    />
-                    <ProfileField
-                      icon={<Tag size={14} color="#94A3B8" />}
-                      label="Valor do deal"
-                      value={
-                        currentLead.dealValue > 0
-                          ? `R$ ${currentLead.dealValue.toLocaleString('pt-BR')}`
-                          : `Estimado R$ ${currentLead.dealImpact.toLocaleString('pt-BR')}`
-                      }
-                    />
-                    <ProfileField
-                      icon={<Tag size={14} color="#94A3B8" />}
-                      label="Origem"
-                      value={LEAD_SOURCE_LABELS[currentLead.source]}
-                    />
-                    <ProfileField
-                      icon={<Calendar size={14} color="#94A3B8" />}
-                      label="Último contato"
-                      value={client?.lastContact ?? '—'}
-                    />
-                  </View>
-                </View>
-
-                {(onEdit || onDelete) && (
-                  <View className="flex-row gap-3">
-                    {onEdit ? (
-                      <Pressable
-                        onPress={() => onEdit(currentLead)}
-                        className="flex-1 rounded-2xl bg-electricBlue py-3"
-                      >
-                        <Text className="text-center text-sm font-semibold text-white">Editar</Text>
-                      </Pressable>
-                    ) : null}
-                    {onDelete ? (
-                      <Pressable
-                        onPress={() => onDelete(currentLead)}
-                        className="flex-1 rounded-2xl border border-red-400/40 bg-red-500/10 py-3"
-                      >
-                        <Text className="text-center text-sm font-semibold text-red-300">
-                          Excluir
-                        </Text>
-                      </Pressable>
-                    ) : null}
-                  </View>
-                )}
-
-                <View className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <Text className="text-xs font-bold uppercase tracking-wider text-white/40">
-                    Tags
-                  </Text>
-                  <View className="mt-3 flex-row flex-wrap gap-2">
-                    {tags.map((tag) => (
-                      <View key={tag} className="rounded-full bg-electricBlue/20 px-3 py-1.5">
-                        <Text className="text-xs font-semibold text-electricBlue">{tag}</Text>
-                      </View>
-                    ))}
-                  </View>
+          {activeTab === 'perfil' ? (
+            <View className="gap-4 pb-6">
+              <View className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <Text className="text-xs font-bold uppercase tracking-wider text-white/40">
+                  {t('opportunities.customFields')}
+                </Text>
+                <View className="mt-3 gap-3">
+                  <ProfileField
+                    icon={<Building2 size={14} color="#94A3B8" />}
+                    label={t('opportunities.company')}
+                    value={client?.company ?? dash}
+                  />
+                  <ProfileField
+                    icon={<Mail size={14} color="#94A3B8" />}
+                    label={t('opportunities.email')}
+                    value={client?.email ?? dash}
+                  />
+                  <ProfileField
+                    icon={<Calendar size={14} color="#94A3B8" />}
+                    label={t('opportunities.stage')}
+                    value={getKanbanColumnTitle(
+                      t,
+                      currentLead.columnId,
+                      currentLead.columnTitle ?? dash,
+                    )}
+                  />
+                  <ProfileField
+                    icon={<Tag size={14} color="#94A3B8" />}
+                    label={t('opportunities.priority')}
+                    value={getPriorityLabel(t, currentLead.priority)}
+                  />
+                  <ProfileField
+                    icon={<Tag size={14} color="#94A3B8" />}
+                    label={t('opportunities.dealValue')}
+                    value={dealValueLabel}
+                  />
+                  <ProfileField
+                    icon={<Tag size={14} color="#94A3B8" />}
+                    label={t('opportunities.source')}
+                    value={getLeadSourceLabel(t, currentLead.source)}
+                  />
+                  <ProfileField
+                    icon={<Calendar size={14} color="#94A3B8" />}
+                    label={t('opportunities.lastContact')}
+                    value={client?.lastContact ?? dash}
+                  />
                 </View>
               </View>
-            ) : null}
 
-            {activeTab === 'historico' ? (
-              <View className="gap-3 pb-6">
-                {activities.map((item) => (
-                  <View key={item.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <View className="flex-row items-center justify-between">
-                      <Text className="text-xs font-bold uppercase tracking-wider text-electricBlue">
-                        {item.type === 'nota' ? 'Nota' : 'Atividade'}
+              {(onEdit || onDelete) && (
+                <View className="flex-row gap-3">
+                  {onEdit ? (
+                    <Pressable
+                      onPress={() => onEdit(currentLead)}
+                      className="flex-1 rounded-2xl bg-electricBlue py-3"
+                    >
+                      <Text className="text-center text-sm font-semibold text-white">
+                        {t('common.edit')}
                       </Text>
-                      <Text className="text-xs text-slate-500">{item.date}</Text>
+                    </Pressable>
+                  ) : null}
+                  {onDelete ? (
+                    <Pressable
+                      onPress={() => onDelete(currentLead)}
+                      className="flex-1 rounded-2xl border border-red-400/40 bg-red-500/10 py-3"
+                    >
+                      <Text className="text-center text-sm font-semibold text-red-300">
+                        {t('common.delete')}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                </View>
+              )}
+
+              <View className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <Text className="text-xs font-bold uppercase tracking-wider text-white/40">
+                  Tags
+                </Text>
+                <View className="mt-3 flex-row flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <View key={tag} className="rounded-full bg-electricBlue/20 px-3 py-1.5">
+                      <Text className="text-xs font-semibold text-electricBlue">{tag}</Text>
                     </View>
-                    <Text className="mt-2 text-base font-semibold text-white">{item.title}</Text>
-                    <Text className="mt-1 text-sm leading-5 text-slate-400">{item.body}</Text>
+                  ))}
+                </View>
+              </View>
+            </View>
+          ) : null}
+
+          {activeTab === 'historico' ? (
+            <View className="gap-3 pb-6">
+              {activities.map((item) => (
+                <View key={item.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-xs font-bold uppercase tracking-wider text-electricBlue">
+                      {item.type === 'nota' ? 'Nota' : 'Atividade'}
+                    </Text>
+                    <Text className="text-xs text-slate-500">{item.date}</Text>
                   </View>
-                ))}
-              </View>
-            ) : null}
+                  <Text className="mt-2 text-base font-semibold text-white">{item.title}</Text>
+                  <Text className="mt-1 text-sm leading-5 text-slate-400">{item.body}</Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
 
-            {activeTab === 'acoes' ? (
-              <View className="gap-3 pb-6">
-                <QuickActionButton
-                  icon={<Phone size={20} color="#FFFFFF" />}
-                  label="Ligar"
-                  description={
-                    phone
-                      ? `+${phone.slice(0, 2)} ${phone.slice(2)}`
-                      : 'Telefone não cadastrado'
-                  }
-                  onPress={handleCall}
-                />
-                <QuickActionButton
-                  icon={<MessageCircle size={20} color="#FFFFFF" />}
-                  label="WhatsApp"
-                  description="Enviar mensagem personalizada"
-                  onPress={handleWhatsApp}
-                />
-                <QuickActionButton
-                  icon={<Mail size={20} color="#FFFFFF" />}
-                  label="E-mail"
-                  description={client?.email ?? 'Sem e-mail cadastrado'}
-                  onPress={handleEmail}
-                  disabled={!client?.email}
-                />
+          {activeTab === 'acoes' ? (
+            <View className="gap-3 pb-6">
+              <QuickActionButton
+                icon={<Phone size={20} color="#FFFFFF" />}
+                label={t('opportunities.call')}
+                description={
+                  phone
+                    ? `+${phone.slice(0, 2)} ${phone.slice(2)}`
+                    : t('opportunities.noPhone')
+                }
+                onPress={handleCall}
+              />
+              <QuickActionButton
+                icon={<MessageCircle size={20} color="#FFFFFF" />}
+                label={t('opportunities.whatsapp')}
+                description={t('opportunities.sendPersonalized')}
+                onPress={handleWhatsApp}
+              />
+              <QuickActionButton
+                icon={<Mail size={20} color="#FFFFFF" />}
+                label={t('opportunities.email')}
+                description={client?.email ?? t('opportunities.noEmail')}
+                onPress={handleEmail}
+                disabled={!client?.email}
+              />
 
-                <AnimatedPressable
-                  onPress={() => {
-                    onExecute?.(currentLead)
-                    Alert.alert(
-                      'Próximo passo',
-                      `${currentLead.nextBestAction} — ${currentLead.clientName}.`,
-                    )
-                  }}
-                  className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl bg-electricBlue py-4"
-                  style={{
-                    shadowColor: '#3B82F6',
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.35,
-                    shadowRadius: 12,
-                    elevation: 6,
-                  }}
-                >
-                  <Text className="text-sm font-bold text-white">Registrar próximo passo</Text>
-                  <ArrowRight size={16} color="#FFFFFF" />
-                </AnimatedPressable>
-              </View>
-            ) : null}
-          </ScrollView>
-        </View>
+              <AnimatedPressable
+                onPress={() => {
+                  onExecute?.(currentLead)
+                  Alert.alert(
+                    t('opportunities.nextStep'),
+                    `${nextActionLabel} — ${currentLead.clientName}.`,
+                  )
+                }}
+                className="mt-2 flex-row items-center justify-center gap-2 rounded-2xl bg-electricBlue py-4"
+                style={{
+                  shadowColor: '#3B82F6',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.35,
+                  shadowRadius: 12,
+                  elevation: 6,
+                }}
+              >
+                <Text className="text-sm font-bold text-white">{t('opportunities.registerNext')}</Text>
+                <ArrowRight size={16} color="#FFFFFF" />
+              </AnimatedPressable>
+            </View>
+          ) : null}
+        </ScrollView>
+      </View>
     </SummusSheetModal>
   )
 }

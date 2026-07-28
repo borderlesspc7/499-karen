@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ActivityIndicator, ScrollView, View } from 'react-native'
 import { router, useLocalSearchParams } from 'expo-router'
-import { useAuth, useGamification } from '@shared/contexts'
+import { useAuth, useGamification, useTranslation } from '@shared/contexts'
 import { GROWTH_ACTIONS } from '@shared/constants/growth-actions'
 import { ThemedScreen } from '@/components/layout/AppScreen'
 import { DesktopContent } from '@/components/layout/DesktopContent'
@@ -12,62 +12,15 @@ import { RevenueHeader } from '@/components/revenue-center/RevenueHeader'
 import { RevenueKpiGrid } from '@/components/revenue-center/RevenueKpiGrid'
 import { RevenueMobileHero } from '@/components/revenue-center/RevenueMobileHero'
 import { GettingStartedChecklist } from '@/components/guidance/GettingStartedChecklist'
-import { LINKEDIN_AUTHORITY_OPPORTUNITY } from '@/constants/ai-content-engine'
 import { CAMPAIGN_LAUNCHED_PARAM } from '@/constants/campaign-journey'
 import { useAnalyticsData } from '@/hooks/useAnalyticsData'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
 type ExecutionFlow = 'leads' | 'linkedin-article' | 'upsell'
 
-const LEADS_EXECUTION: Pick<
-  ExecutionModalProps,
-  | 'title'
-  | 'aiSuggestion'
-  | 'impact'
-  | 'previewDetail'
-  | 'contextLabel'
-  | 'loadingMessage'
-  | 'approveLabel'
-  | 'successMessage'
-> = {
-  title: 'Recuperação de Leads',
-  aiSuggestion:
-    'Preparei uma sequência de 3 e-mails focada em gatilhos de escassez para os leads inativos.',
-  impact: `+R$ ${GROWTH_ACTIONS['reactivate-inactive-leads'].revenueGain.toLocaleString('pt-BR')}`,
-  previewDetail:
-    'E-mail 1: reativação suave com prova social. E-mail 2: urgência com vaga limitada. E-mail 3: última chamada com bónus exclusivo.',
-  contextLabel: 'Meridian',
-  loadingMessage: 'A Meridian está reconstruindo contexto e calculando a decisão…',
-  approveLabel: 'Aprovar e Executar',
-  successMessage: 'Sequência ativada. Impacto estimado sendo rastreado.',
-}
-
-const UPSELL_EXECUTION: Pick<
-  ExecutionModalProps,
-  | 'title'
-  | 'aiSuggestion'
-  | 'impact'
-  | 'previewDetail'
-  | 'contextLabel'
-  | 'loadingMessage'
-  | 'approveLabel'
-  | 'successMessage'
-> = {
-  title: 'Oportunidades de Upsell',
-  aiSuggestion:
-    'Identifiquei clientes ativos prontos para upgrade com alto potencial de receita.',
-  impact: `+R$ ${GROWTH_ACTIONS['send-proposal'].revenueGain.toLocaleString('pt-BR')}`,
-  previewDetail:
-    'Análise baseada no pipeline atual de clientes ativos em negociação.',
-  contextLabel: 'Meridian',
-  loadingMessage: 'Meridian preparando alternativas e impacto estimado…',
-  approveLabel: 'Ver Oportunidades',
-  successMessage: 'Propostas prontas para envio.',
-}
-
-function resolveUserName(email?: string | null): string {
-  if (!email) return 'você'
-  const localPart = email.split('@')[0] ?? 'você'
+function resolveUserName(email: string | null | undefined, fallback: string): string {
+  if (!email) return fallback
+  const localPart = email.split('@')[0] ?? fallback
   return localPart.charAt(0).toUpperCase() + localPart.slice(1)
 }
 
@@ -75,6 +28,7 @@ export default function HomeScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const { currentUser } = useAuth()
   const { executeAction } = useGamification()
+  const { t, locale } = useTranslation()
   const { revenue, kpis, isLoading } = useAnalyticsData()
   const searchParams = useLocalSearchParams<Record<string, string | string[]>>()
   const [activeExecutionFlow, setActiveExecutionFlow] = useState<ExecutionFlow | null>(null)
@@ -84,14 +38,91 @@ export default function HomeScreen() {
     campaignLaunchedParam === '1' ||
     (Array.isArray(campaignLaunchedParam) && campaignLaunchedParam.includes('1'))
 
-  const userName = resolveUserName(currentUser?.email)
+  const userName = resolveUserName(currentUser?.email, t('home.youFallback'))
+
+  const leadsExecution = useMemo<
+    Pick<
+      ExecutionModalProps,
+      | 'title'
+      | 'aiSuggestion'
+      | 'impact'
+      | 'previewDetail'
+      | 'loadingMessage'
+      | 'successMessage'
+    >
+  >(
+    () => ({
+      title: t('home.leadRecovery'),
+      aiSuggestion: t('home.leadRecoverySuggestion'),
+      impact: `+R$ ${GROWTH_ACTIONS['reactivate-inactive-leads'].revenueGain.toLocaleString(locale)}`,
+      previewDetail: t('home.leadRecoveryPreview'),
+      loadingMessage: t('home.leadRecoveryLoading'),
+      successMessage: t('home.leadRecoverySuccess'),
+    }),
+    [t, locale],
+  )
+
+  const upsellExecution = useMemo<
+    Pick<
+      ExecutionModalProps,
+      | 'title'
+      | 'aiSuggestion'
+      | 'impact'
+      | 'previewDetail'
+      | 'loadingMessage'
+      | 'approveLabel'
+      | 'successMessage'
+    >
+  >(
+    () => ({
+      title: t('home.upsellOpportunities'),
+      aiSuggestion: t('home.upsellSuggestion'),
+      impact: `+R$ ${GROWTH_ACTIONS['send-proposal'].revenueGain.toLocaleString(locale)}`,
+      previewDetail: t('home.upsellPreview'),
+      loadingMessage: t('home.upsellLoading'),
+      approveLabel: t('home.seeOpportunities'),
+      successMessage: t('home.upsellSuccess'),
+    }),
+    [t, locale],
+  )
+
+  const linkedinExecution = useMemo<
+    Pick<
+      ExecutionModalProps,
+      | 'title'
+      | 'aiSuggestion'
+      | 'impact'
+      | 'previewDetail'
+      | 'loadingMessage'
+      | 'approveLabel'
+      | 'successMessage'
+    >
+  >(
+    () => ({
+      title: t('home.linkedinTitle'),
+      aiSuggestion: t('home.linkedinSuggestion'),
+      impact: t('home.linkedinImpact'),
+      previewDetail: t('home.linkedinPreview'),
+      loadingMessage: t('home.linkedinLoading'),
+      approveLabel: t('home.linkedinApprove'),
+      successMessage: t('home.linkedinSuccess'),
+    }),
+    [t],
+  )
 
   const executionConfig =
     activeExecutionFlow === 'linkedin-article'
-      ? LINKEDIN_AUTHORITY_OPPORTUNITY.modal
+      ? linkedinExecution
       : activeExecutionFlow === 'upsell'
-        ? UPSELL_EXECUTION
-        : LEADS_EXECUTION
+        ? upsellExecution
+        : leadsExecution
+
+  const executionApproveLabel =
+    activeExecutionFlow === 'upsell'
+      ? upsellExecution.approveLabel
+      : activeExecutionFlow === 'linkedin-article'
+        ? linkedinExecution.approveLabel
+        : undefined
 
   function handleApproveExecution() {
     if (activeExecutionFlow === 'linkedin-article') {
@@ -142,9 +173,8 @@ export default function HomeScreen() {
         aiSuggestion={executionConfig.aiSuggestion}
         impact={executionConfig.impact}
         previewDetail={executionConfig.previewDetail}
-        contextLabel={executionConfig.contextLabel}
         loadingMessage={executionConfig.loadingMessage}
-        approveLabel={executionConfig.approveLabel}
+        approveLabel={executionApproveLabel}
         successMessage={executionConfig.successMessage}
         onClose={() => setActiveExecutionFlow(null)}
         onApprove={handleApproveExecution}

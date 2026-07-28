@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { ScrollView, Text, View } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import {
   LearnImplementFlow,
   type LearnImplementFlowRef,
@@ -12,6 +13,7 @@ import { useThemeClasses } from '@/hooks/useThemeClasses'
 export default function LearnScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const tc = useThemeClasses()
+  const { t } = useTranslation()
   const learnFlowRef = useRef<LearnImplementFlowRef>(null)
 
   return (
@@ -26,10 +28,10 @@ export default function LearnScreen() {
       >
         <View className="gap-2">
           <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>
-            Learn & Implement
+            {t('placeholders.learnTitle')}
           </Text>
           <Text className={['text-sm', tc.textSecondary].join(' ')}>
-            Aprenda na hora e execute com IA — sem páginas em branco.
+            {t('placeholders.learnDesc')}
           </Text>
         </View>
 

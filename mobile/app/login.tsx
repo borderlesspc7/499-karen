@@ -12,10 +12,12 @@ import {
 import { Redirect } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useAuth, useGamification, useSubscription } from '@shared/contexts'
+import { useAuth, useGamification, useSubscription, useTranslation } from '@shared/contexts'
 import { getAuthErrorMessage } from '@shared/services'
 import { requiresEmailVerification } from '@shared/utils/auth-guards'
-import { evaluatePasswordStrength } from '@shared/utils/password-strength'
+import { evaluatePasswordStrength, PASSWORD_MIN_LENGTH } from '@shared/utils/password-strength'
+import type { PasswordFeedbackCode } from '@shared/utils/password-strength'
+import type { TranslationKey } from '@shared/i18n'
 import { PasswordStrengthMeter } from '@/components/auth/PasswordStrengthMeter'
 import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons'
 import { SummusLogo } from '@/components/ui/SummusLogo'
@@ -26,34 +28,19 @@ type AuthMode = 'signin' | 'signup' | 'reset'
 
 const LOGIN_DRAFT_KEY = 'summus_login_draft_v1'
 
-const authModeContent: Record<
-  AuthMode,
-  { title: string; subtitle: string; submitLabel: string; toggleLabel: string }
-> = {
-  signin: {
-    title: 'Entrar',
-    subtitle: 'A Meridian está pronta para transformar sua empresa em uma máquina de conteúdo.',
-    submitLabel: 'Entrar no Summus',
-    toggleLabel: 'Ainda não tem conta? Cadastre-se',
-  },
-  signup: {
-    title: 'Cadastrar',
-    subtitle: 'Crie sua conta com senha forte. Depois confirme o e-mail para ativar o acesso.',
-    submitLabel: 'Criar conta',
-    toggleLabel: 'Já possui conta? Entrar',
-  },
-  reset: {
-    title: 'Recuperar senha',
-    subtitle: 'Enviaremos um link simples de redefinição para o seu e-mail.',
-    submitLabel: 'Enviar link de recuperação',
-    toggleLabel: 'Voltar para o login',
-  },
+const PASSWORD_FEEDBACK_KEYS: Record<PasswordFeedbackCode, TranslationKey> = {
+  minLength: 'password.minLength',
+  uppercase: 'password.uppercase',
+  lowercase: 'password.lowercase',
+  number: 'password.number',
+  special: 'password.special',
 }
 
 export default function LoginScreen() {
   const { currentUser, isAuthLoading, signIn, signUp, resetPassword } = useAuth()
   const { isHydrated, isOnboardingComplete } = useGamification()
   const { hasActiveSubscription, isSubscriptionLoading } = useSubscription()
+  const { t, locale } = useTranslation()
   const { isWebDesktop } = useResponsiveLayout()
   const [authMode, setAuthMode] = useState<AuthMode>('signin')
   const [email, setEmail] = useState('')
@@ -64,7 +51,33 @@ export default function LoginScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDraftReady, setIsDraftReady] = useState(false)
 
-  const content = useMemo(() => authModeContent[authMode], [authMode])
+  const content = useMemo(() => {
+    if (authMode === 'signin') {
+      return {
+        title: t('auth.signinTitle'),
+        subtitle: t('auth.signinSubtitle'),
+        submitLabel: t('auth.signinSubmit'),
+        toggleLabel: t('auth.signinToggle'),
+      }
+    }
+
+    if (authMode === 'signup') {
+      return {
+        title: t('auth.signupTitle'),
+        subtitle: t('auth.signupSubtitle'),
+        submitLabel: t('auth.signupSubmit'),
+        toggleLabel: t('auth.signupToggle'),
+      }
+    }
+
+    return {
+      title: t('auth.resetTitle'),
+      subtitle: t('auth.resetSubtitle'),
+      submitLabel: t('auth.resetSubmit'),
+      toggleLabel: t('auth.resetToggle'),
+    }
+  }, [authMode, t])
+
   const passwordStrength = useMemo(() => evaluatePasswordStrength(password), [password])
 
   useEffect(() => {
@@ -140,14 +153,18 @@ export default function LoginScreen() {
 
     if (authMode === 'signup') {
       if (!passwordStrength.isStrongEnough) {
-        setErrorMessage(
-          `Senha fraca. Inclua: ${passwordStrength.feedback.join(', ').toLowerCase()}.`,
-        )
+        const requirements = passwordStrength.feedback
+          .map((code) =>
+            t(PASSWORD_FEEDBACK_KEYS[code], code === 'minLength' ? { n: PASSWORD_MIN_LENGTH } : undefined),
+          )
+          .join(', ')
+          .toLowerCase()
+        setErrorMessage(t('auth.weakPassword', { requirements }))
         return
       }
 
       if (password !== confirmPassword) {
-        setErrorMessage('As senhas não coincidem.')
+        setErrorMessage(t('auth.passwordsMismatch'))
         return
       }
     }
@@ -159,13 +176,13 @@ export default function LoginScreen() {
         await signIn(email, password)
       } else if (authMode === 'signup') {
         await signUp(email, password)
-        setSuccessMessage('Conta criada. Confirme o e-mail para ativar o acesso.')
+        setSuccessMessage(t('auth.signupSuccess'))
       } else {
         await resetPassword(email)
-        setSuccessMessage('Enviamos um link de recuperação para o seu e-mail.')
+        setSuccessMessage(t('auth.resetSuccess'))
       }
     } catch (error) {
-      setErrorMessage(getAuthErrorMessage(error))
+      setErrorMessage(getAuthErrorMessage(error, locale))
     } finally {
       setIsSubmitting(false)
     }
@@ -189,7 +206,7 @@ export default function LoginScreen() {
 
       <View className="mt-6 gap-4">
         <View>
-          <Text className="mb-2 text-sm font-medium text-slate-700">E-mail</Text>
+          <Text className="mb-2 text-sm font-medium text-slate-700">{t('auth.email')}</Text>
           <TextInput
             value={email}
             onChangeText={setEmail}
@@ -197,21 +214,21 @@ export default function LoginScreen() {
             keyboardType="email-address"
             autoComplete="email"
             className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-navy"
-            placeholder="seu@email.com"
+            placeholder={t('auth.emailPlaceholder')}
             placeholderTextColor="#94A3B8"
           />
         </View>
 
         {authMode !== 'reset' ? (
           <View>
-            <Text className="mb-2 text-sm font-medium text-slate-700">Senha</Text>
+            <Text className="mb-2 text-sm font-medium text-slate-700">{t('auth.password')}</Text>
             <TextInput
               value={password}
               onChangeText={setPassword}
               secureTextEntry
               autoComplete={authMode === 'signup' ? 'new-password' : 'password'}
               className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-navy"
-              placeholder={authMode === 'signup' ? 'Mín. 8 caracteres' : '••••••••'}
+              placeholder={authMode === 'signup' ? t('auth.passwordPlaceholderSignup') : '••••••••'}
               placeholderTextColor="#94A3B8"
             />
             {authMode === 'signup' ? <PasswordStrengthMeter password={password} /> : null}
@@ -220,19 +237,21 @@ export default function LoginScreen() {
 
         {authMode === 'signup' ? (
           <View>
-            <Text className="mb-2 text-sm font-medium text-slate-700">Confirmar senha</Text>
+            <Text className="mb-2 text-sm font-medium text-slate-700">
+              {t('auth.confirmPassword')}
+            </Text>
             <TextInput
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               secureTextEntry
               autoComplete="new-password"
               className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-navy"
-              placeholder="Repita a senha"
+              placeholder={t('auth.confirmPasswordPlaceholder')}
               placeholderTextColor="#94A3B8"
             />
             {confirmPassword.length > 0 && confirmPassword !== password ? (
               <Text className="mt-2 text-xs font-medium text-rose-600">
-                As senhas não coincidem.
+                {t('auth.passwordsMismatch')}
               </Text>
             ) : null}
           </View>
@@ -251,7 +270,7 @@ export default function LoginScreen() {
           className="rounded-2xl bg-gold py-3.5 active:opacity-90 disabled:opacity-70"
         >
           <Text className="text-center text-sm font-bold text-deepBlue">
-            {isSubmitting ? 'Processando...' : content.submitLabel}
+            {isSubmitting ? t('auth.processing') : content.submitLabel}
           </Text>
         </Pressable>
 
@@ -273,7 +292,7 @@ export default function LoginScreen() {
 
         {authMode === 'signin' ? (
           <Pressable onPress={() => setAuthMode('reset')}>
-            <Text className="text-center text-sm text-slate-500">Esqueci minha senha</Text>
+            <Text className="text-center text-sm text-slate-500">{t('auth.forgotPassword')}</Text>
           </Pressable>
         ) : null}
       </View>
@@ -290,10 +309,10 @@ export default function LoginScreen() {
           <View className="max-w-lg items-center">
             <SummusLogo centered />
             <Text className="mt-10 text-center text-4xl font-bold leading-tight text-white">
-              {summusBrand.taglinePt}.
+              {t('auth.heroTagline')}.
             </Text>
             <Text className="mt-4 text-center text-lg leading-7 text-white/55">
-              {summusBrand.positioning} A Meridian pensa junto com você — do primeiro minuto.
+              {t('auth.heroPositioning')} {t('auth.heroSupport')}
             </Text>
           </View>
         </View>

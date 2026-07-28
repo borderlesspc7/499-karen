@@ -6,7 +6,14 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { categoryLabels, priorityLabels } from '@shared/data'
+import {
+  CATEGORY_IDS,
+  PRIORITY_IDS,
+  getCategoryLabel,
+  getKanbanColumnTitle,
+  getPriorityLabel,
+} from '@shared/data'
+import { useTranslation } from '@shared/contexts'
 import type {
   Client,
   KanbanCard,
@@ -46,9 +53,6 @@ type OpportunityFormModalProps = {
   onSubmit: (values: OpportunityFormValues) => void
 }
 
-const CATEGORIES = Object.keys(categoryLabels) as TaskCategory[]
-const PRIORITIES = Object.keys(priorityLabels) as TaskPriority[]
-
 function emptyValues(columnId: string): OpportunityFormValues {
   return {
     title: '',
@@ -87,6 +91,7 @@ export function OpportunityFormModal({
   onClose,
   onSubmit,
 }: OpportunityFormModalProps) {
+  const { t, locale } = useTranslation()
   const isEditing = Boolean(initialCard)
   const fallbackColumnId = defaultColumnId ?? columns[0]?.id ?? 'col-leads'
   const [values, setValues] = useState<OpportunityFormValues>(() => emptyValues(fallbackColumnId))
@@ -106,8 +111,8 @@ export function OpportunityFormModal({
   }, [visible, initialCard, defaultColumnId, columns])
 
   const sortedClients = useMemo(
-    () => [...clients].sort((left, right) => left.name.localeCompare(right.name, 'pt-BR')),
-    [clients],
+    () => [...clients].sort((left, right) => left.name.localeCompare(right.name, locale)),
+    [clients, locale],
   )
 
   function handleSelectClient(client: Client | null) {
@@ -125,12 +130,12 @@ export function OpportunityFormModal({
 
   function handleSubmit() {
     if (!values.title.trim()) {
-      setError('Informe o título da oportunidade.')
+      setError(t('opportunities.titleRequired'))
       return
     }
 
     if (!values.columnId) {
-      setError('Selecione uma etapa do funil.')
+      setError(t('opportunities.stageRequired'))
       return
     }
 
@@ -142,8 +147,8 @@ export function OpportunityFormModal({
     <ResponsiveDialog
       visible={visible}
       onClose={onClose}
-      badge={isEditing ? 'Editar' : 'Nova'}
-      title={isEditing ? 'Editar oportunidade' : 'Nova oportunidade'}
+      badge={isEditing ? t('common.edit') : t('common.newFeminine')}
+      title={isEditing ? t('opportunities.formEdit') : t('opportunities.formNew')}
       maxWidthClassName="max-w-2xl"
       footer={
         <Pressable
@@ -155,16 +160,13 @@ export function OpportunityFormModal({
             <ActivityIndicator color="#fff" />
           ) : (
             <Text className="text-center text-sm font-semibold text-white">
-              {isEditing ? 'Salvar oportunidade' : 'Criar oportunidade'}
+              {isEditing ? t('opportunities.formSave') : t('opportunities.formCreate')}
             </Text>
           )}
         </Pressable>
       }
     >
-      <Text className="mb-4 text-sm text-slate-500">
-        Cadastro manual agora. Depois, leads de anúncios Meta entram neste mesmo funil com origem
-        “Meta Ads”.
-      </Text>
+      <Text className="mb-4 text-sm text-slate-500">{t('opportunities.formHint')}</Text>
 
       {error ? (
         <View className="mb-3 rounded-2xl border border-red-200 bg-red-50 px-3 py-2">
@@ -172,27 +174,27 @@ export function OpportunityFormModal({
         </View>
       ) : null}
 
-      <FieldLabel label="Título *" />
+      <FieldLabel label={t('opportunities.fieldTitle')} />
       <TextInput
         value={values.title}
         onChangeText={(title) => setValues((current) => ({ ...current, title }))}
-        placeholder="Proposta plano anual"
+        placeholder={t('opportunities.fieldTitlePh')}
         className="mb-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
         placeholderTextColor="#94a3b8"
       />
 
-      <FieldLabel label="Descrição" />
+      <FieldLabel label={t('opportunities.fieldDescription')} />
       <TextInput
         value={values.description}
         onChangeText={(description) => setValues((current) => ({ ...current, description }))}
-        placeholder="Contexto do negócio..."
+        placeholder={t('opportunities.fieldDescriptionPh')}
         multiline
         className="mb-3 min-h-[72px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
         placeholderTextColor="#94a3b8"
         textAlignVertical="top"
       />
 
-      <FieldLabel label="Valor do deal" />
+      <FieldLabel label={t('opportunities.fieldDealValue')} />
       <TextInput
         value={values.dealValue}
         onChangeText={(dealValue) =>
@@ -201,19 +203,19 @@ export function OpportunityFormModal({
             dealValue: maskCurrencyBrl(dealValue),
           }))
         }
-        placeholder="R$ 0,00"
+        placeholder={t('opportunities.fieldDealValuePh')}
         keyboardType="number-pad"
         className="mb-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
         placeholderTextColor="#94a3b8"
       />
 
       <DatePickerField
-        label="Prazo"
+        label={t('opportunities.fieldDueDate')}
         value={values.dueDate}
         onChange={(dueDate) => setValues((current) => ({ ...current, dueDate }))}
       />
 
-      <FieldLabel label="Etapa do funil" />
+      <FieldLabel label={t('opportunities.fieldStage')} />
       <View className="mb-3 flex-row flex-wrap gap-2">
         {columns.map((column) => (
           <Pressable
@@ -232,13 +234,13 @@ export function OpportunityFormModal({
                 values.columnId === column.id ? 'text-white' : 'text-slate-600',
               ].join(' ')}
             >
-              {column.title}
+              {getKanbanColumnTitle(t, column.id, column.title)}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      <FieldLabel label="Cliente vinculado" />
+      <FieldLabel label={t('opportunities.fieldLinkedClient')} />
       <View className="mb-3 flex-row flex-wrap gap-2">
         <Pressable
           onPress={() => handleSelectClient(null)}
@@ -253,7 +255,7 @@ export function OpportunityFormModal({
               values.clientId === null ? 'text-white' : 'text-slate-600',
             ].join(' ')}
           >
-            Nenhum
+            {t('common.none')}
           </Text>
         </Pressable>
         {sortedClients.map((client) => (
@@ -281,20 +283,20 @@ export function OpportunityFormModal({
 
       {values.clientId === null ? (
         <>
-          <FieldLabel label="Nome do contato (se sem cliente)" />
+          <FieldLabel label={t('opportunities.fieldContactName')} />
           <TextInput
             value={values.clientName}
             onChangeText={(clientName) => setValues((current) => ({ ...current, clientName }))}
-            placeholder="Nome do lead"
+            placeholder={t('opportunities.fieldContactPh')}
             className="mb-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
             placeholderTextColor="#94a3b8"
           />
         </>
       ) : null}
 
-      <FieldLabel label="Categoria" />
+      <FieldLabel label={t('opportunities.fieldCategory')} />
       <View className="mb-3 flex-row flex-wrap gap-2">
-        {CATEGORIES.map((category) => (
+        {CATEGORY_IDS.map((category) => (
           <Pressable
             key={category}
             onPress={() => setValues((current) => ({ ...current, category }))}
@@ -311,15 +313,15 @@ export function OpportunityFormModal({
                 values.category === category ? 'text-white' : 'text-slate-600',
               ].join(' ')}
             >
-              {categoryLabels[category]}
+              {getCategoryLabel(t, category)}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      <FieldLabel label="Prioridade" />
+      <FieldLabel label={t('opportunities.fieldPriority')} />
       <View className="mb-1 flex-row flex-wrap gap-2">
-        {PRIORITIES.map((priority) => (
+        {PRIORITY_IDS.map((priority) => (
           <Pressable
             key={priority}
             onPress={() => setValues((current) => ({ ...current, priority }))}
@@ -336,7 +338,7 @@ export function OpportunityFormModal({
                 values.priority === priority ? 'text-white' : 'text-slate-600',
               ].join(' ')}
             >
-              {priorityLabels[priority]}
+              {getPriorityLabel(t, priority)}
             </Text>
           </Pressable>
         ))}

@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native'
 import { router } from 'expo-router'
 import { Bell, Plus } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
@@ -9,11 +10,13 @@ type RevenueHeaderProps = {
   userName: string
 }
 
-function resolveGreeting(): string {
+function resolveGreeting(
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
   const hour = new Date().getHours()
-  if (hour < 12) return 'Bom dia'
-  if (hour < 18) return 'Boa tarde'
-  return 'Boa noite'
+  if (hour < 12) return t('home.goodMorning')
+  if (hour < 18) return t('home.goodAfternoon')
+  return t('home.goodEvening')
 }
 
 function resolveInitials(userName: string): string {
@@ -28,7 +31,8 @@ function resolveInitials(userName: string): string {
 export function RevenueHeader({ userName }: RevenueHeaderProps) {
   const tc = useThemeClasses()
   const { isWebDesktop } = useResponsiveLayout()
-  const greeting = resolveGreeting()
+  const { t } = useTranslation()
+  const greeting = resolveGreeting(t)
   const initials = resolveInitials(userName)
 
   return (
@@ -49,7 +53,7 @@ export function RevenueHeader({ userName }: RevenueHeaderProps) {
           {greeting}, {userName}.
         </Text>
         <Text className={['mt-1 text-sm', tc.textSecondary].join(' ')}>
-          Aqui está o resumo do seu negócio e o que fazer agora.
+          {t('home.summary')}
         </Text>
       </View>
 
@@ -59,7 +63,7 @@ export function RevenueHeader({ userName }: RevenueHeaderProps) {
             'relative h-10 w-10 items-center justify-center rounded-xl border',
             tc.isDark ? 'border-white/10 bg-white/5' : 'border-premiumBorder bg-white',
           ].join(' ')}
-          accessibilityLabel="Notificações"
+          accessibilityLabel={t('common.notifications')}
         >
           <Bell size={18} color={tc.isDark ? '#94A3B8' : premiumColors.textSecondary} />
           <View className="absolute right-2 top-2 h-2 w-2 rounded-full bg-emerald" />
@@ -71,7 +75,7 @@ export function RevenueHeader({ userName }: RevenueHeaderProps) {
             className="flex-row items-center gap-2 rounded-xl bg-navy px-4 py-2.5 active:opacity-90"
           >
             <Plus size={16} color="#FFFFFF" strokeWidth={2.5} />
-            <Text className="text-sm font-semibold text-white">Nova campanha</Text>
+            <Text className="text-sm font-semibold text-white">{t('home.newCampaign')}</Text>
           </Pressable>
         ) : null}
 
@@ -79,10 +83,11 @@ export function RevenueHeader({ userName }: RevenueHeaderProps) {
           onPress={() => router.push('/(tabs)/profile')}
           className={[
             'h-10 w-10 items-center justify-center rounded-xl border',
-            tc.isDark ? 'border-gold/20 bg-gold/10' : 'border-gold/30 bg-gold/5',
+            tc.isDark ? 'border-white/10 bg-white/5' : 'border-premiumBorder bg-white',
           ].join(' ')}
+          accessibilityLabel={t('profile.openProfileA11y')}
         >
-          <Text className="text-xs font-bold text-gold">{initials}</Text>
+          <Text className={['text-xs font-bold', tc.textPrimary].join(' ')}>{initials}</Text>
         </Pressable>
       </View>
     </View>

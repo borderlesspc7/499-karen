@@ -1,6 +1,12 @@
 import { ActivityIndicator, Platform, View } from 'react-native'
 import { Redirect, Tabs } from 'expo-router'
-import { useAuth, useGamification, useSubscription, useTheme } from '@shared/contexts'
+import {
+  useAuth,
+  useGamification,
+  useSubscription,
+  useTheme,
+  useTranslation,
+} from '@shared/contexts'
 import { requiresEmailVerification } from '@shared/utils/auth-guards'
 import { OnboardingModal } from '@/components/OnboardingModal'
 import { GuidedFirstRun } from '@/components/guidance/GuidedFirstRun'
@@ -14,6 +20,7 @@ export default function TabLayout() {
   const { isHydrated, isOnboardingComplete } = useGamification()
   const { hasActiveSubscription, isSubscriptionLoading } = useSubscription()
   const { isHydrated: isThemeHydrated } = useTheme()
+  const { t } = useTranslation()
   const tc = useThemeClasses()
   const { isWebDesktop } = useResponsiveLayout()
   const hideMobileTabBar = Platform.OS === 'web' && isWebDesktop
@@ -59,31 +66,31 @@ export default function TabLayout() {
           <Tabs.Screen
             name="index"
             options={{
-              title: 'Meridian',
+              title: t('nav.meridian'),
             }}
           />
           <Tabs.Screen
             name="workforce"
             options={{
-              title: 'Motores Meridian',
+              title: t('nav.enginesMeridian'),
             }}
           />
           <Tabs.Screen
             name="integrations"
             options={{
-              title: 'Canais',
+              title: t('nav.channels'),
             }}
           />
           <Tabs.Screen
             name="campaign-magic"
             options={{
-              title: 'Campanhas',
+              title: t('nav.campaigns'),
             }}
           />
           <Tabs.Screen
             name="inbox"
             options={{
-              title: 'Inbox',
+              title: t('nav.inbox'),
             }}
           />
           <Tabs.Screen name="conversations" options={{ href: null }} />
@@ -93,14 +100,14 @@ export default function TabLayout() {
           <Tabs.Screen
             name="opportunities"
             options={{
-              title: 'Oportunidades',
+              title: t('nav.opportunities'),
             }}
           />
           <Tabs.Screen
             name="crm"
             options={{
               href: null,
-              title: 'CRM',
+              title: t('nav.crm'),
             }}
           />
           <Tabs.Screen name="automations" options={{ href: null }} />

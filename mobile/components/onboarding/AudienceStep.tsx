@@ -1,12 +1,20 @@
 import { Text, View } from 'react-native'
 import { Target } from 'lucide-react-native'
-import { TARGET_CLIENT_LABELS } from '@shared/utils/brand-identity'
+import { useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import type { TargetClientType } from '@shared/types/brand-identity'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { SummusModalBadge } from '@/components/ui/modal'
 import { OnboardingField } from './OnboardingField'
 
-const TARGET_OPTIONS = Object.entries(TARGET_CLIENT_LABELS) as Array<[TargetClientType, string]>
+const TARGET_OPTIONS: Array<{ type: TargetClientType; labelKey: TranslationKey }> = [
+  { type: 'mulheres-estetica', labelKey: 'onboarding.audEsthetics' },
+  { type: 'executivos', labelKey: 'onboarding.audExecutives' },
+  { type: 'noivas-eventos', labelKey: 'onboarding.audBrides' },
+  { type: 'premium-alto-ticket', labelKey: 'onboarding.audPremium' },
+  { type: 'publico-local', labelKey: 'onboarding.audLocal' },
+  { type: 'outro', labelKey: 'onboarding.audOther' },
+]
 
 type AudienceStepProps = {
   targetClientType: TargetClientType | null
@@ -23,24 +31,25 @@ export function AudienceStep({
   onChangeDescription,
   variant = 'onboarding',
 }: AudienceStepProps) {
+  const { t } = useTranslation()
   const isEmbedded = variant === 'embedded'
 
   return (
     <>
       {!isEmbedded ? (
         <View className="mb-8 items-center gap-3">
-          <SummusModalBadge label="Passo 2" icon={Target} tone="emerald" />
+          <SummusModalBadge label={t('onboarding.step2')} icon={Target} tone="emerald" />
           <Text className="text-center text-2xl font-bold leading-tight text-white">
-            Quem é o seu cliente ideal?
+            {t('onboarding.audienceTitle')}
           </Text>
           <Text className="max-w-sm text-center text-base leading-6 text-white/55">
-            A IA usará esse perfil para definir tom de voz, ofertas e canais nas suas campanhas.
+            {t('onboarding.audienceSubtitle')}
           </Text>
         </View>
       ) : null}
 
       <View className="gap-3">
-        {TARGET_OPTIONS.map(([type, label]) => {
+        {TARGET_OPTIONS.map(({ type, labelKey }) => {
           const isSelected = targetClientType === type
 
           return (
@@ -71,7 +80,7 @@ export function AudienceStep({
                       : 'text-white/80',
                 ].join(' ')}
               >
-                {label}
+                {t(labelKey)}
               </Text>
             </AnimatedPressable>
           )
@@ -81,10 +90,10 @@ export function AudienceStep({
       {targetClientType === 'outro' || targetClientDescription.length > 0 ? (
         <View className="mt-5">
           <OnboardingField
-            label="Detalhes do público (opcional)"
+            label={t('onboarding.detailsLabel')}
             value={targetClientDescription}
             onChangeText={onChangeDescription}
-            placeholder="Ex: Mulheres 30-50 anos, classe A/B, região da zona sul..."
+            placeholder={t('onboarding.detailsPh')}
             multiline
             variant={variant}
           />

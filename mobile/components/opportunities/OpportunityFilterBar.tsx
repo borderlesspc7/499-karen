@@ -1,18 +1,7 @@
 import { Pressable, ScrollView, Text, View } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import type { OpportunityQuickFilter } from '@/lib/crm-lead-insights'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
-
-type FilterOption = {
-  id: OpportunityQuickFilter
-  label: string
-}
-
-const FILTER_OPTIONS: FilterOption[] = [
-  { id: 'todos', label: 'Todos' },
-  { id: 'quentes', label: 'Quentes' },
-  { id: 'esquecidos', label: 'Esquecidos (IA)' },
-  { id: 'ganhos', label: 'Ganhos' },
-]
 
 type OpportunityFilterBarProps = {
   activeFilter: OpportunityQuickFilter
@@ -26,6 +15,14 @@ export function OpportunityFilterBar({
   counts,
 }: OpportunityFilterBarProps) {
   const tc = useThemeClasses()
+  const { t } = useTranslation()
+
+  const filterOptions: Array<{ id: OpportunityQuickFilter; label: string }> = [
+    { id: 'todos', label: t('common.all') },
+    { id: 'quentes', label: t('opportunities.filterHot') },
+    { id: 'esquecidos', label: t('opportunities.filterForgotten') },
+    { id: 'ganhos', label: t('opportunities.filterWon') },
+  ]
 
   return (
     <ScrollView
@@ -33,7 +30,7 @@ export function OpportunityFilterBar({
       showsHorizontalScrollIndicator={false}
       contentContainerClassName="gap-2"
     >
-      {FILTER_OPTIONS.map((option) => {
+      {filterOptions.map((option) => {
         const isActive = activeFilter === option.id
         const count = counts[option.id]
 

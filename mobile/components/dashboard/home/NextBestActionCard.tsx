@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import { Sparkles, Zap } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { GROWTH_ACTIONS } from '@shared/constants/growth-actions'
 import { premiumColors, premiumShadows } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -11,11 +12,12 @@ type NextBestActionCardProps = {
   onRequestApproval: () => void
 }
 
-function formatRevenue(amount: number): string {
-  return amount.toLocaleString('pt-BR')
+function formatRevenue(amount: number, locale: string): string {
+  return amount.toLocaleString(locale)
 }
 
 export function NextBestActionCard({ onRequestApproval }: NextBestActionCardProps) {
+  const { t, locale } = useTranslation()
   const tc = useThemeClasses()
 
   return (
@@ -35,21 +37,23 @@ export function NextBestActionCard({ onRequestApproval }: NextBestActionCardProp
           <Sparkles size={14} color={premiumColors.gold} strokeWidth={1.5} />
         </View>
         <Text className="text-xs font-bold uppercase tracking-wider text-gold">
-          Oportunidade para hoje
+          {t('home.opportunityForToday')}
         </Text>
       </View>
 
       <Text className={['mt-4 text-lg font-semibold', tc.textPrimary].join(' ')}>
-        Sua maior oportunidade hoje:
+        {t('home.yourBiggestOpportunity')}
       </Text>
 
       <Text className={['mt-2 text-xl font-bold leading-7', tc.textPrimary].join(' ')}>
-        {featuredAction.title}
+        {t(featuredAction.titleKey)}
       </Text>
 
       <View className="mt-4 self-start rounded-full border border-emerald/15 bg-emerald/10 px-3.5 py-2">
         <Text className="text-sm font-bold text-emerald">
-          Impacto estimado: +R$ {formatRevenue(featuredAction.revenueGain)}
+          {t('home.estimatedImpactMoney', {
+            amount: formatRevenue(featuredAction.revenueGain, locale),
+          })}
         </Text>
       </View>
 
@@ -58,7 +62,7 @@ export function NextBestActionCard({ onRequestApproval }: NextBestActionCardProp
         className="mt-6 flex-row items-center justify-center gap-2 rounded-card bg-forest py-4 active:opacity-90"
       >
         <Zap size={18} color="#FFFFFF" fill="#FFFFFF" strokeWidth={1.5} />
-        <Text className="text-base font-bold text-white">Executar Agora</Text>
+        <Text className="text-base font-bold text-white">{t('home.executeNow')}</Text>
       </Pressable>
     </View>
   )

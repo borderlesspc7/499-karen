@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Alert } from 'react-native'
 import type { Client, KanbanCardWithClient, KanbanColumn } from '@shared/types'
-import { useAuth, useGamification } from '@shared/contexts'
+import { useAuth, useGamification, useTranslation } from '@shared/contexts'
 import {
   buildGrowthFlowLeads,
   buildWonLeads,
@@ -24,6 +24,7 @@ import {
 export function useOpportunitiesScreen() {
   const { executeAction } = useGamification()
   const { currentUser } = useAuth()
+  const { t } = useTranslation()
 
   const [columns, setColumns] = useState<KanbanColumn[]>([])
   const [cards, setCards] = useState<KanbanCardWithClient[]>([])
@@ -62,14 +63,12 @@ export function useOpportunitiesScreen() {
       applySnapshot(await loadLinkedCrmSnapshot(currentUser.id))
     } catch (loadError) {
       const message =
-        loadError instanceof Error
-          ? loadError.message
-          : 'Não foi possível carregar as oportunidades.'
+        loadError instanceof Error ? loadError.message : t('opportunities.loadError')
       setError(message)
     } finally {
       setIsLoading(false)
     }
-  }, [applySnapshot, currentUser?.id])
+  }, [applySnapshot, currentUser?.id, t])
 
   useEffect(() => {
     void loadOpportunities()
@@ -166,11 +165,7 @@ export function useOpportunitiesScreen() {
       setIsFormVisible(false)
       setEditingCard(null)
     } catch (saveError) {
-      setError(
-        saveError instanceof Error
-          ? saveError.message
-          : 'Não foi possível salvar a oportunidade.',
-      )
+      setError(saveError instanceof Error ? saveError.message : t('opportunities.saveError'))
     } finally {
       setIsSaving(false)
     }
@@ -181,27 +176,31 @@ export function useOpportunitiesScreen() {
       return
     }
 
-    Alert.alert('Excluir oportunidade', `Remover "${lead.title}" do funil?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: () => {
-          void (async () => {
-            try {
-              applySnapshot(await deleteOpportunity(currentUser.id, lead.id))
-              setSelectedLead(null)
-            } catch (deleteError) {
-              setError(
-                deleteError instanceof Error
-                  ? deleteError.message
-                  : 'Não foi possível excluir a oportunidade.',
-              )
-            }
-          })()
+    Alert.alert(
+      t('opportunities.deleteTitle'),
+      t('opportunities.deleteMessage', { title: lead.title }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            void (async () => {
+              try {
+                applySnapshot(await deleteOpportunity(currentUser.id, lead.id))
+                setSelectedLead(null)
+              } catch (deleteError) {
+                setError(
+                  deleteError instanceof Error
+                    ? deleteError.message
+                    : t('opportunities.deleteError'),
+                )
+              }
+            })()
+          },
         },
-      },
-    ])
+      ],
+    )
   }
 
   return {

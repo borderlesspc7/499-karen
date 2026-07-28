@@ -1,5 +1,7 @@
 import { Text, View } from 'react-native'
 import Animated, { FadeInUp } from 'react-native-reanimated'
+import { useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import type { RevenueDailyMetrics } from '@shared/services/revenue-center'
 import { formatCurrencyBrlCompact } from '@shared/services/revenue-center'
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter'
@@ -16,25 +18,28 @@ type MetricItem = {
   suffix?: string
 }
 
-function buildMetricItems(metrics: RevenueDailyMetrics): MetricItem[] {
+function buildMetricItems(
+  metrics: RevenueDailyMetrics,
+  t: (key: TranslationKey) => string,
+): MetricItem[] {
   return [
     {
-      label: 'Receita gerada',
+      label: t('home.revenueGenerated'),
       value: metrics.revenueGenerated,
       format: (v) => formatCurrencyBrlCompact(Math.round(v)),
     },
     {
-      label: 'Leads',
+      label: t('home.leads'),
       value: metrics.leadsRecovered,
       format: (v) => `+${Math.round(v)}`,
     },
     {
-      label: 'Tempo economizado',
+      label: t('home.timeSaved'),
       value: metrics.hoursSaved,
       format: (v) => `${Math.round(v)}h`,
     },
     {
-      label: 'Horas IA',
+      label: t('home.aiHours'),
       value: metrics.hoursWorkedByAi,
       format: (v) => `${Math.round(v)}h`,
     },
@@ -42,12 +47,13 @@ function buildMetricItems(metrics: RevenueDailyMetrics): MetricItem[] {
 }
 
 export function RevenueMetricsStrip({ metrics }: RevenueMetricsStripProps) {
+  const { t } = useTranslation()
   const tc = useThemeClasses()
-  const items = buildMetricItems(metrics)
+  const items = buildMetricItems(metrics, t)
 
   return (
     <Animated.View entering={FadeInUp.delay(400).duration(500)} className="gap-3">
-      <Text className={tc.sectionLabel}>Hoje sua equipe de IA executou</Text>
+      <Text className={tc.sectionLabel}>{t('home.aiTeamExecuted')}</Text>
       <View
         className={['flex-row flex-wrap gap-3 p-5', tc.glassCard].join(' ')}
         style={tc.cardShadow}

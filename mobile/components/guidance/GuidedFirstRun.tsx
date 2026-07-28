@@ -12,17 +12,18 @@ import {
   X,
 } from 'lucide-react-native'
 import { getStorage } from '@shared/storage'
-import { useAuth } from '@shared/contexts'
+import { useAuth, useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 const TOUR_STORAGE_PREFIX = 'summus_guided_tour_v1:'
 
-type TourStep = {
+type TourStepDef = {
   id: string
-  title: string
-  body: string
-  ctaLabel: string
+  titleKey: TranslationKey
+  bodyKey: TranslationKey
+  ctaKey: TranslationKey
   href?:
     | '/(tabs)'
     | '/(tabs)/integrations'
@@ -33,50 +34,50 @@ type TourStep = {
   icon: typeof Sparkles
 }
 
-const TOUR_STEPS: TourStep[] = [
+const TOUR_STEPS: TourStepDef[] = [
   {
     id: 'welcome',
-    title: 'Bem-vindo ao Summus',
-    body: 'Eu sou a Meridian e vou ajudar você a transformar sua empresa em uma máquina de criação de conteúdo — sem precisar ser especialista em marketing.',
-    ctaLabel: 'Começar o tour',
+    titleKey: 'tour.welcomeTitle',
+    bodyKey: 'tour.welcomeBody',
+    ctaKey: 'tour.welcomeCta',
     icon: Sparkles,
   },
   {
     id: 'company',
-    title: 'Sua empresa já está no sistema',
-    body: 'Usamos o nome, serviços e público que você informou para a Meridian criar campanhas e respostas alinhadas ao seu negócio. Dá para ajustar depois em Configurações.',
-    ctaLabel: 'Continuar',
+    titleKey: 'tour.companyTitle',
+    bodyKey: 'tour.companyBody',
+    ctaKey: 'common.continue',
     icon: Building2,
   },
   {
     id: 'channels',
-    title: '1. Conecte seus canais',
-    body: 'Instagram, Facebook ou LinkedIn. É por aqui que conversas e oportunidades entram no sistema.',
-    ctaLabel: 'Ver canais',
+    titleKey: 'tour.channelsTitle',
+    bodyKey: 'tour.channelsBody',
+    ctaKey: 'tour.channelsCta',
     href: '/(tabs)/integrations',
     icon: Radio,
   },
   {
     id: 'campaigns',
-    title: '2. Crie uma campanha',
-    body: 'A Meridian monta textos e ideias para você. Você só revisa e aprova o que faz sentido.',
-    ctaLabel: 'Abrir campanhas',
+    titleKey: 'tour.campaignsTitle',
+    bodyKey: 'tour.campaignsBody',
+    ctaKey: 'tour.campaignsCta',
     href: '/(tabs)/campaign-magic',
     icon: Megaphone,
   },
   {
     id: 'opportunities',
-    title: '3. Acompanhe oportunidades',
-    body: 'Cada lead ou cliente em negociação aparece aqui, em etapas claras — como um quadro de tarefas.',
-    ctaLabel: 'Ver oportunidades',
+    titleKey: 'tour.oppsTitle',
+    bodyKey: 'tour.oppsBody',
+    ctaKey: 'home.viewOpportunities',
     href: '/(tabs)/opportunities',
     icon: Target,
   },
   {
     id: 'inbox',
-    title: '4. Responda no Inbox',
-    body: 'Todas as conversas em um só lugar. A Meridian pode sugerir respostas; você decide o que enviar.',
-    ctaLabel: 'Ir ao Inbox',
+    titleKey: 'tour.inboxTitle',
+    bodyKey: 'tour.inboxBody',
+    ctaKey: 'tour.inboxCta',
     href: '/(tabs)/inbox',
     icon: MessageSquare,
   },
@@ -88,6 +89,7 @@ type GuidedFirstRunProps = {
 
 export function GuidedFirstRun({ enabled }: GuidedFirstRunProps) {
   const { currentUser } = useAuth()
+  const { t } = useTranslation()
   const tc = useThemeClasses()
   const [isVisible, setIsVisible] = useState(false)
   const [stepIndex, setStepIndex] = useState(0)
@@ -167,16 +169,20 @@ export function GuidedFirstRun({ enabled }: GuidedFirstRunProps) {
             <View className="h-11 w-11 items-center justify-center rounded-2xl bg-gold/15">
               <Icon size={20} color={premiumColors.gold} />
             </View>
-            <Pressable onPress={dismiss} hitSlop={12} accessibilityLabel="Fechar tour">
+            <Pressable onPress={dismiss} hitSlop={12} accessibilityLabel={t('tour.closeA11y')}>
               <X size={18} color={tc.isDark ? '#94a3b8' : '#64748b'} />
             </Pressable>
           </View>
 
           <Text className={['text-xs font-bold uppercase tracking-wider text-gold'].join(' ')}>
-            Passo {stepIndex + 1} de {TOUR_STEPS.length}
+            {t('tour.stepOf', { current: stepIndex + 1, total: TOUR_STEPS.length })}
           </Text>
-          <Text className={['mt-2 text-xl font-bold', tc.textPrimary].join(' ')}>{step.title}</Text>
-          <Text className={['mt-2 text-sm leading-6', tc.textSecondary].join(' ')}>{step.body}</Text>
+          <Text className={['mt-2 text-xl font-bold', tc.textPrimary].join(' ')}>
+            {t(step.titleKey)}
+          </Text>
+          <Text className={['mt-2 text-sm leading-6', tc.textSecondary].join(' ')}>
+            {t(step.bodyKey)}
+          </Text>
 
           <View className="mt-5 flex-row gap-1.5">
             {TOUR_STEPS.map((item, index) => (
@@ -195,7 +201,7 @@ export function GuidedFirstRun({ enabled }: GuidedFirstRunProps) {
             className="mt-5 flex-row items-center justify-center gap-2 rounded-2xl bg-gold py-3.5 active:opacity-90"
           >
             <Text className="text-sm font-bold text-navy">
-              {isLast ? 'Concluir e explorar' : step.ctaLabel}
+              {isLast ? t('tour.finish') : t(step.ctaKey)}
             </Text>
             <ArrowRight size={16} color="#04122C" />
           </Pressable>
@@ -203,7 +209,7 @@ export function GuidedFirstRun({ enabled }: GuidedFirstRunProps) {
           {!isLast ? (
             <Pressable onPress={dismiss} className="mt-3 py-2">
               <Text className={['text-center text-sm', tc.textMuted].join(' ')}>
-                Pular introdução
+                {t('tour.skip')}
               </Text>
             </Pressable>
           ) : null}

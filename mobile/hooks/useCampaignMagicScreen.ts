@@ -11,7 +11,8 @@ import {
 } from '@/components/campaign-magic/campaign-wizard-types'
 import { CAMPAIGN_LAUNCHED_PARAM } from '@/constants/campaign-journey'
 import { getCampaignRepository } from '@/lib/firestore-campaign-repository'
-import { useAuth, useGamification } from '@shared/contexts'
+import { useAuth, useGamification, useTranslation } from '@shared/contexts'
+import type { TranslationKey, TranslationParams } from '@shared/i18n'
 import { AiOrchestrationError } from '@shared/services/ai-orchestration-service'
 import type { SavedCampaign } from '@shared/types'
 import {
@@ -41,18 +42,24 @@ function wizardDraftKey(userId: string) {
   return `summus_campaign_wizard_draft_v1:${userId}`
 }
 
-function resolveCampaignTitle(data: CampaignWizardData): string {
+function resolveCampaignTitle(
+  data: CampaignWizardData,
+  t: (key: TranslationKey, params?: TranslationParams) => string,
+): string {
   if (data.offer.trim()) {
     return data.offer.trim()
   }
 
-  const objectiveLabel = CAMPAIGN_OBJECTIVES.find((item) => item.id === data.objective)?.label
-  return objectiveLabel ? `Campanha: ${objectiveLabel}` : 'Nova campanha'
+  const objectiveKey = CAMPAIGN_OBJECTIVES.find((item) => item.id === data.objective)?.labelKey
+  return objectiveKey
+    ? t('campaigns.campaignLabel', { label: t(objectiveKey) })
+    : t('campaigns.newCampaign')
 }
 
 export function useCampaignMagicScreen() {
   const { currentUser } = useAuth()
   const { brandIdentity, brandAiContext, userProfile, executeAction } = useGamification()
+  const { t } = useTranslation()
 
   const [phase, setPhase] = useState<CampaignScreenPhase>('hub')
   const [wizardStep, setWizardStep] = useState<CampaignWizardStep>(0)
@@ -98,13 +105,12 @@ export function useCampaignMagicScreen() {
       const campaigns = await getCampaignRepository().listActiveByUser(currentUser.id)
       setActiveCampaigns(campaigns)
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Não foi possível carregar as campanhas.'
+      const message = error instanceof Error ? error.message : t('campaigns.loadFailed')
       setCampaignsError(message)
     } finally {
       setIsLoadingCampaigns(false)
     }
-  }, [currentUser?.id])
+  }, [currentUser?.id, t])
 
   useEffect(() => {
     void loadActiveCampaigns()
@@ -206,7 +212,7 @@ export function useCampaignMagicScreen() {
   }, [])
 
   const handleGenerate = useCallback(() => {
-    const builtPrompt = buildCampaignPrompt(wizardData)
+    const builtPrompt = buildCampaignPrompt(wizardData, t)
     setPrompt(builtPrompt)
     setPhase('loading')
     void clearWizardDraft()
@@ -226,23 +232,18 @@ export function useCampaignMagicScreen() {
       .catch((error) => {
         setPhase('wizard')
         const message =
-          error instanceof AiOrchestrationError
-            ? error.message
-            : 'Não foi possível gerar a campanha com IA.'
-        Alert.alert('IA indisponível', message)
+          error instanceof AiOrchestrationError ? error.message : t('campaigns.generateFailed')
+        Alert.alert(t('campaigns.aiUnavailable'), message)
       })
-  }, [wizardData, brandIdentity, brandAiContext, userProfile, clearWizardDraft])
+  }, [wizardData, brandIdentity, brandAiContext, userProfile, clearWizardDraft, t])
 
   const handleEdit = useCallback(() => {
-    Alert.alert(
-      'Editar Campanha',
-      'Em breve você poderá ajustar cada peça da campanha individualmente.',
-    )
-  }, [])
+    Alert.alert(t('campaigns.editTitle'), t('campaigns.editBody'))
+  }, [t])
 
   const handlePublish = useCallback(async () => {
     if (!currentUser?.id) {
-      Alert.alert('Sessão necessária', 'Faça login para publicar e salvar a campanha.')
+      Alert.alert(t('campaigns.sessionRequired'), t('campaigns.sessionRequiredBody'))
       return
     }
 
@@ -255,7 +256,7 @@ export function useCampaignMagicScreen() {
     try {
       await getCampaignRepository().createActive({
         userId: currentUser.id,
-        title: resolveCampaignTitle(wizardData),
+        title: resolveCampaignTitle(wizardData, t),
         objective: (wizardData.objective ?? 'promote') as CampaignObjective,
         audience: wizardData.audience,
         offer: wizardData.offer,
@@ -270,9 +271,8 @@ export function useCampaignMagicScreen() {
       await clearWizardDraft()
       setIsSuccessVisible(true)
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Não foi possível publicar a campanha.'
-      Alert.alert('Falha ao publicar', message)
+      const message = error instanceof Error ? error.message : t('campaigns.publishFailed')
+      Alert.alert(t('campaigns.publishFailedTitle'), message)
     } finally {
       setIsPublishing(false)
     }
@@ -287,6 +287,7 @@ export function useCampaignMagicScreen() {
     executeAction,
     loadActiveCampaigns,
     clearWizardDraft,
+    t,
   ])
 
   const navigateToHomeAfterLaunch = useCallback(() => {

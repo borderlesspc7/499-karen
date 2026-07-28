@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { Check } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { CampaignWizardStep } from './CampaignWizardStep'
 import { CAMPAIGN_OBJECTIVES, type CampaignObjective } from './campaign-wizard-types'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -14,20 +15,24 @@ type ObjectiveStepProps = {
 
 export function ObjectiveStep({ selected, onSelect, onNext }: ObjectiveStepProps) {
   const tc = useThemeClasses()
+  const { t } = useTranslation()
 
   return (
     <CampaignWizardStep
       stepIndex={0}
       totalSteps={4}
-      title="Qual é o objetivo da campanha?"
-      subtitle="A IA adaptará todo o conteúdo ao seu objetivo."
+      title={t('campaigns.objectiveTitle')}
+      subtitle={t('campaigns.objectiveSubtitle')}
     >
       <View className="gap-3">
         {CAMPAIGN_OBJECTIVES.map((option, index) => {
           const isSelected = selected === option.id
 
           return (
-            <Animated.View key={option.id} entering={platformEntering(FadeInDown.delay(index * 50).duration(350))}>
+            <Animated.View
+              key={option.id}
+              entering={platformEntering(FadeInDown.delay(index * 50).duration(350))}
+            >
               <Pressable
                 onPress={() => onSelect(option.id)}
                 className={[
@@ -49,10 +54,10 @@ export function ObjectiveStep({ selected, onSelect, onNext }: ObjectiveStepProps
                 </View>
                 <View className="flex-1">
                   <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
-                    {option.label}
+                    {t(option.labelKey)}
                   </Text>
                   <Text className={['mt-0.5 text-xs', tc.textMuted].join(' ')}>
-                    {option.description}
+                    {t(option.descriptionKey)}
                   </Text>
                 </View>
               </Pressable>
@@ -69,7 +74,9 @@ export function ObjectiveStep({ selected, onSelect, onNext }: ObjectiveStepProps
           selected ? 'bg-gold active:opacity-90' : 'bg-slate-200 opacity-50',
         ].join(' ')}
       >
-        <Text className="text-center text-base font-bold text-deepBlue">Continuar</Text>
+        <Text className="text-center text-base font-bold text-deepBlue">
+          {t('common.continue')}
+        </Text>
       </Pressable>
     </CampaignWizardStep>
   )

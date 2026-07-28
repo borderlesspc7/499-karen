@@ -1,3 +1,7 @@
+import type { AppLocale } from '../types/locale'
+import { DEFAULT_LOCALE } from '../types/locale'
+import { translate, type TranslationKey } from '../i18n'
+
 export class AuthError extends Error {
   code: string
 
@@ -33,65 +37,69 @@ function readErrorMessage(error: object): string {
   return ''
 }
 
-export function getAuthErrorMessage(error: unknown): string {
-  if (isAuthError(error)) {
-    return error.message
-  }
-
-  if (error && typeof error === 'object' && 'code' in error) {
-    const code = String((error as { code: string }).code)
-    return mapFirebaseAuthCode(code, readErrorMessage(error))
-  }
-
-  if (error instanceof Error && error.message) {
-    return error.message
-  }
-
-  return 'Não foi possível concluir a autenticação. Tente novamente.'
+const FIREBASE_AUTH_KEYS: Record<string, TranslationKey> = {
+  'auth/invalid-email': 'authErrors.invalidEmail',
+  'auth/missing-password': 'authErrors.missingPassword',
+  'auth/user-disabled': 'authErrors.userDisabled',
+  'auth/user-not-found': 'authErrors.userNotFound',
+  'auth/wrong-password': 'authErrors.wrongPassword',
+  'auth/invalid-credential': 'authErrors.invalidCredential',
+  'auth/email-already-in-use': 'authErrors.emailInUse',
+  'auth/weak-password': 'authErrors.weakPassword',
+  'auth/too-many-requests': 'authErrors.tooManyRequests',
+  'auth/network-request-failed': 'authErrors.networkFailed',
+  'auth/operation-not-allowed': 'authErrors.operationNotAllowed',
+  'auth/admin-restricted-operation': 'authErrors.adminRestricted',
+  'auth/configuration-not-found': 'authErrors.configurationNotFound',
+  'auth/invalid-api-key': 'authErrors.invalidApiKey',
+  'auth/app-not-authorized': 'authErrors.appNotAuthorized',
+  'auth/popup-closed-by-user': 'authErrors.popupClosed',
+  'auth/cancelled-popup-request': 'authErrors.popupClosed',
+  'auth/account-exists-with-different-credential': 'authErrors.accountExistsDifferent',
+  'auth/provider-not-configured': 'authErrors.providerNotConfigured',
 }
 
-const FIREBASE_AUTH_MESSAGES: Record<string, string> = {
-  'auth/invalid-email': 'Informe um e-mail válido.',
-  'auth/missing-password': 'Informe uma senha.',
-  'auth/user-disabled': 'Esta conta foi desativada.',
-  'auth/user-not-found': 'Não encontramos uma conta com este e-mail.',
-  'auth/wrong-password': 'Credenciais inválidas. Revise e-mail e senha.',
-  'auth/invalid-credential': 'Credenciais inválidas. Revise e-mail e senha.',
-  'auth/email-already-in-use': 'Este e-mail já está cadastrado.',
-  'auth/weak-password':
-    'A senha deve ser forte: mínimo 8 caracteres, com maiúscula, minúscula, número e caractere especial.',
-  'auth/too-many-requests': 'Muitas tentativas. Tente novamente mais tarde.',
-  'auth/network-request-failed': 'Sem conexão. Verifique sua internet e tente novamente.',
-  'auth/operation-not-allowed':
-    'Este método de login ainda não está ativo no Firebase. Ative em Authentication → Sign-in method.',
-  'auth/admin-restricted-operation':
-    'Cadastro por e-mail/senha não está ativo no Firebase. Ative em Authentication → Sign-in method → E-mail/senha.',
-  'auth/configuration-not-found':
-    'Authentication não está configurado no projeto Firebase. Abra o console → Authentication → "Começar", ative E-mail/senha e habilite a API Identity Toolkit no Google Cloud.',
-  'auth/invalid-api-key': 'Chave da API Firebase inválida. Verifique a configuração do projeto.',
-  'auth/app-not-authorized':
-    'Este app não está autorizado no Firebase. Adicione o domínio/bundle no console do Firebase.',
-  'auth/popup-closed-by-user': 'Login cancelado. Tente novamente quando quiser.',
-  'auth/cancelled-popup-request': 'Login cancelado. Tente novamente quando quiser.',
-  'auth/account-exists-with-different-credential':
-    'Já existe uma conta com este e-mail usando outro método de login.',
-  'auth/provider-not-configured':
-    'Este provedor ainda não foi configurado. Ative no Firebase Console e adicione as chaves no app.',
-}
-
-function mapFirebaseAuthCode(code: string, fallbackMessage: string): string {
-  if (FIREBASE_AUTH_MESSAGES[code]) {
-    return FIREBASE_AUTH_MESSAGES[code]
+function mapFirebaseAuthCode(
+  code: string,
+  fallbackMessage: string,
+  locale: AppLocale,
+): string {
+  const key = FIREBASE_AUTH_KEYS[code]
+  if (key) {
+    return translate(locale, key)
   }
 
   if (fallbackMessage && !fallbackMessage.startsWith('Firebase:')) {
     return fallbackMessage
   }
 
-  return `Erro de autenticação (${code}). Verifique o Firebase Console.`
+  return translate(locale, 'authErrors.unknownCode', { code })
 }
 
-export function mapFirebaseAuthError(error: unknown): AuthError {
+export function getAuthErrorMessage(
+  error: unknown,
+  locale: AppLocale = DEFAULT_LOCALE,
+): string {
+  if (isAuthError(error)) {
+    return error.message
+  }
+
+  if (error && typeof error === 'object' && 'code' in error) {
+    const code = String((error as { code: string }).code)
+    return mapFirebaseAuthCode(code, readErrorMessage(error), locale)
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+
+  return translate(locale, 'authErrors.fallback')
+}
+
+export function mapFirebaseAuthError(
+  error: unknown,
+  locale: AppLocale = DEFAULT_LOCALE,
+): AuthError {
   if (error && typeof error === 'object' && 'code' in error) {
     const code = String((error as { code: string }).code)
     const fallbackMessage = readErrorMessage(error)
@@ -100,12 +108,12 @@ export function mapFirebaseAuthError(error: unknown): AuthError {
       console.warn('[Firebase Auth]', code, fallbackMessage)
     }
 
-    return new AuthError(code, mapFirebaseAuthCode(code, fallbackMessage))
+    return new AuthError(code, mapFirebaseAuthCode(code, fallbackMessage, locale))
   }
 
   if (__DEV__ && error) {
     console.warn('[Firebase Auth] unknown error', error)
   }
 
-  return new AuthError('auth/unknown', 'Não foi possível concluir a autenticação. Tente novamente.')
+  return new AuthError('auth/unknown', translate(locale, 'authErrors.fallback'))
 }

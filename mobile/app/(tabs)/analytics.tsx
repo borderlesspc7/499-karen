@@ -1,10 +1,12 @@
+import { useTranslation } from '@shared/contexts'
 import { SummusPlaceholderScreen } from '@/components/layout/SummusPlaceholderScreen'
 
 export default function AnalyticsScreen() {
+  const { t } = useTranslation()
   return (
     <SummusPlaceholderScreen
-      title="Analytics"
-      description="Métricas de performance, progresso gamificado e insights acionáveis do seu negócio."
+      title={t('placeholders.analyticsTitle')}
+      description={t('placeholders.analyticsDesc')}
     />
   )
 }

@@ -1,5 +1,6 @@
 import { EyeOff, Sparkles } from 'lucide-react-native'
 import { Text, View } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import {
   SummusModal,
@@ -15,6 +16,8 @@ type AskAiModalProps = {
 }
 
 export function AskAiModal({ visible, onClose, onAccept }: AskAiModalProps) {
+  const { t } = useTranslation()
+
   return (
     <SummusModal visible={visible} onClose={onClose}>
       <SummusModalCard className="p-6">
@@ -26,18 +29,14 @@ export function AskAiModal({ visible, onClose, onAccept }: AskAiModalProps) {
         </View>
 
         <View className="mt-4">
-          <SummusModalBadge label="Meridian" icon={Sparkles} />
+          <SummusModalBadge label={t('nav.meridian')} icon={Sparkles} />
         </View>
 
         <Text className="mt-2 text-xs font-semibold uppercase tracking-wider text-[#F9A8D4]">
-          Interrupção da Meridian
+          {t('home.meridianInterrupt')}
         </Text>
 
-        <Text className="mt-4 text-base leading-7 text-white/90">
-          Detectei algo que quase passou despercebido: a conversão do site caiu 12% esta semana, mas
-          a premissa de que o tráfego é o problema está frágil. O contexto aponta para a headline.
-          Quer que a Meridian reescreva agora com base nisso?
-        </Text>
+        <Text className="mt-4 text-base leading-7 text-white/90">{t('home.interruptBody')}</Text>
 
         <AnimatedPressable
           onPress={onAccept}
@@ -50,9 +49,7 @@ export function AskAiModal({ visible, onClose, onAccept }: AskAiModalProps) {
             elevation: 6,
           }}
         >
-          <Text className="text-center text-sm font-bold text-white">
-            Sim — integrar e decidir
-          </Text>
+          <Text className="text-center text-sm font-bold text-white">{t('home.yesIntegrate')}</Text>
         </AnimatedPressable>
 
         <AnimatedPressable
@@ -61,7 +58,7 @@ export function AskAiModal({ visible, onClose, onAccept }: AskAiModalProps) {
           className="mt-3 rounded-2xl border border-white/20 bg-white/5 py-4"
         >
           <Text className="text-center text-sm font-semibold text-white/75">
-            Manter observação
+            {t('home.keepObserving')}
           </Text>
         </AnimatedPressable>
       </SummusModalCard>

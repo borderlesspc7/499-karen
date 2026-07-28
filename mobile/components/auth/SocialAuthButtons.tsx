@@ -3,7 +3,8 @@ import { ActivityIndicator, Platform, Pressable, Text, View } from 'react-native
 import * as AuthSession from 'expo-auth-session'
 import * as WebBrowser from 'expo-web-browser'
 import Constants from 'expo-constants'
-import { useAuth } from '@shared/contexts'
+import { useAuth, useTranslation } from '@shared/contexts'
+import { translate } from '@shared/i18n'
 import { AuthError, getAuthErrorMessage } from '@shared/services'
 import type { SocialAuthProvider } from '@shared/types/auth'
 import {
@@ -69,6 +70,7 @@ function GoogleNativeLoginButton({
   setActiveProvider,
 }: GoogleNativeLoginProps) {
   const { signInWithSocial } = useAuth()
+  const { locale } = useTranslation()
   const [, , googlePromptAsync] = useGoogleAuthRequest()
   const isLoading = activeProvider === 'google'
 
@@ -82,7 +84,7 @@ function GoogleNativeLoginButton({
         if (result.type === 'dismiss' || result.type === 'cancel') {
           return
         }
-        throw new AuthError('auth/invalid-credential', 'Não foi possível entrar com Google.')
+        throw new AuthError('auth/invalid-credential', translate(locale, 'system.googleSignInFailed'))
       }
 
       const idToken =
@@ -92,7 +94,7 @@ function GoogleNativeLoginButton({
       if (!idToken) {
         throw new AuthError(
           'auth/invalid-credential',
-          'Google não retornou um token válido. Verifique o Client ID no Firebase/Google Cloud.',
+          translate(locale, 'system.googleTokenMissing'),
         )
       }
 
@@ -100,11 +102,11 @@ function GoogleNativeLoginButton({
         await buildGoogleCredentialFromIdToken(idToken, result.authentication?.accessToken),
       )
     } catch (error) {
-      onError(getAuthErrorMessage(error))
+      onError(getAuthErrorMessage(error, locale))
     } finally {
       setActiveProvider(null)
     }
-  }, [googlePromptAsync, onError, setActiveProvider, signInWithSocial])
+  }, [googlePromptAsync, locale, onError, setActiveProvider, signInWithSocial])
 
   return (
     <Pressable
@@ -123,6 +125,7 @@ function GoogleNativeLoginButton({
 
 export function SocialAuthButtons({ onError, disabled = false }: SocialAuthButtonsProps) {
   const { signInWithSocial, signInWithSocialPopup } = useAuth()
+  const { t, locale } = useTranslation()
   const [activeProvider, setActiveProvider] = useState<SocialAuthProvider | null>(null)
   const googleNativeReady = canUseGoogleNativeHook()
 
@@ -179,7 +182,10 @@ export function SocialAuthButtons({ onError, disabled = false }: SocialAuthButto
           const hash = result.url.split('#')[1] ?? ''
           const accessToken = new URLSearchParams(hash).get('access_token')
           if (!accessToken) {
-            throw new AuthError('auth/invalid-credential', 'Facebook não retornou um token válido.')
+            throw new AuthError(
+              'auth/invalid-credential',
+              translate(locale, 'system.facebookTokenMissing'),
+            )
           }
 
           await signInWithSocial(await buildFacebookCredential(accessToken))
@@ -224,19 +230,19 @@ export function SocialAuthButtons({ onError, disabled = false }: SocialAuthButto
           if (!idToken) {
             throw new AuthError(
               'auth/invalid-credential',
-              'Microsoft não retornou um token válido.',
+              translate(locale, 'system.microsoftTokenMissing'),
             )
           }
 
           await signInWithSocial(await buildMicrosoftCredential(idToken))
         }
       } catch (error) {
-        onError(getAuthErrorMessage(error))
+        onError(getAuthErrorMessage(error, locale))
       } finally {
         setActiveProvider(null)
       }
     },
-    [onError, signInWithSocial, signInWithSocialPopup],
+    [locale, onError, signInWithSocial, signInWithSocialPopup],
   )
 
   return (
@@ -244,7 +250,7 @@ export function SocialAuthButtons({ onError, disabled = false }: SocialAuthButto
       <View className="flex-row items-center gap-3">
         <View className="h-px flex-1 bg-slate-200" />
         <Text className="text-xs font-medium uppercase tracking-wider text-slate-400">
-          Ou continue com
+          {t('auth.continueWith')}
         </Text>
         <View className="h-px flex-1 bg-slate-200" />
       </View>

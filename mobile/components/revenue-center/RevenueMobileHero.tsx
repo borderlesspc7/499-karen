@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
+import { useTranslation } from '@shared/contexts'
 import { formatCurrencyBrlCompact } from '@shared/services/revenue-center'
 import { MiniSparkline } from '@/components/ui/MiniSparkline'
 import { premiumColors } from '@/constants/premium-theme'
@@ -9,6 +10,7 @@ type RevenueMobileHeroProps = {
 }
 
 export function RevenueMobileHero({ monthlyRevenue }: RevenueMobileHeroProps) {
+  const { t } = useTranslation()
   const sparkline = [80, 92, 88, 105, 110, 118, 125, 128]
 
   return (
@@ -24,7 +26,7 @@ export function RevenueMobileHero({ monthlyRevenue }: RevenueMobileHeroProps) {
       }}
     >
       <Text className="text-xs font-medium uppercase tracking-wider text-white/50">
-        Receita gerada este mês
+        {t('home.revenueThisMonth')}
       </Text>
       <Text className="mt-2 text-3xl font-bold tabular-nums text-gold">
         {formatCurrencyBrlCompact(monthlyRevenue)}

@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native'
 import { router } from 'expo-router'
 import { CheckCircle2, Circle, ListChecks } from 'lucide-react-native'
 import { getStorage } from '@shared/storage'
-import { useAuth, useGamification } from '@shared/contexts'
+import { useAuth, useGamification, useTranslation } from '@shared/contexts'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { useChannelConnections } from '@/hooks/useChannelConnections'
@@ -15,13 +15,19 @@ type ChecklistItem = {
   label: string
   hint: string
   done: boolean
-  href: '/(tabs)/integrations' | '/(tabs)/campaign-magic' | '/(tabs)/opportunities' | '/(tabs)/inbox' | '/(tabs)/settings'
+  href:
+    | '/(tabs)/integrations'
+    | '/(tabs)/campaign-magic'
+    | '/(tabs)/opportunities'
+    | '/(tabs)/inbox'
+    | '/(tabs)/settings'
 }
 
 export function GettingStartedChecklist() {
   const { currentUser } = useAuth()
   const { isOnboardingComplete, brandIdentity } = useGamification()
   const { connections, isLoading: isChannelsLoading } = useChannelConnections()
+  const { t } = useTranslation()
   const tc = useThemeClasses()
   const [isDismissed, setIsDismissed] = useState(true)
 
@@ -59,36 +65,36 @@ export function GettingStartedChecklist() {
     () => [
       {
         id: 'brand',
-        label: 'Contar quem é a sua empresa',
+        label: t('checklist.brandLabel'),
         hint: brandIdentity?.companyName
-          ? `Marca salva: ${brandIdentity.companyName}`
-          : 'Complete nome, serviços e público da sua empresa',
+          ? t('checklist.brandHintDone', { name: brandIdentity.companyName })
+          : t('checklist.brandHintTodo'),
         done: isOnboardingComplete && Boolean(brandIdentity?.companyName?.trim()),
         href: '/(tabs)/settings',
       },
       {
         id: 'channel',
-        label: 'Conectar ao menos um canal',
-        hint: 'Instagram, Facebook ou LinkedIn',
+        label: t('checklist.channelLabel'),
+        hint: t('checklist.channelHint'),
         done: hasConnectedChannel,
         href: '/(tabs)/integrations',
       },
       {
         id: 'campaign',
-        label: 'Gerar a primeira campanha com IA',
-        hint: 'A IA escreve; você só aprova',
+        label: t('checklist.campaignLabel'),
+        hint: t('checklist.campaignHint'),
         done: false,
         href: '/(tabs)/campaign-magic',
       },
       {
         id: 'pipeline',
-        label: 'Olhar suas oportunidades',
-        hint: 'Veja quem está perto de fechar negócio',
+        label: t('checklist.pipelineLabel'),
+        hint: t('checklist.pipelineHint'),
         done: false,
         href: '/(tabs)/opportunities',
       },
     ],
-    [brandIdentity?.companyName, hasConnectedChannel, isOnboardingComplete],
+    [brandIdentity?.companyName, hasConnectedChannel, isOnboardingComplete, t],
   )
 
   const completedCount = items.filter((item) => item.done).length
@@ -117,10 +123,10 @@ export function GettingStartedChecklist() {
         </View>
         <View className="flex-1">
           <Text className={['text-base font-bold', tc.textPrimary].join(' ')}>
-            Seus primeiros passos
+            {t('checklist.title')}
           </Text>
           <Text className={['text-sm', tc.textSecondary].join(' ')}>
-            {completedCount} de {items.length} concluídos — siga na ordem que preferir
+            {t('checklist.progress', { done: completedCount, total: items.length })}
           </Text>
         </View>
       </View>
@@ -157,7 +163,7 @@ export function GettingStartedChecklist() {
 
       <Pressable onPress={handleDismiss} className="mt-4 py-2">
         <Text className={['text-center text-xs font-medium', tc.textMuted].join(' ')}>
-          Ocultar esta lista
+          {t('checklist.dismiss')}
         </Text>
       </Pressable>
     </View>

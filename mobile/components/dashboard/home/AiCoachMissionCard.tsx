@@ -1,5 +1,6 @@
 import { Alert, Pressable, Text, View } from 'react-native'
 import { Bot, Sparkles, Target, Zap } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import type { MissionImpactCategory } from '@shared/types/gamification'
 
 type AiCoachMissionCardProps = {
@@ -17,6 +18,8 @@ const MISSION_IMPACT_CATEGORY: MissionImpactCategory = 'posicionamento'
 const MISSION_IMPACT_VALUE = 8
 
 export function AiCoachMissionCard({ onResolveMission }: AiCoachMissionCardProps) {
+  const { t } = useTranslation()
+
   function handleResolveMission() {
     onResolveMission(
       MISSION_XP_REWARD,
@@ -25,10 +28,7 @@ export function AiCoachMissionCard({ onResolveMission }: AiCoachMissionCardProps
       MISSION_IMPACT_VALUE,
     )
 
-    Alert.alert(
-      'Missão em execução!',
-      'A IA está a adicionar o CTA na página principal. Receberá a proposta em instantes.',
-    )
+    Alert.alert(t('home.missionRunning'), t('home.missionRunningBody'))
   }
 
   return (
@@ -51,22 +51,19 @@ export function AiCoachMissionCard({ onResolveMission }: AiCoachMissionCardProps
         </View>
         <View className="flex-1">
           <Text className="text-xs font-bold uppercase tracking-wider text-electricBlue">
-            Prioridade máxima
+            {t('home.maxPriority')}
           </Text>
-          <Text className="text-lg font-bold text-white">AI Coach — O que fazer agora:</Text>
+          <Text className="text-lg font-bold text-white">{t('home.coachWhatNow')}</Text>
         </View>
         <Sparkles size={18} color="#F59E0B" />
       </View>
 
-      <Text className="mt-4 text-base leading-6 text-white/85">
-        Notei que seu site precisa de mais conversão. Missão: Adicionar um CTA na página
-        principal.
-      </Text>
+      <Text className="mt-4 text-base leading-6 text-white/85">{t('home.missionCtaSite')}</Text>
 
       <View className="mt-4 flex-row items-center gap-2 self-start rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5">
         <Target size={14} color="#F59E0B" />
         <Text className="text-xs font-semibold text-gold">
-          Impacto estimado: +{MISSION_IMPACT_VALUE} pontos em Posicionamento
+          {t('home.impactPositioning', { points: String(MISSION_IMPACT_VALUE) })}
         </Text>
       </View>
 
@@ -82,7 +79,7 @@ export function AiCoachMissionCard({ onResolveMission }: AiCoachMissionCardProps
         }}
       >
         <Zap size={18} color="#FFFFFF" fill="#FFFFFF" />
-        <Text className="text-base font-bold text-white">Resolver Agora</Text>
+        <Text className="text-base font-bold text-white">{t('home.resolveNow')}</Text>
       </Pressable>
     </View>
   )

@@ -11,6 +11,8 @@ import {
 import Animated, { FadeInDown, SlideInRight, SlideInUp } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Globe, Instagram, Mail, Megaphone, Sparkles } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import { ThemedScreen } from '@/components/layout/AppScreen'
 import { DesktopContent } from '@/components/layout/DesktopContent'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -38,10 +40,10 @@ type PreviewCard = CampaignPreviewCard
 const STAGGER_MS = 70
 const ENTER_DURATION_MS = 420
 
-const APPROVAL_TABS: { id: ApprovalTab; label: string; icon: typeof Instagram }[] = [
-  { id: 'social', label: 'Posts de Social Media', icon: Megaphone },
-  { id: 'emails', label: 'E-mails', icon: Mail },
-  { id: 'landing', label: 'Landing Page Copy', icon: Globe },
+const APPROVAL_TABS: { id: ApprovalTab; labelKey: TranslationKey; icon: typeof Instagram }[] = [
+  { id: 'social', labelKey: 'campaigns.socialPosts', icon: Megaphone },
+  { id: 'emails', labelKey: 'campaigns.emails', icon: Mail },
+  { id: 'landing', labelKey: 'campaigns.landingCopy', icon: Globe },
 ]
 
 const PUBLISH_CHANNELS: PublishChannelStatus[] = [
@@ -52,16 +54,27 @@ const PUBLISH_CHANNELS: PublishChannelStatus[] = [
   { id: 'whatsapp', name: 'WhatsApp', published: true },
 ]
 
-function resolveCardMeta(card: PreviewCard, tab: ApprovalTab): string {
+function resolveCardMeta(
+  card: PreviewCard,
+  tab: ApprovalTab,
+  previewFallback: string,
+): string {
   if (tab === 'social' && card.channel) return card.channel
   if (tab === 'emails' && card.subject) return card.subject
   if (tab === 'landing' && card.label) return card.label
-  return 'Preview'
+  return previewFallback
 }
 
-function resolveCardTitle(card: PreviewCard, tab: ApprovalTab): string {
+function resolveCardTitle(
+  card: PreviewCard,
+  tab: ApprovalTab,
+  t: ReturnType<typeof useTranslation>['t'],
+): string {
   if (tab === 'social' && card.channel) {
-    return `Post ${card.channel}: ${card.preview}`
+    return t('campaigns.postChannelPreview', {
+      channel: card.channel,
+      preview: card.preview,
+    })
   }
   return card.preview
 }
@@ -70,6 +83,7 @@ export default function CampaignMagicScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const tc = useThemeClasses()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const {
     brandIdentity,
     phase,
@@ -146,7 +160,7 @@ export default function CampaignMagicScreen() {
               >
                 <Pressable onPress={handleBackToHub} className="self-start active:opacity-70">
                   <Text className={['text-sm font-medium', tc.backText].join(' ')}>
-                    ← Campanhas ativas
+                    {t('campaigns.backToHub')}
                   </Text>
                 </Pressable>
                 {wizardStep > 0 ? (
@@ -155,21 +169,21 @@ export default function CampaignMagicScreen() {
                     className="self-start active:opacity-70"
                   >
                     <Text className={['text-xs font-semibold', tc.backText].join(' ')}>
-                      Voltar ao início do formulário
+                      {t('campaigns.backToFormStart')}
                     </Text>
                   </Pressable>
                 ) : null}
                 <View className="flex-row items-center gap-2 self-start rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5">
                   <Sparkles size={12} color="#C5A059" />
                   <Text className="text-[11px] font-bold uppercase tracking-wider text-gold">
-                    Campaign Magic
+                    {t('campaigns.magicBadge')}
                   </Text>
                 </View>
                 <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>
-                  Criador de Campanhas
+                  {t('campaigns.wizardTitle')}
                 </Text>
                 <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
-                  Responda algumas perguntas e a Meridian cria toda a campanha para você.
+                  {t('campaigns.wizardSubtitle')}
                 </Text>
               </Animated.View>
 
@@ -224,20 +238,23 @@ export default function CampaignMagicScreen() {
                   entering={platformEntering(FadeInDown.duration(ENTER_DURATION_MS))}
                   className="gap-1"
                 >
-                  <Pressable onPress={handleBackToHub} className="mb-2 self-start active:opacity-70">
+                  <Pressable
+                    onPress={handleBackToHub}
+                    className="mb-2 self-start active:opacity-70"
+                  >
                     <Text className={['text-sm font-medium', tc.backText].join(' ')}>
-                      ← Campanhas ativas
+                      {t('campaigns.backToHub')}
                     </Text>
                   </Pressable>
                   <Text className={['text-2xl font-bold', tc.textPrimary].join(' ')}>
-                    Dashboard de Aprovação
+                    {t('campaigns.approvalDashboardTitle')}
                   </Text>
                   <Text className={['text-sm', tc.textMuted].join(' ')}>
-                    Revise e aprove o conteúdo gerado para todos os canais.
+                    {t('campaigns.approvalDashboardSubtitle')}
                   </Text>
                   {brandIdentity ? (
                     <Text className="text-xs text-electricBlue/80">
-                      Baseado na identidade de {brandIdentity.companyName}
+                      {t('campaigns.basedOnBrand', { name: brandIdentity.companyName })}
                       {prompt.trim()
                         ? ` · ${prompt.trim().slice(0, 60)}${prompt.length > 60 ? '...' : ''}`
                         : ''}
@@ -269,7 +286,7 @@ export default function CampaignMagicScreen() {
                               isActive ? 'text-deepBlue' : tc.tabInactiveText,
                             ].join(' ')}
                           >
-                            {tab.label}
+                            {t(tab.labelKey)}
                           </Text>
                         </Pressable>
                       </Animated.View>
@@ -308,13 +325,13 @@ export default function CampaignMagicScreen() {
                             tc.textMuted,
                           ].join(' ')}
                         >
-                          {resolveCardMeta(card, activeTab)}
+                          {resolveCardMeta(card, activeTab, t('campaigns.preview'))}
                         </Text>
                       </View>
                       <Text
                         className={['text-base font-semibold leading-6', tc.textPrimary].join(' ')}
                       >
-                        {resolveCardTitle(card, activeTab)}
+                        {resolveCardTitle(card, activeTab, t)}
                       </Text>
                       <Text className={['mt-2 text-sm leading-5', tc.textMuted].join(' ')}>
                         {card.detail}
@@ -329,7 +346,9 @@ export default function CampaignMagicScreen() {
               entering={platformEntering(
                 FadeInDown.delay(STAGGER_MS * 2).duration(ENTER_DURATION_MS),
               )}
-              className={['gap-3 border-t pt-4', tc.footerBar, tc.divider, contentPadding].join(' ')}
+              className={['gap-3 border-t pt-4', tc.footerBar, tc.divider, contentPadding].join(
+                ' ',
+              )}
               style={{ paddingBottom: Math.max(insets.bottom, 16) }}
             >
               <DesktopContent maxWidth="4xl" className="gap-3">
@@ -348,7 +367,7 @@ export default function CampaignMagicScreen() {
                     <Text
                       className={['text-center text-sm font-bold', tc.outlineButtonText].join(' ')}
                     >
-                      Editar
+                      {t('common.edit')}
                     </Text>
                   </AnimatedPressable>
                   <AnimatedPressable
@@ -368,7 +387,7 @@ export default function CampaignMagicScreen() {
                       <ActivityIndicator color="#0A1128" />
                     ) : (
                       <Text className="text-center text-base font-bold text-deepBlue">
-                        Aprovar Tudo & Publicar
+                        {t('campaigns.approveAllPublish')}
                       </Text>
                     )}
                   </AnimatedPressable>

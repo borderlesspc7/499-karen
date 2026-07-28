@@ -1,3 +1,5 @@
+import type { TranslationKey, TranslationParams } from '@shared/i18n'
+
 export type CampaignObjective =
   | 'sell'
   | 'schedule'
@@ -11,32 +13,54 @@ export type CampaignWizardData = {
   offer: string
 }
 
+type TranslateFn = (key: TranslationKey, params?: TranslationParams) => string
+
 export const CAMPAIGN_OBJECTIVES: {
   id: CampaignObjective
-  label: string
-  description: string
+  labelKey: TranslationKey
+  descriptionKey: TranslationKey
 }[] = [
-  { id: 'sell', label: 'Vender', description: 'Converter leads em clientes pagantes' },
-  { id: 'schedule', label: 'Agendar', description: 'Marcar consultas, demos ou reuniões' },
-  { id: 'authority', label: 'Gerar autoridade', description: 'Posicionar sua marca como referência' },
-  { id: 'reactivate', label: 'Recuperar clientes', description: 'Reengajar leads e clientes inativos' },
-  { id: 'promote', label: 'Promover novo serviço', description: 'Lançar ou divulgar uma oferta nova' },
+  { id: 'sell', labelKey: 'campaigns.objSell', descriptionKey: 'campaigns.objSellDesc' },
+  {
+    id: 'schedule',
+    labelKey: 'campaigns.objSchedule',
+    descriptionKey: 'campaigns.objScheduleDesc',
+  },
+  {
+    id: 'authority',
+    labelKey: 'campaigns.objAuthority',
+    descriptionKey: 'campaigns.objAuthorityDesc',
+  },
+  {
+    id: 'reactivate',
+    labelKey: 'campaigns.objReactivate',
+    descriptionKey: 'campaigns.objReactivateDesc',
+  },
+  { id: 'promote', labelKey: 'campaigns.objPromote', descriptionKey: 'campaigns.objPromoteDesc' },
 ]
 
-export const OFFER_SUGGESTIONS = [
-  'Consultoria estratégica premium',
-  'Harmonização facial',
-  'Pacote de implantes dentários',
-  'Diagnóstico gratuito do funil',
-  'Programa de fidelidade anual',
-] as const
+export const OFFER_SUGGESTION_KEYS = [
+  'campaigns.sugConsulting',
+  'campaigns.sugFacial',
+  'campaigns.sugDental',
+  'campaigns.sugFunnel',
+  'campaigns.sugLoyalty',
+] as const satisfies readonly TranslationKey[]
 
-export function buildCampaignPrompt(data: CampaignWizardData): string {
+export const AUDIENCE_CHIP_KEYS = [
+  'campaigns.chipWomen',
+  'campaigns.chipLocal',
+  'campaigns.chipClinics',
+  'campaigns.chipPros',
+  'campaigns.chipEcommerce',
+] as const satisfies readonly TranslationKey[]
+
+export function buildCampaignPrompt(data: CampaignWizardData, t: TranslateFn): string {
   const objective = CAMPAIGN_OBJECTIVES.find((o) => o.id === data.objective)
   const parts = [
-    objective ? `Objetivo: ${objective.label}.` : '',
-    data.audience ? `Público: ${data.audience}.` : '',
-    data.offer ? `Oferta: ${data.offer}.` : '',
+    objective ? t('campaigns.promptObjective', { label: t(objective.labelKey) }) : '',
+    data.audience ? t('campaigns.promptAudience', { audience: data.audience }) : '',
+    data.offer ? t('campaigns.promptOffer', { offer: data.offer }) : '',
   ].filter(Boolean)
 
   return parts.join(' ')

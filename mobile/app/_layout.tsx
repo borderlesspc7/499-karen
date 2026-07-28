@@ -12,8 +12,10 @@ import { configureStorage } from '@shared/storage'
 import {
   AuthProvider,
   GamificationProvider,
+  LocaleProvider,
   SubscriptionProvider,
   ThemeProvider,
+  useTranslation,
 } from '@shared/contexts'
 import { createAsyncStorageAdapter } from '@/lib/async-storage'
 import { premiumColors } from '@/constants/premium-theme'
@@ -25,6 +27,29 @@ export { ErrorBoundary } from 'expo-router'
 configureStorage(createAsyncStorageAdapter())
 
 SplashScreen.preventAutoHideAsync()
+
+function RootNavigator() {
+  const { t } = useTranslation()
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="login" />
+      <Stack.Screen name="verify-email" />
+      <Stack.Screen name="plans" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen
+        name="reports"
+        options={{
+          headerShown: Platform.OS !== 'web',
+          title: t('nav.reports'),
+          headerStyle: { backgroundColor: premiumColors.navy },
+          headerTintColor: premiumColors.gold,
+        }}
+      />
+    </Stack>
+  )
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -53,29 +78,16 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <FirebaseBootstrap>
           <ThemeProvider>
-            <ThemeSync />
-            <AuthProvider>
-              <SubscriptionProvider>
-                <GamificationProvider>
-                  <Stack screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="index" />
-                    <Stack.Screen name="login" />
-                    <Stack.Screen name="verify-email" />
-                    <Stack.Screen name="plans" />
-                    <Stack.Screen name="(tabs)" />
-                    <Stack.Screen
-                      name="reports"
-                      options={{
-                        headerShown: Platform.OS !== 'web',
-                        title: 'Relatórios',
-                        headerStyle: { backgroundColor: premiumColors.navy },
-                        headerTintColor: premiumColors.gold,
-                      }}
-                    />
-                  </Stack>
-                </GamificationProvider>
-              </SubscriptionProvider>
-            </AuthProvider>
+            <LocaleProvider>
+              <ThemeSync />
+              <AuthProvider>
+                <SubscriptionProvider>
+                  <GamificationProvider>
+                    <RootNavigator />
+                  </GamificationProvider>
+                </SubscriptionProvider>
+              </AuthProvider>
+            </LocaleProvider>
           </ThemeProvider>
         </FirebaseBootstrap>
       </SafeAreaProvider>

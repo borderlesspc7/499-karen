@@ -6,6 +6,7 @@ import {
   Text,
   View,
 } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import { ThemedScreen } from '@/components/layout/AppScreen'
 import { DesktopContent } from '@/components/layout/DesktopContent'
 import { CrmKanbanBoard } from '@/components/crm/CrmKanbanBoard'
@@ -21,6 +22,7 @@ import { useThemeClasses } from '@/hooks/useThemeClasses'
 export default function OpportunitiesScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const tc = useThemeClasses()
+  const { t } = useTranslation()
   const {
     columns,
     cards,
@@ -55,7 +57,7 @@ export default function OpportunitiesScreen() {
       <ThemedScreen className="items-center justify-center">
         <ActivityIndicator size="large" color="#3B82F6" />
         <Text className={['mt-3 text-sm', tc.textSecondary].join(' ')}>
-          Carregando pipeline do Firestore...
+          {t('opportunities.loading')}
         </Text>
       </ThemedScreen>
     )
@@ -78,18 +80,17 @@ export default function OpportunitiesScreen() {
           <View className="flex-row items-start justify-between gap-3">
             <View className="flex-1 gap-2">
               <Text className={['text-3xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
-                Oportunidades
+                {t('opportunities.title')}
               </Text>
               <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
-                Funil CRM no Firestore. Cadastre deals agora; leads de Meta Ads entram na mesma
-                estrutura depois.
+                {t('opportunities.subtitle')}
               </Text>
             </View>
             <Pressable
               onPress={openCreateForm}
               className="rounded-2xl bg-electricBlue px-4 py-3 active:opacity-80"
             >
-              <Text className="text-sm font-semibold text-white">Nova</Text>
+              <Text className="text-sm font-semibold text-white">{t('common.newFeminine')}</Text>
             </Pressable>
           </View>
 
@@ -106,16 +107,16 @@ export default function OpportunitiesScreen() {
           {cards.length === 0 && !isLoading ? (
             <View className={['items-center gap-4 rounded-3xl p-8', tc.emptyState].join(' ')}>
               <Text className={['text-center text-base font-medium', tc.textPrimary].join(' ')}>
-                Nenhuma oportunidade no pipeline
+                {t('opportunities.emptyTitle')}
               </Text>
               <Text className={['text-center text-sm', tc.textSecondary].join(' ')}>
-                Crie a primeira oportunidade ou cadastre um cliente para começar.
+                {t('opportunities.emptyBody')}
               </Text>
               <Pressable
                 onPress={openCreateForm}
                 className="rounded-2xl bg-electricBlue px-5 py-3 active:opacity-80"
               >
-                <Text className="font-semibold text-white">Criar oportunidade</Text>
+                <Text className="font-semibold text-white">{t('opportunities.createCta')}</Text>
               </Pressable>
             </View>
           ) : (

@@ -1,10 +1,12 @@
+import { useTranslation } from '@shared/contexts'
 import { SummusPlaceholderScreen } from '@/components/layout/SummusPlaceholderScreen'
 
 export default function TasksScreen() {
+  const { t } = useTranslation()
   return (
     <SummusPlaceholderScreen
-      title="Tasks"
-      description="Organize ações diárias, metas semanais e entregas prioritárias com foco em execução."
+      title={t('placeholders.tasksTitle')}
+      description={t('placeholders.tasksDesc')}
     />
   )
 }

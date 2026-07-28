@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import * as WebBrowser from 'expo-web-browser'
-import { useAuth } from '@shared/contexts'
+import { useAuth, useTranslation } from '@shared/contexts'
 import type { ChannelConnectionsSnapshot, MessagingChannel } from '@shared/types'
 import { DEFAULT_CHANNEL_CONNECTIONS } from '@shared/types'
 import {
@@ -13,6 +13,7 @@ WebBrowser.maybeCompleteAuthSession()
 
 export function useChannelConnections() {
   const { currentUser } = useAuth()
+  const { t } = useTranslation()
   const [connections, setConnections] = useState<ChannelConnectionsSnapshot>(
     DEFAULT_CHANNEL_CONNECTIONS,
   )
@@ -34,13 +35,12 @@ export function useChannelConnections() {
       const data = await fetchChannelConnections()
       setConnections(data)
     } catch (loadError) {
-      const message =
-        loadError instanceof Error ? loadError.message : 'Não foi possível carregar conexões.'
+      const message = loadError instanceof Error ? loadError.message : t('channels.loadError')
       setError(message)
     } finally {
       setIsLoading(false)
     }
-  }, [currentUser?.id])
+  }, [currentUser?.id, t])
 
   useEffect(() => {
     void reload()
@@ -56,20 +56,20 @@ export function useChannelConnections() {
         const result = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri)
 
         if (result.type !== 'success') {
-          throw new Error('Conexão cancelada pelo usuário.')
+          throw new Error(t('channels.cancelled'))
         }
 
         await reload()
       } catch (connectError) {
         const message =
-          connectError instanceof Error ? connectError.message : 'Falha ao conectar canal.'
+          connectError instanceof Error ? connectError.message : t('channels.connectFailed')
         setError(message)
         throw connectError
       } finally {
         setIsConnecting(null)
       }
     },
-    [reload],
+    [reload, t],
   )
 
   const disconnectChannel = useCallback(
@@ -80,12 +80,14 @@ export function useChannelConnections() {
         await reload()
       } catch (disconnectError) {
         const message =
-          disconnectError instanceof Error ? disconnectError.message : 'Falha ao desconectar.'
+          disconnectError instanceof Error
+            ? disconnectError.message
+            : t('channels.disconnectFailed')
         setError(message)
         throw disconnectError
       }
     },
-    [reload],
+    [reload, t],
   )
 
   return {

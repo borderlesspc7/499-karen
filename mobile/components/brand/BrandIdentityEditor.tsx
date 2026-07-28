@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { Palette } from 'lucide-react-native'
-import { useAuth } from '@shared/contexts'
+import { useAuth, useTranslation } from '@shared/contexts'
 import type { BrandColors, BrandIdentity, TargetClientType } from '@shared/types/brand-identity'
 import type { UserProfile } from '@shared/types/gamification'
 import {
@@ -80,6 +80,7 @@ export function BrandIdentityEditor({
   saveTrigger = 0,
 }: BrandIdentityEditorProps) {
   const { currentUser } = useAuth()
+  const { t } = useTranslation()
   const [draft, setDraft] = useState<EditorDraft>(() => createDraftFromIdentity(initialIdentity))
   const [validationError, setValidationError] = useState<string | null>(null)
 
@@ -108,7 +109,7 @@ export function BrandIdentityEditor({
       }
 
       if (!isBrandIdentityComplete(identityDraft)) {
-        setValidationError('Preencha nome da empresa, serviços, público-alvo e cores da marca.')
+        setValidationError(t('brand.incomplete'))
         onSaveStatusChange?.('idle')
         return
       }
@@ -127,7 +128,7 @@ export function BrandIdentityEditor({
           return
         }
         setValidationError(
-          error instanceof Error ? error.message : 'Falha ao enviar o logo para o Storage.',
+          error instanceof Error ? error.message : t('brand.logoUploadError'),
         )
         onSaveStatusChange?.('idle')
       }
@@ -138,7 +139,7 @@ export function BrandIdentityEditor({
     return () => {
       isCancelled = true
     }
-  }, [saveTrigger, draft, onSave, onSaveStatusChange, userProfile, currentUser?.id])
+  }, [saveTrigger, draft, onSave, onSaveStatusChange, userProfile, currentUser?.id, t])
 
   return (
     <ScrollView
@@ -150,16 +151,13 @@ export function BrandIdentityEditor({
       <View className="gap-1">
         <View className="flex-row items-center gap-2">
           <Palette size={18} color="#7c3aed" />
-          <Text className="text-lg font-semibold text-slate-900">Identidade da marca</Text>
+          <Text className="text-lg font-semibold text-slate-900">{t('brand.title')}</Text>
         </View>
-        <Text className="text-sm leading-5 text-slate-500">
-          A IA usa essas informações para personalizar campanhas, conteúdos e automações. O logo é
-          enviado ao Firebase Storage.
-        </Text>
+        <Text className="text-sm leading-5 text-slate-500">{t('brand.subtitle')}</Text>
       </View>
 
       <View className="gap-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-        <Text className="text-sm font-semibold text-slate-800">Empresa e serviços</Text>
+        <Text className="text-sm font-semibold text-slate-800">{t('brand.sectionCompany')}</Text>
         <CompanyStep
           companyName={draft.companyName}
           servicesDescription={draft.servicesDescription}
@@ -172,7 +170,7 @@ export function BrandIdentityEditor({
       </View>
 
       <View className="gap-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-        <Text className="text-sm font-semibold text-slate-800">Público-alvo</Text>
+        <Text className="text-sm font-semibold text-slate-800">{t('brand.sectionAudience')}</Text>
         <AudienceStep
           targetClientType={draft.targetClientType}
           targetClientDescription={draft.targetClientDescription}
@@ -185,7 +183,7 @@ export function BrandIdentityEditor({
       </View>
 
       <View className="gap-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-        <Text className="text-sm font-semibold text-slate-800">Visual da marca</Text>
+        <Text className="text-sm font-semibold text-slate-800">{t('brand.sectionVisual')}</Text>
         <VisualStep
           colors={draft.colors}
           logoUri={draft.logoUri}

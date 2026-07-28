@@ -1,4 +1,5 @@
 import { Text, View } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import type { BusinessHealthScores } from '@shared/types/gamification'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -7,21 +8,21 @@ type GrowthNodeStatus = 'completed' | 'in_progress' | 'pending'
 
 type GrowthTreeNode = {
   id: string
-  label: string
+  labelKey: 'home.credibility' | 'home.marketing' | 'home.leads' | 'home.sales' | 'home.automation' | 'home.scale'
   resolveValue: (health: BusinessHealthScores) => number
 }
 
 const GROWTH_TREE_NODES: GrowthTreeNode[] = [
-  { id: 'credibilidade', label: 'Credibilidade', resolveValue: (h) => h.credibilidade },
-  { id: 'marketing', label: 'Marketing', resolveValue: (h) => h.marketing },
+  { id: 'credibilidade', labelKey: 'home.credibility', resolveValue: (h) => h.credibilidade },
+  { id: 'marketing', labelKey: 'home.marketing', resolveValue: (h) => h.marketing },
   {
     id: 'leads',
-    label: 'Leads',
+    labelKey: 'home.leads',
     resolveValue: (h) => Math.round((h.marketing + h.vendas) / 2),
   },
-  { id: 'vendas', label: 'Vendas', resolveValue: (h) => h.vendas },
-  { id: 'automacao', label: 'Automação', resolveValue: (h) => h.automacao },
-  { id: 'escala', label: 'Escala', resolveValue: (h) => h.posicionamento },
+  { id: 'vendas', labelKey: 'home.sales', resolveValue: (h) => h.vendas },
+  { id: 'automacao', labelKey: 'home.automation', resolveValue: (h) => h.automacao },
+  { id: 'escala', labelKey: 'home.scale', resolveValue: (h) => h.posicionamento },
 ]
 
 function resolveNodeStatus(value: number): GrowthNodeStatus {
@@ -46,28 +47,31 @@ function resolveStatusColor(status: GrowthNodeStatus): string {
   return colors[status]
 }
 
-function resolveStatusLabel(status: GrowthNodeStatus): string {
-  const labels: Record<GrowthNodeStatus, string> = {
-    completed: 'Concluído',
-    in_progress: 'Em progresso',
-    pending: 'Pendente',
-  }
-
-  return labels[status]
-}
-
 type GrowthTreeProps = {
   businessHealth: BusinessHealthScores
 }
 
 export function GrowthTree({ businessHealth }: GrowthTreeProps) {
+  const { t } = useTranslation()
   const tc = useThemeClasses()
+
+  function resolveStatusLabel(status: GrowthNodeStatus): string {
+    const labels: Record<GrowthNodeStatus, string> = {
+      completed: t('home.completed'),
+      in_progress: t('home.inProgress'),
+      pending: t('home.pending'),
+    }
+
+    return labels[status]
+  }
 
   return (
     <View className={['p-6', tc.card].join(' ')} style={tc.cardShadow}>
-      <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>Árvore de Crescimento</Text>
+      <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
+        {t('home.growthTree')}
+      </Text>
       <Text className={['mt-1 text-sm', tc.textSecondary].join(' ')}>
-        O caminho estratégico da sua empresa, do primeiro contato à escala.
+        {t('home.growthTreeSubtitle')}
       </Text>
 
       <View className="mt-6">
@@ -101,7 +105,7 @@ export function GrowthTree({ businessHealth }: GrowthTreeProps) {
                 <View className="flex-row items-start justify-between">
                   <View className="flex-1">
                     <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
-                      {node.label}
+                      {t(node.labelKey)}
                     </Text>
                     <Text className={['mt-0.5 text-xs', tc.textMuted].join(' ')}>
                       {resolveStatusLabel(status)}

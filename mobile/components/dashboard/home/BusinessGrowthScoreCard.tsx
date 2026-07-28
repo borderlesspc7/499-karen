@@ -1,18 +1,13 @@
 import { useState } from 'react'
 import { Pressable, Text, View } from 'react-native'
 import { ChevronDown, ChevronUp, Sparkles, TrendingUp } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 
 type ScoreCategory = {
   label: string
   value: number
   color: string
 }
-
-const SCORE_CATEGORIES: ScoreCategory[] = [
-  { label: 'Site', value: 90, color: '#10B981' },
-  { label: 'Branding', value: 60, color: '#F59E0B' },
-  { label: 'SEO', value: 30, color: '#EF4444' },
-]
 
 const OVERALL_SCORE = 92
 const MAX_SCORE = 100
@@ -55,7 +50,14 @@ function CategoryBar({ label, value, color }: ScoreCategory) {
 }
 
 export function BusinessGrowthScoreCard() {
+  const { t } = useTranslation()
   const [isScoreExpanded, setIsScoreExpanded] = useState(false)
+
+  const scoreCategories: ScoreCategory[] = [
+    { label: t('home.site'), value: 90, color: '#10B981' },
+    { label: t('home.branding'), value: 60, color: '#F59E0B' },
+    { label: t('home.seo'), value: 30, color: '#EF4444' },
+  ]
 
   return (
     <Pressable
@@ -72,7 +74,7 @@ export function BusinessGrowthScoreCard() {
       <View className="flex-row items-center justify-between">
         <View className="flex-row items-center gap-2">
           <TrendingUp size={18} color="#10B981" />
-          <Text className="text-lg font-bold text-deepBlue">Business Growth Score</Text>
+          <Text className="text-lg font-bold text-deepBlue">{t('home.businessGrowthScore')}</Text>
         </View>
         {isScoreExpanded ? (
           <ChevronUp size={20} color="#64748B" />
@@ -81,9 +83,7 @@ export function BusinessGrowthScoreCard() {
         )}
       </View>
 
-      <Text className="mt-1 text-sm text-deepBlue/50">
-        Toque para ver o que compõe a sua nota
-      </Text>
+      <Text className="mt-1 text-sm text-deepBlue/50">{t('home.tapToSeeScore')}</Text>
 
       <View className="mt-6 items-center">
         <ScoreRing score={OVERALL_SCORE} maxScore={MAX_SCORE} />
@@ -91,7 +91,7 @@ export function BusinessGrowthScoreCard() {
 
       {isScoreExpanded ? (
         <View className="mt-6 gap-4">
-          {SCORE_CATEGORIES.map((category) => (
+          {scoreCategories.map((category) => (
             <CategoryBar key={category.label} {...category} />
           ))}
 
@@ -100,8 +100,8 @@ export function BusinessGrowthScoreCard() {
               <Sparkles size={16} color="#3B82F6" />
             </View>
             <Text className="flex-1 text-sm leading-5 text-deepBlue">
-              O que falta para chegar ao próximo nível: Publicar o artigo de SEO no blog.{' '}
-              <Text className="font-bold text-electricBlue">[Fazer isto agora]</Text>
+              {t('home.nextLevelSeo')}{' '}
+              <Text className="font-bold text-electricBlue">{t('home.doItNow')}</Text>
             </Text>
           </View>
         </View>
@@ -113,9 +113,7 @@ export function BusinessGrowthScoreCard() {
               style={{ width: `${OVERALL_SCORE}%` }}
             />
           </View>
-          <Text className="mt-2 text-center text-xs text-deepBlue/40">
-            Meta do trimestre: 95/100
-          </Text>
+          <Text className="mt-2 text-center text-xs text-deepBlue/40">{t('home.quarterGoal')}</Text>
         </View>
       )}
     </Pressable>

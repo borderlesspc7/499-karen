@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
   Alert,
@@ -12,9 +12,10 @@ import {
   View,
 } from 'react-native'
 import { ArrowLeft, Send, Sparkles } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { generateSmartReplies } from '@shared/services/ai-orchestration-service'
 import type { InboxContactStatus, InboxConversation, InboxMessage } from '@shared/types'
-import { INBOX_QUICK_TEMPLATES } from '@/constants/inbox-templates'
+import { INBOX_QUICK_TEMPLATE_KEYS } from '@/constants/inbox-templates'
 import { premiumColors } from '@/constants/premium-theme'
 import { useInboxMessages } from '@/hooks/useInboxMessages'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -26,15 +27,6 @@ type InboxChatViewProps = {
   conversation: InboxConversation
   onBack?: () => void
   showBackButton?: boolean
-}
-
-function resolveStatusLabel(status: InboxContactStatus): string {
-  const labels: Record<InboxContactStatus, string> = {
-    online: 'Online',
-    away: 'Ausente',
-    offline: 'Offline',
-  }
-  return labels[status]
 }
 
 function resolveStatusColor(status: InboxContactStatus): string {
@@ -51,11 +43,17 @@ function MessageBubble({
   incomingBubbleClass,
   textPrimaryClass,
   textMutedClass,
+  aiLabel,
+  sendingLabel,
+  failedLabel,
 }: {
   message: InboxMessage
   incomingBubbleClass: string
   textPrimaryClass: string
   textMutedClass: string
+  aiLabel: string
+  sendingLabel: string
+  failedLabel: string
 }) {
   const isOutgoing = message.role === 'agent'
   const isAi = message.role === 'ai'
@@ -76,7 +74,7 @@ function MessageBubble({
       {isAi ? (
         <View className="mb-1 flex-row items-center gap-1">
           <Sparkles size={10} color={premiumColors.gold} />
-          <Text className="text-[10px] font-bold uppercase tracking-wider text-gold">IA</Text>
+          <Text className="text-[10px] font-bold uppercase tracking-wider text-gold">{aiLabel}</Text>
         </View>
       ) : null}
       <Text className={['text-sm leading-5', isOutgoing ? 'text-white' : textPrimaryClass].join(' ')}>
@@ -86,8 +84,12 @@ function MessageBubble({
         <Text className={['text-[10px]', isOutgoing ? 'text-white/60' : textMutedClass].join(' ')}>
           {message.timestamp}
         </Text>
-        {isOutgoing && isPending ? <Text className="text-[10px] text-white/60">Enviando…</Text> : null}
-        {isOutgoing && isFailed ? <Text className="text-[10px] text-rose-300">Falhou</Text> : null}
+        {isOutgoing && isPending ? (
+          <Text className="text-[10px] text-white/60">{sendingLabel}</Text>
+        ) : null}
+        {isOutgoing && isFailed ? (
+          <Text className="text-[10px] text-rose-300">{failedLabel}</Text>
+        ) : null}
       </View>
     </View>
   )
@@ -99,6 +101,7 @@ export function InboxChatView({
   showBackButton = false,
 }: InboxChatViewProps) {
   const tc = useThemeClasses()
+  const { t } = useTranslation()
   const { messages: remoteMessages, isLoading: isLoadingMessages } = useInboxMessages(
     conversation.id,
   )
@@ -108,6 +111,17 @@ export function InboxChatView({
   const listRef = useRef<FlatList<InboxMessage>>(null)
 
   const messages = [...remoteMessages, ...optimisticMessages]
+
+  const defaultTemplates = useMemo(
+    () => INBOX_QUICK_TEMPLATE_KEYS.map((key) => t(key)),
+    [t],
+  )
+
+  const statusLabels: Record<InboxContactStatus, string> = {
+    online: t('inbox.online'),
+    away: t('inbox.away'),
+    offline: t('inbox.offline'),
+  }
 
   useEffect(() => {
     setOptimisticMessages([])
@@ -123,7 +137,11 @@ export function InboxChatView({
     })
   }, [messages.length])
 
-  const [smartReplies, setSmartReplies] = useState<string[]>([...INBOX_QUICK_TEMPLATES])
+  const [smartReplies, setSmartReplies] = useState<string[]>([])
+
+  useEffect(() => {
+    setSmartReplies(defaultTemplates)
+  }, [defaultTemplates])
 
   useEffect(() => {
     let isMounted = true
@@ -142,7 +160,7 @@ export function InboxChatView({
       })
       .catch(() => {
         if (isMounted) {
-          setSmartReplies([...INBOX_QUICK_TEMPLATES])
+          setSmartReplies(defaultTemplates)
         }
       })
 
@@ -155,6 +173,7 @@ export function InboxChatView({
     conversation.channel,
     conversation.preview,
     remoteMessages,
+    defaultTemplates,
   ])
 
   const canSendExternally = ['whatsapp', 'instagram', 'facebook'].includes(conversation.channel)
@@ -170,7 +189,7 @@ export function InboxChatView({
         id: optimisticId,
         role: 'agent',
         text: trimmed,
-        timestamp: 'Agora',
+        timestamp: t('inbox.now'),
         deliveryStatus: 'pending',
       },
     ])
@@ -184,13 +203,13 @@ export function InboxChatView({
           current.filter((message) => message.id !== optimisticId),
         )
       } else if (canSendExternally) {
-        throw new Error('Conversa sem contato externo vinculado.')
+        throw new Error(t('inbox.noExternal'))
       } else {
         Alert.alert(
-          'Canal não conectado',
+          t('inbox.channelNotConnected'),
           conversation.channel === 'linkedin'
-            ? 'LinkedIn inbox requer parceria API. Conecte WhatsApp, Instagram ou Facebook para responder pelo app.'
-            : 'Conecte o canal nas Integrações para enviar mensagens reais.',
+            ? t('inbox.linkedinHint')
+            : t('inbox.connectGeneric'),
         )
         setOptimisticMessages((current) =>
           current.filter((message) => message.id !== optimisticId),
@@ -203,8 +222,8 @@ export function InboxChatView({
         ),
       )
       Alert.alert(
-        'Erro ao enviar',
-        error instanceof Error ? error.message : 'Não foi possível enviar a mensagem.',
+        t('inbox.sendError'),
+        error instanceof Error ? error.message : t('inbox.sendFailed'),
       )
     } finally {
       setIsSending(false)
@@ -242,7 +261,7 @@ export function InboxChatView({
                 style={{ backgroundColor: resolveStatusColor(conversation.status) }}
               />
               <Text className={['text-xs', tc.textMuted].join(' ')}>
-                {resolveStatusLabel(conversation.status)}
+                {statusLabels[conversation.status]}
               </Text>
             </View>
           </View>
@@ -278,6 +297,9 @@ export function InboxChatView({
               incomingBubbleClass={tc.incomingBubble}
               textPrimaryClass={tc.textPrimary}
               textMutedClass={tc.textMuted}
+              aiLabel={t('inbox.aiLabel')}
+              sendingLabel={t('inbox.sending')}
+              failedLabel={t('inbox.failed')}
             />
           )}
         />
@@ -320,7 +342,7 @@ export function InboxChatView({
             <TextInput
               value={input}
               onChangeText={setInput}
-              placeholder="Escreva uma mensagem..."
+              placeholder={t('inbox.placeholder')}
               placeholderTextColor={tc.placeholderColor}
               multiline
               editable={!isSending}

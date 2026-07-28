@@ -1,5 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
+import { DEFAULT_LOCALE } from '@shared/types/locale'
+import { translate } from '@shared/i18n'
 import { getFirebaseConfigError } from '@/lib/env'
 import { initializeFirebase } from '@/lib/firebase'
 import { configureAppServices } from '@/lib/configure-app-services'
@@ -23,7 +25,9 @@ export function FirebaseBootstrap({ children }: FirebaseBootstrapProps) {
       setIsReady(true)
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Não foi possível inicializar o Firebase.'
+        error instanceof Error
+          ? error.message
+          : translate(DEFAULT_LOCALE, 'system.firebaseInitFailed')
       setConfigError(message)
     }
   }, [configError])
@@ -32,12 +36,11 @@ export function FirebaseBootstrap({ children }: FirebaseBootstrapProps) {
     return (
       <View className="flex-1 items-center justify-center bg-slate-100 px-8">
         <Text className="text-center text-lg font-semibold text-slate-900">
-          Configuração incompleta
+          {translate(DEFAULT_LOCALE, 'system.configIncomplete')}
         </Text>
         <Text className="mt-3 text-center text-sm leading-6 text-slate-600">{configError}</Text>
         <Text className="mt-6 text-center text-xs text-slate-500">
-          No EAS Build, configure EXPO_PUBLIC_FIREBASE_* no painel Expo (Environment variables) e
-          gere o APK novamente.
+          {translate(DEFAULT_LOCALE, 'system.easFirebaseHint')}
         </Text>
       </View>
     )

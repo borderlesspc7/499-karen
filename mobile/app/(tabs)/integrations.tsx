@@ -11,6 +11,8 @@ import {
   Sparkles,
   type LucideIcon,
 } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import type { MessagingChannel } from '@shared/types'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { ThemedScreen } from '@/components/layout/AppScreen'
@@ -24,7 +26,7 @@ import { triggerLightHaptic } from '@/lib/haptics'
 type Integration = {
   id: MessagingChannel
   name: string
-  description: string
+  descriptionKey: TranslationKey
   icon: LucideIcon
   accentColor: string
 }
@@ -33,28 +35,28 @@ const INTEGRATIONS: Integration[] = [
   {
     id: 'whatsapp',
     name: 'WhatsApp Business',
-    description: 'Receba e responda mensagens no inbox omnichannel',
+    descriptionKey: 'channels.whatsappDesc',
     icon: MessageCircle,
     accentColor: '#16A34A',
   },
   {
     id: 'instagram',
     name: 'Instagram Direct',
-    description: 'DMs do Instagram Business sincronizadas em tempo real',
+    descriptionKey: 'channels.instagramDesc',
     icon: Instagram,
     accentColor: '#DB2777',
   },
   {
     id: 'facebook',
     name: 'Facebook Messenger',
-    description: 'Mensagens da sua Página no inbox unificado',
+    descriptionKey: 'channels.facebookDesc',
     icon: Facebook,
     accentColor: '#1877F2',
   },
   {
     id: 'linkedin',
     name: 'LinkedIn',
-    description: 'Conexão de conta — inbox sujeito à API de parceiros LinkedIn',
+    descriptionKey: 'channels.linkedinDesc',
     icon: Linkedin,
     accentColor: '#0A66C2',
   },
@@ -67,24 +69,28 @@ export default function IntegrationsScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const tc = useThemeClasses()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const params = useLocalSearchParams<{ status?: string; channel?: string; message?: string }>()
   const { connections, isLoading, isConnecting, connectChannel, disconnectChannel, reload } =
     useChannelConnections()
 
   useEffect(() => {
     if (params.status === 'connected' && params.channel) {
-      Alert.alert('Canal conectado', `${params.channel} foi vinculado com sucesso.`)
+      Alert.alert(
+        t('channels.connectedTitle'),
+        t('channels.connectedBody', { channel: params.channel }),
+      )
       void reload()
     }
 
     if (params.status === 'error') {
       Alert.alert(
-        'Falha na conexão',
-        params.message ? decodeURIComponent(String(params.message)) : 'Não foi possível conectar o canal.',
+        t('channels.errorTitle'),
+        params.message ? decodeURIComponent(String(params.message)) : t('channels.errorBody'),
       )
       void reload()
     }
-  }, [params.channel, params.message, params.status, reload])
+  }, [params.channel, params.message, params.status, reload, t])
 
   const hasConnectedChannel = useMemo(
     () => Object.values(connections).some((connection) => connection.status === 'connected'),
@@ -108,21 +114,17 @@ export default function IntegrationsScreen() {
         return
       }
 
-      Alert.alert(
-        'Conectar canal',
-        `Você será redirecionado para autenticar com ${integration.name}. As conversas passarão a aparecer no Inbox.`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Continuar',
-            onPress: () => {
-              void connectChannel(integration.id).catch(() => undefined)
-            },
+      Alert.alert(t('channels.connectTitle'), t('channels.connectBody', { name: integration.name }), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.continue'),
+          onPress: () => {
+            void connectChannel(integration.id).catch(() => undefined)
           },
-        ],
-      )
+        },
+      ])
     },
-    [connectChannel, disconnectChannel],
+    [connectChannel, disconnectChannel, t],
   )
 
   if (isLoading) {
@@ -147,84 +149,85 @@ export default function IntegrationsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <DesktopContent maxWidth="4xl" className="gap-6">
-        <Animated.View
-          entering={platformEntering(FadeInDown.duration(ENTER_DURATION_MS))}
-          className="gap-2"
-        >
-          <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>
-            Conecte seu Ecossistema
-          </Text>
-          <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
-            Vincule WhatsApp, Instagram, Facebook e LinkedIn. Todas as conversas das redes
-            aparecem no Inbox para você responder pelo app.
-          </Text>
-        </Animated.View>
+          <Animated.View
+            entering={platformEntering(FadeInDown.duration(ENTER_DURATION_MS))}
+            className="gap-2"
+          >
+            <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>
+              {t('channels.title')}
+            </Text>
+            <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
+              {t('channels.subtitle')}
+            </Text>
+          </Animated.View>
 
-        <View className={isWebDesktop ? 'flex-row flex-wrap gap-3' : 'gap-3'}>
-          {INTEGRATIONS.map((integration, index) => {
-            const Icon = integration.icon
-            const connection = connections[integration.id]
-            const isConnected = connection.status === 'connected'
-            const isPending = connection.status === 'pending' || isConnecting === integration.id
-            const hasError = connection.status === 'error'
+          <View className={isWebDesktop ? 'flex-row flex-wrap gap-3' : 'gap-3'}>
+            {INTEGRATIONS.map((integration, index) => {
+              const Icon = integration.icon
+              const connection = connections[integration.id]
+              const isConnected = connection.status === 'connected'
+              const isPending = connection.status === 'pending' || isConnecting === integration.id
+              const hasError = connection.status === 'error'
 
-            return (
-              <Animated.View
-                key={integration.id}
-                entering={platformEntering(
-                  FadeInDown.delay(STAGGER_MS * (index + 1)).duration(ENTER_DURATION_MS),
-                )}
-                className={[
-                  'gap-3 p-4',
-                  tc.cardLg,
-                  isWebDesktop ? 'min-w-[calc(50%-6px)] flex-1' : 'w-full',
-                ].join(' ')}
-              >
-                <View className="flex-row items-center gap-4">
-                  <View
-                    className="h-12 w-12 items-center justify-center rounded-2xl"
-                    style={{ backgroundColor: `${integration.accentColor}22` }}
-                  >
-                    <Icon size={22} color={integration.accentColor} />
-                  </View>
+              return (
+                <Animated.View
+                  key={integration.id}
+                  entering={platformEntering(
+                    FadeInDown.delay(STAGGER_MS * (index + 1)).duration(ENTER_DURATION_MS),
+                  )}
+                  className={[
+                    'gap-3 p-4',
+                    tc.cardLg,
+                    isWebDesktop ? 'min-w-[calc(50%-6px)] flex-1' : 'w-full',
+                  ].join(' ')}
+                >
+                  <View className="flex-row items-center gap-4">
+                    <View
+                      className="h-12 w-12 items-center justify-center rounded-2xl"
+                      style={{ backgroundColor: `${integration.accentColor}22` }}
+                    >
+                      <Icon size={22} color={integration.accentColor} />
+                    </View>
 
-                  <View className="flex-1 gap-1">
-                    <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
-                      {integration.name}
-                    </Text>
-                    <Text className={['text-xs leading-4', tc.textSecondary].join(' ')}>
-                      {integration.description}
-                    </Text>
-                    {isConnected ? (
-                      <View className="mt-1 self-start rounded-full bg-emerald/15 px-2.5 py-0.5">
-                        <Text className="text-[11px] font-bold text-emerald">
-                          {connection.externalAccountName ?? 'Conectado'}
-                        </Text>
-                      </View>
-                    ) : null}
-                    {isPending ? (
-                      <Text className="mt-1 text-[11px] font-medium text-gold">Conectando…</Text>
-                    ) : null}
-                    {hasError ? (
-                      <Text className="mt-1 text-[11px] font-medium text-rose-400">
-                        {connection.errorMessage ?? 'Erro na conexão'}
+                    <View className="flex-1 gap-1">
+                      <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
+                        {integration.name}
                       </Text>
-                    ) : null}
-                  </View>
+                      <Text className={['text-xs leading-4', tc.textSecondary].join(' ')}>
+                        {t(integration.descriptionKey)}
+                      </Text>
+                      {isConnected ? (
+                        <View className="mt-1 self-start rounded-full bg-emerald/15 px-2.5 py-0.5">
+                          <Text className="text-[11px] font-bold text-emerald">
+                            {connection.externalAccountName ?? t('common.connected')}
+                          </Text>
+                        </View>
+                      ) : null}
+                      {isPending ? (
+                        <Text className="mt-1 text-[11px] font-medium text-gold">
+                          {t('channels.connecting')}
+                        </Text>
+                      ) : null}
+                      {hasError ? (
+                        <Text className="mt-1 text-[11px] font-medium text-rose-400">
+                          {connection.errorMessage ?? t('channels.connectionError')}
+                        </Text>
+                      ) : null}
+                    </View>
 
-                  <Switch
-                    value={isConnected}
-                    disabled={isPending}
-                    onValueChange={(value) => void handleToggle(integration, value)}
-                    trackColor={{ false: '#334155', true: '#10B981' }}
-                    thumbColor="#FFFFFF"
-                    ios_backgroundColor="#334155"
-                  />
-                </View>
-              </Animated.View>
-            )
-          })}
-        </View>
+                    <Switch
+                      value={isConnected}
+                      disabled={isPending}
+                      onValueChange={(value) => void handleToggle(integration, value)}
+                      trackColor={{ false: '#334155', true: '#10B981' }}
+                      thumbColor="#FFFFFF"
+                      ios_backgroundColor="#334155"
+                    />
+                  </View>
+                </Animated.View>
+              )
+            })}
+          </View>
         </DesktopContent>
       </ScrollView>
 
@@ -235,20 +238,20 @@ export default function IntegrationsScreen() {
           style={{ paddingBottom: Math.max(insets.bottom, 16) }}
         >
           <DesktopContent maxWidth="4xl" className="gap-3">
-          <AnimatedPressable
-            onPress={() => router.push('/(tabs)/inbox')}
-            className="flex-row items-center justify-center gap-2 rounded-2xl border border-gold/30 bg-navy py-4"
-          >
-            <Text className="text-base font-bold text-white">Abrir Inbox Omnichannel</Text>
-            <MessageCircle size={18} color="#C5A059" />
-          </AnimatedPressable>
-          <AnimatedPressable
-            onPress={handleAdvanceToCampaign}
-            className="flex-row items-center justify-center gap-2 rounded-2xl bg-gold py-4"
-          >
-            <Text className="text-base font-bold text-deepBlue">Avançar: Criar Campanha</Text>
-            <Sparkles size={18} color="#0F172A" />
-          </AnimatedPressable>
+            <AnimatedPressable
+              onPress={() => router.push('/(tabs)/inbox')}
+              className="flex-row items-center justify-center gap-2 rounded-2xl border border-gold/30 bg-navy py-4"
+            >
+              <Text className="text-base font-bold text-white">{t('channels.openInbox')}</Text>
+              <MessageCircle size={18} color="#C5A059" />
+            </AnimatedPressable>
+            <AnimatedPressable
+              onPress={handleAdvanceToCampaign}
+              className="flex-row items-center justify-center gap-2 rounded-2xl bg-gold py-4"
+            >
+              <Text className="text-base font-bold text-deepBlue">{t('channels.createCampaign')}</Text>
+              <Sparkles size={18} color="#0F172A" />
+            </AnimatedPressable>
           </DesktopContent>
         </Animated.View>
       ) : null}

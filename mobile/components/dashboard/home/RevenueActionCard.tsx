@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { ChevronRight } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import type { RevenueOpportunity } from '@shared/services/revenue-center'
 import { formatCurrencyBrlCompact } from '@shared/services/revenue-center'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -16,11 +17,12 @@ export function RevenueActionCard({
   index = 0,
   onPress,
 }: RevenueActionCardProps) {
+  const { t } = useTranslation()
   const tc = useThemeClasses()
 
   const impactDisplay =
     opportunity.type === 'approve-campaign' && opportunity.secondaryValue
-      ? `${opportunity.secondaryValue} novos leads`
+      ? t('home.newLeadsCount', { count: opportunity.secondaryValue })
       : `+${formatCurrencyBrlCompact(opportunity.impactValue)}`
 
   return (

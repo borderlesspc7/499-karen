@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Pressable, Text, View } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 type CampaignWizardStepProps = {
@@ -22,6 +23,7 @@ export function CampaignWizardStep({
   showBack = false,
 }: CampaignWizardStepProps) {
   const tc = useThemeClasses()
+  const { t } = useTranslation()
 
   return (
     <View className="gap-6">
@@ -39,7 +41,9 @@ export function CampaignWizardStep({
 
       {showBack && onBack ? (
         <Pressable onPress={onBack} className="self-start">
-          <Text className={['text-sm font-medium', tc.backText].join(' ')}>← Voltar</Text>
+          <Text className={['text-sm font-medium', tc.backText].join(' ')}>
+            {t('campaigns.wizardBack')}
+          </Text>
         </Pressable>
       ) : null}
 

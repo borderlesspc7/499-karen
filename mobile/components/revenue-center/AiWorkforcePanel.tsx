@@ -1,4 +1,5 @@
 import { Text, View } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import { LiveAiActivity } from '@/components/dashboard/home/LiveAiActivity'
 import { AiWorkforceOrb } from '@/components/revenue-center/AiWorkforceOrb'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -11,15 +12,16 @@ type AiWorkforcePanelProps = {
 export function AiWorkforcePanel({ isLiveReveal = false }: AiWorkforcePanelProps) {
   const tc = useThemeClasses()
   const { isWebDesktop } = useResponsiveLayout()
+  const { t } = useTranslation()
 
   return (
     <View className="gap-4">
       <View className="gap-1">
         <Text className={['text-lg font-bold', tc.textPrimary].join(' ')}>
-          Meridian em operação
+          {t('home.meridianLive')}
         </Text>
         <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
-          Context, Decision e Blind Spot rodando em paralelo — você vê só a resposta integrada.
+          {t('home.meridianLiveHint')}
         </Text>
       </View>
 

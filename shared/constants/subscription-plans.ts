@@ -44,8 +44,8 @@ export function getSubscriptionPlan(planId: SubscriptionPlanId): SubscriptionPla
   return plan
 }
 
-export function formatPlanPriceBrl(cents: number): string {
-  return (cents / 100).toLocaleString('pt-BR', {
+export function formatPlanPriceBrl(cents: number, locale: string = 'pt-BR'): string {
+  return (cents / 100).toLocaleString(locale, {
     style: 'currency',
     currency: 'BRL',
     minimumFractionDigits: 0,

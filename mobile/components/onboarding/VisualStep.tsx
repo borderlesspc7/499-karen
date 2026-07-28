@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Alert, Image, Platform, Pressable, Text, TextInput, View } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { ImagePlus, Palette } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import {
   DEFAULT_BRAND_COLORS,
   normalizeHexColor,
@@ -31,10 +33,10 @@ type VisualStepProps = {
 
 type ColorFieldKey = keyof BrandColors
 
-const COLOR_FIELD_LABELS: Record<ColorFieldKey, string> = {
-  primary: 'Cor primária',
-  secondary: 'Cor secundária',
-  accent: 'Cor de destaque',
+const COLOR_FIELD_KEYS: Record<ColorFieldKey, TranslationKey> = {
+  primary: 'onboarding.colorPrimary',
+  secondary: 'onboarding.colorSecondary',
+  accent: 'onboarding.colorAccent',
 }
 
 function ColorField({
@@ -48,6 +50,7 @@ function ColorField({
   onChange: (value: string) => void
   variant?: 'onboarding' | 'embedded'
 }) {
+  const { t } = useTranslation()
   const isEmbedded = variant === 'embedded'
   const [draft, setDraft] = useState(value)
 
@@ -62,7 +65,7 @@ function ColorField({
       <Text
         className={`text-sm font-medium ${isEmbedded ? 'text-slate-700' : 'text-white/80'}`}
       >
-        {COLOR_FIELD_LABELS[field]}
+        {t(COLOR_FIELD_KEYS[field])}
       </Text>
       <View className="flex-row items-center gap-3">
         <View
@@ -107,15 +110,14 @@ export function VisualStep({
   onChangeColors,
   variant = 'onboarding',
 }: VisualStepProps) {
+  const { t } = useTranslation()
   const isEmbedded = variant === 'embedded'
+
   async function handlePickLogo() {
     if (Platform.OS !== 'web') {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync()
       if (!permission.granted) {
-        Alert.alert(
-          'Permissão necessária',
-          'Precisamos de acesso à galeria para carregar o logo da sua marca.',
-        )
+        Alert.alert(t('onboarding.permissionTitle'), t('onboarding.permissionBody'))
         return
       }
     }
@@ -141,12 +143,12 @@ export function VisualStep({
     <>
       {!isEmbedded ? (
         <View className="mb-8 items-center gap-3">
-          <SummusModalBadge label="Passo 3" icon={Palette} tone="gold" />
+          <SummusModalBadge label={t('onboarding.step3')} icon={Palette} tone="gold" />
           <Text className="text-center text-2xl font-bold leading-tight text-white">
-            Identidade visual da marca
+            {t('onboarding.visualTitle')}
           </Text>
           <Text className="max-w-sm text-center text-base leading-6 text-white/55">
-            Logo e cores serão usados como referência nas peças geradas pela IA.
+            {t('onboarding.visualSubtitle')}
           </Text>
         </View>
       ) : null}
@@ -166,18 +168,18 @@ export function VisualStep({
               <View className="items-center gap-1">
                 <ImagePlus size={28} color="#94A3B8" />
                 <Text className={`text-xs ${isEmbedded ? 'text-slate-400' : 'text-white/40'}`}>
-                  Adicionar logo
+                  {t('onboarding.addLogo')}
                 </Text>
               </View>
             )}
           </AnimatedPressable>
           {logoUri ? (
             <Pressable onPress={() => onChangeLogoUri(null)}>
-              <Text className="text-sm font-medium text-rose-500">Remover logo</Text>
+              <Text className="text-sm font-medium text-rose-500">{t('onboarding.removeLogo')}</Text>
             </Pressable>
           ) : (
             <Text className={`text-xs ${isEmbedded ? 'text-slate-400' : 'text-white/40'}`}>
-              Opcional — PNG ou JPG recomendado
+              {t('onboarding.logoHint')}
             </Text>
           )}
         </View>

@@ -11,7 +11,7 @@ import {
 } from 'react-native'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useAuth, useGamification } from '@shared/contexts'
+import { useAuth, useGamification, useTranslation } from '@shared/contexts'
 import type { BrandColors, BrandIdentityDraft } from '@shared/types/brand-identity'
 import type { UserProfile } from '@shared/types/gamification'
 import {
@@ -72,6 +72,7 @@ function draftStorageKey(userId: string) {
  */
 export function OnboardingModal({ visible }: OnboardingModalProps) {
   const { currentUser } = useAuth()
+  const { t } = useTranslation()
   const { userProfile, brandIdentity, setUserProfile, setBrandIdentity } = useGamification()
   const [step, setStep] = useState<OnboardingStep>('profile')
   const [selectedProfile, setSelectedProfile] = useState<UserProfile | null>(null)
@@ -297,7 +298,7 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
                 </View>
                 <View className="items-center gap-2">
                   <Text className="text-center text-xl font-semibold text-white">
-                    Olá! Eu sou a Meridian e estou configurando a identidade da sua marca…
+                    {t('onboarding.adapting')}
                   </Text>
                   <Text className="text-center text-sm text-white/50">{draft.companyName}</Text>
                 </View>
@@ -316,7 +317,9 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
                   {showBrandProgress ? (
                     <View className="mb-4 gap-2">
                       <Pressable onPress={handleBackToStart} className="self-start py-1">
-                        <Text className="text-xs font-semibold text-gold">← Voltar ao início</Text>
+                        <Text className="text-xs font-semibold text-gold">
+                          {t('onboarding.backToStart')}
+                        </Text>
                       </Pressable>
                       <OnboardingProgressBar
                         currentStep={brandFormStep}
@@ -383,7 +386,7 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
                         className="flex-1 rounded-2xl border border-white/15 py-4"
                       >
                         <Text className="text-center text-sm font-semibold text-white/70">
-                          Voltar
+                          {t('common.back')}
                         </Text>
                       </Pressable>
 
@@ -409,7 +412,9 @@ export function OnboardingModal({ visible }: OnboardingModalProps) {
                         className="flex-1 rounded-2xl bg-gold py-4 disabled:opacity-40"
                       >
                         <Text className="text-center text-sm font-semibold text-deepBlue">
-                          {step === 'visual' ? 'Concluir identidade' : 'Continuar'}
+                          {step === 'visual'
+                            ? t('onboarding.finishIdentity')
+                            : t('common.continue')}
                         </Text>
                       </Pressable>
                     </View>

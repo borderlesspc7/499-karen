@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import { Megaphone, Plus, TrendingUp } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import type { SavedCampaign } from '@shared/types'
 import { CAMPAIGN_OBJECTIVES } from '@/components/campaign-magic/campaign-wizard-types'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -25,10 +26,6 @@ function formatCurrency(value: number): string {
   return `R$ ${value.toFixed(2).replace('.', ',')}`
 }
 
-function resolveObjectiveLabel(objective: SavedCampaign['objective']): string {
-  return CAMPAIGN_OBJECTIVES.find((item) => item.id === objective)?.label ?? 'Campanha'
-}
-
 function ActiveCampaignListCard({
   campaign,
   onPress,
@@ -37,6 +34,9 @@ function ActiveCampaignListCard({
   onPress?: () => void
 }) {
   const tc = useThemeClasses()
+  const { t } = useTranslation()
+  const objectiveKey = CAMPAIGN_OBJECTIVES.find((item) => item.id === campaign.objective)?.labelKey
+  const objectiveLabel = objectiveKey ? t(objectiveKey) : t('campaigns.campaignFallback')
 
   return (
     <Pressable
@@ -49,7 +49,7 @@ function ActiveCampaignListCard({
           <View className="flex-row items-center gap-2">
             <Megaphone size={14} color={premiumColors.gold} strokeWidth={1.5} />
             <Text className="text-[11px] font-bold uppercase tracking-wider text-gold">
-              {resolveObjectiveLabel(campaign.objective)}
+              {objectiveLabel}
             </Text>
           </View>
           <Text className={['text-lg font-bold', tc.textPrimary].join(' ')} numberOfLines={2}>
@@ -57,14 +57,14 @@ function ActiveCampaignListCard({
           </Text>
           <Text className={['text-sm leading-5', tc.textSecondary].join(' ')} numberOfLines={2}>
             {campaign.audience
-              ? `Público: ${campaign.audience}`
-              : 'Campanha omnichannel em operação'}
+              ? t('campaigns.audienceLabel', { audience: campaign.audience })
+              : t('campaigns.omnichannelLive')}
           </Text>
         </View>
 
         <View className="flex-row items-center gap-1.5 rounded-full border border-emerald/20 bg-emerald/10 px-3 py-1.5">
           <TrendingUp size={12} color={premiumColors.emerald} strokeWidth={2} />
-          <Text className="text-[11px] font-bold text-emerald">Ao vivo</Text>
+          <Text className="text-[11px] font-bold text-emerald">{t('campaigns.live')}</Text>
         </View>
       </View>
 
@@ -97,7 +97,7 @@ function ActiveCampaignListCard({
 
       {campaign.channels.length > 0 ? (
         <Text className={['text-xs', tc.textMuted].join(' ')}>
-          Canais: {campaign.channels.join(' · ')}
+          {t('campaigns.channelsLabel', { channels: campaign.channels.join(' · ') })}
         </Text>
       ) : null}
     </Pressable>
@@ -113,6 +113,7 @@ export function ActiveCampaignsHub({
   onSelectCampaign,
 }: ActiveCampaignsHubProps) {
   const tc = useThemeClasses()
+  const { t } = useTranslation()
 
   return (
     <View className="gap-6">
@@ -120,14 +121,14 @@ export function ActiveCampaignsHub({
         <View className="flex-row items-center gap-2 self-start rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5">
           <Megaphone size={12} color={premiumColors.gold} />
           <Text className="text-[11px] font-bold uppercase tracking-wider text-gold">
-            Campanhas
+            {t('campaigns.hubBadge')}
           </Text>
         </View>
         <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>
-          Campanhas ativas
+          {t('campaigns.hubTitle')}
         </Text>
         <Text className={['text-sm leading-5', tc.textSecondary].join(' ')}>
-          Acompanhe o desempenho das campanhas publicadas e crie uma nova quando quiser.
+          {t('campaigns.hubSubtitle')}
         </Text>
       </View>
 
@@ -136,14 +137,14 @@ export function ActiveCampaignsHub({
         className="flex-row items-center justify-center gap-2 rounded-2xl bg-gold py-4 active:opacity-90"
       >
         <Plus size={18} color="#0A1128" strokeWidth={2.5} />
-        <Text className="text-base font-bold text-deepBlue">Criar nova campanha</Text>
+        <Text className="text-base font-bold text-deepBlue">{t('campaigns.createNew')}</Text>
       </Pressable>
 
       {error ? (
         <View className="rounded-2xl border border-red-200 bg-red-50 p-4">
           <Text className="text-sm text-red-600">{error}</Text>
           <Pressable onPress={onRefresh} className="mt-3 self-start">
-            <Text className="text-sm font-semibold text-red-700">Tentar novamente</Text>
+            <Text className="text-sm font-semibold text-red-700">{t('common.retry')}</Text>
           </Pressable>
         </View>
       ) : null}
@@ -151,7 +152,7 @@ export function ActiveCampaignsHub({
       {isLoading && campaigns.length === 0 ? (
         <View className={['rounded-3xl p-8', tc.emptyState].join(' ')}>
           <Text className={['text-center text-sm', tc.textSecondary].join(' ')}>
-            Carregando campanhas...
+            {t('campaigns.loading')}
           </Text>
         </View>
       ) : null}
@@ -159,11 +160,10 @@ export function ActiveCampaignsHub({
       {!isLoading && campaigns.length === 0 && !error ? (
         <View className={['items-center gap-3 rounded-3xl p-8', tc.emptyState].join(' ')}>
           <Text className={['text-center text-base font-semibold', tc.textPrimary].join(' ')}>
-            Nenhuma campanha ativa ainda
+            {t('campaigns.emptyTitle')}
           </Text>
           <Text className={['text-center text-sm leading-5', tc.textSecondary].join(' ')}>
-            Publique sua primeira campanha pelo Campaign Magic para vê-la aqui com métricas em
-            tempo real.
+            {t('campaigns.emptyBody')}
           </Text>
         </View>
       ) : null}

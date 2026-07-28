@@ -28,8 +28,8 @@ export type Automation = {
 
 export type AutomationTemplate = {
   id: string
-  title: string
-  description: string
+  titleKey: `automations.${string}`
+  descriptionKey: `automations.${string}`
   trigger: AutomationTrigger
   action: AutomationAction
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import Animated, {
   Easing,
@@ -10,6 +10,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { Brain } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { ActivatedGlow } from '@/components/ui/ActivatedGlow'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -19,23 +20,6 @@ type StrategicActivityItem = {
   timestamp: string
   message: string
 }
-
-const STRATEGIC_AI_FEED: StrategicActivityItem[] = [
-  { id: 's1', timestamp: '09:41', message: 'Meridian — reconstruindo histórico e intenção…' },
-  { id: 's2', timestamp: '09:42', message: 'Meridian — detectou limitações e sinais implícitos.' },
-  { id: 's3', timestamp: '09:42', message: 'Meridian — calculando cenários e custo de oportunidade.' },
-  { id: 's4', timestamp: '09:43', message: 'Meridian — avaliando riscos e reversibilidade.' },
-  { id: 's5', timestamp: '09:43', message: 'Meridian — procurando premissas frágeis…' },
-  { id: 's6', timestamp: '09:44', message: 'Integração — decisão fundamentada pronta.' },
-]
-
-const CAMPAIGN_LAUNCH_FEED: StrategicActivityItem[] = [
-  { id: 'l1', timestamp: 'Agora', message: 'Meridian — alinhando campanha ao contexto atual…' },
-  { id: 'l2', timestamp: 'Agora', message: 'Meridian — priorizando canais por retorno esperado…' },
-  { id: 'l3', timestamp: 'Agora', message: 'Meridian — checando contradições na oferta…' },
-  { id: 'l4', timestamp: 'Agora', message: 'Integração — sincronizando execução nos canais…' },
-  { id: 'l5', timestamp: 'Agora', message: 'Resposta — campanha no ar. Meridian continua em observação.' },
-]
 
 const REVEAL_INTERVAL_MS = 900
 
@@ -111,8 +95,33 @@ function TimelineItem({
 }
 
 export function LiveAiActivity({ isLiveReveal = false, embedded = false }: LiveAiActivityProps) {
+  const { t } = useTranslation()
   const tc = useThemeClasses()
-  const feed = isLiveReveal ? CAMPAIGN_LAUNCH_FEED : STRATEGIC_AI_FEED
+
+  const strategicAiFeed = useMemo<StrategicActivityItem[]>(
+    () => [
+      { id: 's1', timestamp: '09:41', message: t('home.feedContext1') },
+      { id: 's2', timestamp: '09:42', message: t('home.feedContext2') },
+      { id: 's3', timestamp: '09:42', message: t('home.feedDecision1') },
+      { id: 's4', timestamp: '09:43', message: t('home.feedDecision2') },
+      { id: 's5', timestamp: '09:43', message: t('home.feedBlind1') },
+      { id: 's6', timestamp: '09:44', message: t('home.feedIntegration') },
+    ],
+    [t],
+  )
+
+  const campaignLaunchFeed = useMemo<StrategicActivityItem[]>(
+    () => [
+      { id: 'l1', timestamp: t('home.now'), message: t('home.feedCampaign1') },
+      { id: 'l2', timestamp: t('home.now'), message: t('home.feedCampaign2') },
+      { id: 'l3', timestamp: t('home.now'), message: t('home.feedCampaign3') },
+      { id: 'l4', timestamp: t('home.now'), message: t('home.feedCampaign4') },
+      { id: 'l5', timestamp: t('home.now'), message: t('home.feedCampaign5') },
+    ],
+    [t],
+  )
+
+  const feed = isLiveReveal ? campaignLaunchFeed : strategicAiFeed
   const [visibleCount, setVisibleCount] = useState(isLiveReveal ? 0 : feed.length)
 
   useEffect(() => {
@@ -137,6 +146,7 @@ export function LiveAiActivity({ isLiveReveal = false, embedded = false }: LiveA
   }, [feed.length, isLiveReveal])
 
   const visibleItems = feed.slice(0, visibleCount)
+  const statusLabel = isLiveReveal ? t('home.livePipeline') : t('home.liveEnginesActive')
 
   const content = (
     <>
@@ -147,26 +157,18 @@ export function LiveAiActivity({ isLiveReveal = false, embedded = false }: LiveA
           </View>
           <View className="flex-1">
             <Text className={['text-base font-bold', tc.textPrimary].join(' ')}>
-              Meridian
+              {t('nav.meridian')}
             </Text>
             <View className="mt-1 flex-row items-center gap-2">
               <PulsingStatusDot />
-              <Text className="text-xs font-semibold text-emerald">
-                {isLiveReveal
-                  ? 'Ao vivo — pipeline em execução'
-                  : '3 motores permanentes ativos'}
-              </Text>
+              <Text className="text-xs font-semibold text-emerald">{statusLabel}</Text>
             </View>
           </View>
         </View>
       ) : (
         <View className="mb-3 flex-row items-center gap-2 px-2">
           <PulsingStatusDot />
-          <Text className="text-xs font-semibold text-emerald">
-            {isLiveReveal
-              ? 'Ao vivo — pipeline em execução'
-              : '3 motores permanentes ativos'}
-          </Text>
+          <Text className="text-xs font-semibold text-emerald">{statusLabel}</Text>
         </View>
       )}
 
@@ -189,7 +191,7 @@ export function LiveAiActivity({ isLiveReveal = false, embedded = false }: LiveA
             <View className="flex-row items-center gap-2 pl-6">
               <View className="h-1.5 w-1.5 rounded-full bg-gold/60" />
               <Text className={['text-xs font-medium', tc.textMuted].join(' ')}>
-                Processando…
+                {t('common.processing')}
               </Text>
             </View>
           ) : null}

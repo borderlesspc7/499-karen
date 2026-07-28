@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import Animated, { FadeInDown } from 'react-native-reanimated'
+import { useTranslation } from '@shared/contexts'
 import type { OpportunityVariant, RevenueOpportunity } from '@shared/services/revenue-center'
 import {
   formatCurrencyBrlCompact,
@@ -45,15 +46,25 @@ const VARIANT_STYLES: Record<
 export function OpportunityCard({ opportunity, index = 0, onPress }: OpportunityCardProps) {
   const tc = useThemeClasses()
   const { isWebDesktop } = useResponsiveLayout()
+  const { t } = useTranslation()
   const variant = OPPORTUNITY_VARIANTS[opportunity.type]
   const styles = VARIANT_STYLES[variant]
 
   const impactDisplay =
     opportunity.type === 'approve-campaign' && opportunity.secondaryValue
-      ? `${opportunity.secondaryValue} novos leads`
+      ? t('home.newLeadsCount', { count: opportunity.secondaryValue })
       : `+${formatCurrencyBrlCompact(opportunity.impactValue)}`
 
   const buttonTextClass = variant === 'gold' ? 'text-deepBlue' : 'text-white'
+
+  const ctaLabel =
+    opportunity.type === 'reactivate-leads'
+      ? t('home.runNow')
+      : opportunity.type === 'approve-campaign'
+        ? t('home.approveCampaign')
+        : opportunity.type === 'upsell'
+          ? t('home.viewOpportunities')
+          : opportunity.ctaLabel
 
   return (
     <Animated.View
@@ -90,15 +101,7 @@ export function OpportunityCard({ opportunity, index = 0, onPress }: Opportunity
           onPress={onPress}
           className={['items-center rounded-xl py-3 active:opacity-90', styles.button].join(' ')}
         >
-          <Text className={['text-sm font-bold', buttonTextClass].join(' ')}>
-            {opportunity.ctaLabel === 'Reativar Agora'
-              ? 'Executar agora'
-              : opportunity.ctaLabel === 'Aprovar'
-                ? 'Aprovar campanha'
-                : opportunity.ctaLabel === 'Ver'
-                  ? 'Ver oportunidades'
-                  : opportunity.ctaLabel}
-          </Text>
+          <Text className={['text-sm font-bold', buttonTextClass].join(' ')}>{ctaLabel}</Text>
         </Pressable>
       </View>
     </Animated.View>
@@ -118,13 +121,14 @@ export function OpportunitySection({
 }: OpportunitySectionProps) {
   const tc = useThemeClasses()
   const { isWebDesktop } = useResponsiveLayout()
+  const { t } = useTranslation()
   const resolvedLimit = limit ?? (isWebDesktop ? 3 : 4)
   const visible = opportunities.slice(0, resolvedLimit)
 
   return (
     <View className="gap-4">
       <Text className={['text-lg font-bold', tc.textPrimary].join(' ')}>
-        Oportunidades para hoje
+        {t('home.opportunitiesToday')}
       </Text>
       <View className={isWebDesktop ? 'flex-row gap-4' : 'gap-3'}>
         {visible.map((opportunity, index) => (

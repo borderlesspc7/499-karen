@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native'
 import { Lock, Medal } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { ACHIEVEMENTS } from '@/constants/achievements'
 import type { UserGamificationState } from '@shared/types/gamification'
 
@@ -8,12 +9,13 @@ type AchievementsGridProps = {
 }
 
 export function AchievementsGrid({ gamificationState }: AchievementsGridProps) {
+  const { t } = useTranslation()
   const unlockedCount = ACHIEVEMENTS.filter((item) => item.isUnlocked(gamificationState)).length
 
   return (
     <View>
       <View className="mb-4 flex-row items-center justify-between">
-        <Text className="text-lg font-bold text-white">Mural de Conquistas</Text>
+        <Text className="text-lg font-bold text-white">{t('progress.achievementsWall')}</Text>
         <View className="rounded-full bg-gold/15 px-2.5 py-1">
           <Text className="text-xs font-bold text-gold">
             {unlockedCount}/{ACHIEVEMENTS.length}
@@ -64,7 +66,7 @@ export function AchievementsGrid({ gamificationState }: AchievementsGridProps) {
                 ].join(' ')}
                 numberOfLines={2}
               >
-                {achievement.title}
+                {t(achievement.titleKey)}
               </Text>
             </View>
           )

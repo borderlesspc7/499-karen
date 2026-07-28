@@ -1,11 +1,14 @@
 import { Pressable, Text, View } from 'react-native'
 import { Sparkles, Wand2 } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 
 type MagicBuilderShortcutProps = {
   onPress: () => void
 }
 
 export function MagicBuilderShortcut({ onPress }: MagicBuilderShortcutProps) {
+  const { t } = useTranslation()
+
   return (
     <Pressable
       onPress={onPress}
@@ -15,10 +18,8 @@ export function MagicBuilderShortcut({ onPress }: MagicBuilderShortcutProps) {
         <Wand2 size={22} color="#F59E0B" />
       </View>
       <View className="flex-1">
-        <Text className="text-base font-bold text-white">Construtor Mágico</Text>
-        <Text className="mt-1 text-sm text-white/60">
-          Gere o ecossistema do seu negócio com IA em poucos cliques.
-        </Text>
+        <Text className="text-base font-bold text-white">{t('home.magicBuilder')}</Text>
+        <Text className="mt-1 text-sm text-white/60">{t('home.magicBuilderHint')}</Text>
       </View>
       <View className="flex-row items-center gap-1 rounded-full bg-gold px-3 py-1.5">
         <Sparkles size={12} color="#0F172A" />

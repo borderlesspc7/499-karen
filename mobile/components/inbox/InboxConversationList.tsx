@@ -1,5 +1,6 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { FlatList, Pressable, Text, View } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import type { InboxConversation } from '@shared/types'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 import { InboxAiSummary } from './InboxAiSummary'
@@ -61,7 +62,10 @@ function ConversationRow({
 
         <View className="min-w-0 flex-1 gap-1.5">
           <View className="flex-row items-center justify-between gap-2">
-            <Text className={['flex-1 text-base font-semibold', textPrimary].join(' ')} numberOfLines={1}>
+            <Text
+              className={['flex-1 text-base font-semibold', textPrimary].join(' ')}
+              numberOfLines={1}
+            >
               {conversation.contactName}
             </Text>
             <Text className={['text-xs tabular-nums', textMuted].join(' ')}>
@@ -92,6 +96,7 @@ export function InboxConversationList({
   isCompact = false,
 }: InboxConversationListProps) {
   const tc = useThemeClasses()
+  const { t } = useTranslation()
   const unreadTotal = useMemo(
     () => conversations.reduce((sum, conversation) => sum + conversation.unreadCount, 0),
     [conversations],
@@ -110,7 +115,15 @@ export function InboxConversationList({
         listItemPressed={tc.listItemPressed}
       />
     ),
-    [onSelect, selectedId, tc.isDark, tc.listItemPressed, tc.textMuted, tc.textPrimary, tc.textSecondary],
+    [
+      onSelect,
+      selectedId,
+      tc.isDark,
+      tc.listItemPressed,
+      tc.textMuted,
+      tc.textPrimary,
+      tc.textSecondary,
+    ],
   )
 
   return (
@@ -121,14 +134,19 @@ export function InboxConversationList({
         isCompact ? `border-r ${tc.isDark ? 'border-white/10' : 'border-slate-100'}` : '',
       ].join(' ')}
     >
-      <View className={['px-6 pb-5 pt-8', tc.isDark ? 'border-b border-white/5' : 'border-b border-slate-50'].join(' ')}>
+      <View
+        className={[
+          'px-6 pb-5 pt-8',
+          tc.isDark ? 'border-b border-white/5' : 'border-b border-slate-50',
+        ].join(' ')}
+      >
         <View className="flex-row items-baseline justify-between">
           <Text className={['text-2xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
-            Inbox
+            {t('inbox.title')}
           </Text>
           {unreadTotal > 0 ? (
             <Text className={['text-sm tabular-nums', tc.textMuted].join(' ')}>
-              {unreadTotal} não lidas
+              {t('inbox.unread', { count: unreadTotal })}
             </Text>
           ) : null}
         </View>

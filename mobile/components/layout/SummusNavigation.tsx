@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, Text, View } from 'react-native'
 import { Link, usePathname } from 'expo-router'
+import { useTranslation } from '@shared/contexts'
 import { summusNavItems } from '@/constants/summus-nav-items'
 import { premiumColors } from '@/constants/premium-theme'
 import { SummusLogo } from '@/components/ui/SummusLogo'
@@ -11,6 +12,7 @@ type SummusNavigationProps = {
 
 export function SummusNavigation({ onNavigate }: SummusNavigationProps) {
   const pathname = usePathname()
+  const { t } = useTranslation()
 
   return (
     <View className="h-full w-[272px] border-r border-gold/10 bg-navy">
@@ -51,7 +53,7 @@ export function SummusNavigation({ onNavigate }: SummusNavigationProps) {
                   ].join(' ')}
                   numberOfLines={1}
                 >
-                  {item.label}
+                  {t(item.labelKey)}
                 </Text>
               </Pressable>
             </Link>

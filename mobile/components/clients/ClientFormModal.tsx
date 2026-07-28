@@ -6,15 +6,10 @@ import {
   TextInput,
   View,
 } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import type { Client, ClientStatus } from '@shared/types'
 import { ResponsiveDialog } from '@/components/layout/ResponsiveDialog'
 import { maskPhoneBr, unmaskPhoneBr } from '@/lib/input-masks'
-
-const STATUS_OPTIONS: Array<{ value: ClientStatus; label: string }> = [
-  { value: 'prospecto', label: 'Prospecto' },
-  { value: 'ativo', label: 'Ativo' },
-  { value: 'inativo', label: 'Inativo' },
-]
 
 export type ClientFormValues = {
   name: string
@@ -62,9 +57,16 @@ export function ClientFormModal({
   onClose,
   onSubmit,
 }: ClientFormModalProps) {
+  const { t } = useTranslation()
   const isEditing = Boolean(initialClient)
   const [values, setValues] = useState<ClientFormValues>(emptyValues)
   const [error, setError] = useState<string | null>(null)
+
+  const statusOptions: Array<{ value: ClientStatus; label: string }> = [
+    { value: 'prospecto', label: t('clients.statusProspect') },
+    { value: 'ativo', label: t('clients.statusActive') },
+    { value: 'inativo', label: t('clients.statusInactive') },
+  ]
 
   useEffect(() => {
     if (!visible) {
@@ -77,7 +79,7 @@ export function ClientFormModal({
 
   function handleSubmit() {
     if (!values.name.trim()) {
-      setError('Informe o nome do cliente.')
+      setError(t('clients.nameRequired'))
       return
     }
 
@@ -93,8 +95,8 @@ export function ClientFormModal({
     <ResponsiveDialog
       visible={visible}
       onClose={onClose}
-      badge={isEditing ? 'Editar' : 'Novo'}
-      title={isEditing ? 'Editar cliente' : 'Cadastrar cliente'}
+      badge={isEditing ? t('common.edit') : t('common.new')}
+      title={isEditing ? t('clients.formEdit') : t('clients.formNew')}
       footer={
         <Pressable
           onPress={handleSubmit}
@@ -105,16 +107,13 @@ export function ClientFormModal({
             <ActivityIndicator color="#fff" />
           ) : (
             <Text className="text-center text-sm font-semibold text-white">
-              {isEditing ? 'Salvar alterações' : 'Cadastrar cliente'}
+              {isEditing ? t('clients.formSave') : t('clients.formNew')}
             </Text>
           )}
         </Pressable>
       }
     >
-      <Text className="mb-4 text-sm text-slate-500">
-        Origem: manual. Leads de Meta Ads chegarão automaticamente quando a integração estiver
-        ativa.
-      </Text>
+      <Text className="mb-4 text-sm text-slate-500">{t('clients.formHint')}</Text>
 
       {error ? (
         <View className="mb-3 rounded-2xl border border-red-200 bg-red-50 px-3 py-2">
@@ -122,7 +121,7 @@ export function ClientFormModal({
         </View>
       ) : null}
 
-      <FieldLabel label="Nome *" />
+      <FieldLabel label={t('clients.fieldName')} />
       <TextInput
         value={values.name}
         onChangeText={(name) => setValues((current) => ({ ...current, name }))}
@@ -131,7 +130,7 @@ export function ClientFormModal({
         placeholderTextColor="#94a3b8"
       />
 
-      <FieldLabel label="Empresa" />
+      <FieldLabel label={t('clients.fieldCompany')} />
       <TextInput
         value={values.company}
         onChangeText={(company) => setValues((current) => ({ ...current, company }))}
@@ -140,7 +139,7 @@ export function ClientFormModal({
         placeholderTextColor="#94a3b8"
       />
 
-      <FieldLabel label="E-mail" />
+      <FieldLabel label={t('clients.fieldEmail')} />
       <TextInput
         value={values.email}
         onChangeText={(email) => setValues((current) => ({ ...current, email }))}
@@ -152,7 +151,7 @@ export function ClientFormModal({
         placeholderTextColor="#94a3b8"
       />
 
-      <FieldLabel label="Telefone" />
+      <FieldLabel label={t('clients.fieldPhone')} />
       <TextInput
         value={values.phone}
         onChangeText={(phone) =>
@@ -164,9 +163,9 @@ export function ClientFormModal({
         placeholderTextColor="#94a3b8"
       />
 
-      <FieldLabel label="Status" />
+      <FieldLabel label={t('clients.fieldStatus')} />
       <View className="mb-3 flex-row flex-wrap gap-2">
-        {STATUS_OPTIONS.map((option) => (
+        {statusOptions.map((option) => (
           <Pressable
             key={option.value}
             onPress={() => setValues((current) => ({ ...current, status: option.value }))}
@@ -189,11 +188,11 @@ export function ClientFormModal({
         ))}
       </View>
 
-      <FieldLabel label="Notas" />
+      <FieldLabel label={t('clients.fieldNotes')} />
       <TextInput
         value={values.notes}
         onChangeText={(notes) => setValues((current) => ({ ...current, notes }))}
-        placeholder="Contexto comercial, objeções, próximos passos..."
+        placeholder={t('clients.fieldNotesPh')}
         multiline
         className="mb-1 min-h-[88px] rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-900"
         placeholderTextColor="#94a3b8"

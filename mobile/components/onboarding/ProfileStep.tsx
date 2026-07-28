@@ -8,17 +8,24 @@ import {
 } from 'lucide-react-native'
 import type { LucideIcon } from 'lucide-react-native'
 import { Text, View } from 'react-native'
+import { useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
+import type { UserProfile } from '@shared/types/gamification'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { SummusLogo } from '@/components/ui/SummusLogo'
-import type { UserProfile } from '@shared/types/gamification'
 
-export const PROFILE_OPTIONS: Array<{ label: UserProfile; icon: LucideIcon; color: string }> = [
-  { label: 'Clínica', icon: Stethoscope, color: '#3B82F6' },
-  { label: 'Med Spa', icon: Sparkles, color: '#DB2777' },
-  { label: 'Agência', icon: Building2, color: '#8B5CF6' },
-  { label: 'E-commerce', icon: ShoppingBag, color: '#F59E0B' },
-  { label: 'Consultor', icon: UserRound, color: '#10B981' },
-  { label: 'Empresário', icon: Store, color: '#6366F1' },
+export const PROFILE_OPTIONS: Array<{
+  label: UserProfile
+  labelKey: TranslationKey
+  icon: LucideIcon
+  color: string
+}> = [
+  { label: 'Clínica', labelKey: 'onboarding.clinic', icon: Stethoscope, color: '#3B82F6' },
+  { label: 'Med Spa', labelKey: 'onboarding.medSpa', icon: Sparkles, color: '#DB2777' },
+  { label: 'Agência', labelKey: 'onboarding.agency', icon: Building2, color: '#8B5CF6' },
+  { label: 'E-commerce', labelKey: 'onboarding.ecommerce', icon: ShoppingBag, color: '#F59E0B' },
+  { label: 'Consultor', labelKey: 'onboarding.consultant', icon: UserRound, color: '#10B981' },
+  { label: 'Empresário', labelKey: 'onboarding.entrepreneur', icon: Store, color: '#6366F1' },
 ]
 
 type ProfileStepProps = {
@@ -26,15 +33,17 @@ type ProfileStepProps = {
 }
 
 export function ProfileStep({ onSelectProfile }: ProfileStepProps) {
+  const { t } = useTranslation()
+
   return (
     <>
       <View className="mb-8 items-center gap-4">
         <SummusLogo variant="icon" centered />
         <Text className="text-center text-3xl font-bold leading-tight text-white">
-          Qual é o seu perfil de negócio?
+          {t('onboarding.profileTitle')}
         </Text>
         <Text className="max-w-sm text-center text-base leading-6 text-white/55">
-          Personalizamos missões, campanhas e insights para o seu modelo de crescimento.
+          {t('onboarding.profileSubtitle')}
         </Text>
       </View>
 
@@ -55,7 +64,9 @@ export function ProfileStep({ onSelectProfile }: ProfileStepProps) {
               >
                 <Icon size={20} color={option.color} />
               </View>
-              <Text className="flex-1 text-base font-semibold text-white">{option.label}</Text>
+              <Text className="flex-1 text-base font-semibold text-white">
+                {t(option.labelKey)}
+              </Text>
             </AnimatedPressable>
           )
         })}

@@ -1,6 +1,6 @@
 import { Pressable, Text, View } from 'react-native'
 import { Linkedin, Megaphone, Sparkles } from 'lucide-react-native'
-import { LINKEDIN_AUTHORITY_OPPORTUNITY } from '@/constants/ai-content-engine'
+import { useTranslation } from '@shared/contexts'
 import { premiumColors, premiumShadows } from '@/constants/premium-theme'
 
 type AuthorityOpportunityCardProps = {
@@ -12,7 +12,7 @@ export function AuthorityOpportunityCard({
   onGenerateArticle,
   onDismiss,
 }: AuthorityOpportunityCardProps) {
-  const { prompt } = LINKEDIN_AUTHORITY_OPPORTUNITY
+  const { t } = useTranslation()
 
   return (
     <View
@@ -29,22 +29,22 @@ export function AuthorityOpportunityCard({
         <View className="flex-1 flex-row items-center gap-2">
           <Megaphone size={14} color={premiumColors.gold} strokeWidth={1.5} />
           <Text className="text-xs font-bold uppercase tracking-wider text-gold">
-            AI Newsroom & Autoridade
+            {t('home.newsroomBadge')}
           </Text>
         </View>
         <Sparkles size={16} color={premiumColors.gold} strokeWidth={1.5} />
       </View>
 
-      <Text className="mt-4 text-lg font-bold text-white">Oportunidade de Autoridade</Text>
+      <Text className="mt-4 text-lg font-bold text-white">{t('home.authorityTitle')}</Text>
 
-      <Text className="mt-3 text-sm leading-6 text-white/70">{prompt}</Text>
+      <Text className="mt-3 text-sm leading-6 text-white/70">{t('home.linkedinPrompt')}</Text>
 
       <View className="mt-6 flex-row gap-3">
         <Pressable
           onPress={onDismiss}
           className="flex-1 rounded-card border border-white/10 py-3.5 active:opacity-70"
         >
-          <Text className="text-center text-sm font-semibold text-white/55">Ignorar</Text>
+          <Text className="text-center text-sm font-semibold text-white/55">{t('home.dismiss')}</Text>
         </Pressable>
 
         <Pressable
@@ -52,7 +52,7 @@ export function AuthorityOpportunityCard({
           className="flex-1 rounded-card bg-gold py-3.5 active:opacity-90"
           style={premiumShadows.gold}
         >
-          <Text className="text-center text-sm font-bold text-navy">Gerar Artigo</Text>
+          <Text className="text-center text-sm font-bold text-navy">{t('home.generateArticle')}</Text>
         </Pressable>
       </View>
     </View>

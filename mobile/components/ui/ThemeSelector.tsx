@@ -1,25 +1,32 @@
 import { Pressable, Text, View } from 'react-native'
 import { Moon, Sun } from 'lucide-react-native'
-import { useTheme } from '@shared/contexts'
+import { useTheme, useTranslation } from '@shared/contexts'
 import type { ThemeMode } from '@shared/types/theme'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
-const THEME_OPTIONS: { id: ThemeMode; label: string; icon: typeof Sun }[] = [
-  { id: 'light', label: 'Claro', icon: Sun },
-  { id: 'dark', label: 'Escuro', icon: Moon },
+const THEME_OPTIONS: {
+  id: ThemeMode
+  labelKey: 'theme.light' | 'theme.dark'
+  icon: typeof Sun
+}[] = [
+  { id: 'light', labelKey: 'theme.light', icon: Sun },
+  { id: 'dark', labelKey: 'theme.dark', icon: Moon },
 ]
 
 export function ThemeSelector() {
   const { theme, setTheme } = useTheme()
+  const { t } = useTranslation()
   const tc = useThemeClasses()
 
   return (
     <View className={['gap-3 p-4', tc.card].join(' ')}>
       <View className="gap-1">
-        <Text className={['text-sm font-semibold', tc.textLabel].join(' ')}>Aparência</Text>
+        <Text className={['text-sm font-semibold', tc.textLabel].join(' ')}>
+          {t('theme.title')}
+        </Text>
         <Text className={['text-xs leading-5', tc.textMuted].join(' ')}>
-          Escolha como a plataforma deve ser exibida em todas as telas.
+          {t('theme.description')}
         </Text>
       </View>
 
@@ -54,7 +61,7 @@ export function ThemeSelector() {
                   isActive ? 'text-gold' : tc.textSecondary,
                 ].join(' ')}
               >
-                {option.label}
+                {t(option.labelKey)}
               </Text>
             </Pressable>
           )

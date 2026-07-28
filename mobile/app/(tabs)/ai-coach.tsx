@@ -1,23 +1,25 @@
 import { useMemo } from 'react'
 import { ScrollView, Text, View } from 'react-native'
 import { GROWTH_ACTIONS } from '@shared/constants/growth-actions'
-import { useGamification } from '@shared/contexts'
+import { useGamification, useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import { AiCoachMissionCard } from '@/components/dashboard/home/AiCoachMissionCard'
 import { ThemedScreen } from '@/components/layout/AppScreen'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
-const IMPACT_LABELS: Record<string, string> = {
-  marketing: 'Marketing',
-  vendas: 'Vendas',
-  automacao: 'Automação',
-  credibilidade: 'Credibilidade',
-  posicionamento: 'Posicionamento',
+const IMPACT_LABEL_KEYS: Record<string, TranslationKey> = {
+  marketing: 'home.marketing',
+  vendas: 'home.sales',
+  automacao: 'home.automation',
+  credibilidade: 'home.credibility',
+  posicionamento: 'home.positioning',
 }
 
 export default function AiCoachScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const tc = useThemeClasses()
+  const { t } = useTranslation()
   const { completeMission, timeline } = useGamification()
 
   const suggestedMissions = useMemo(() => {
@@ -26,12 +28,16 @@ export default function AiCoachScreen() {
     return Object.entries(GROWTH_ACTIONS)
       .filter(([actionId]) => !completedActionIds.has(actionId))
       .slice(0, 3)
-      .map(([actionId, action]) => ({
-        id: actionId,
-        title: action.title,
-        impact: `+${action.xpReward} XP · ${IMPACT_LABELS[action.impactCategory] ?? action.impactCategory}`,
-      }))
-  }, [timeline])
+      .map(([actionId, action]) => {
+        const labelKey = IMPACT_LABEL_KEYS[action.impactCategory]
+        const label = labelKey ? t(labelKey) : action.impactCategory
+        return {
+          id: actionId,
+          title: t(action.titleKey),
+          impact: t('home.missionXp', { xp: action.xpReward, label }),
+        }
+      })
+  }, [t, timeline])
 
   return (
     <ThemedScreen>
@@ -44,9 +50,11 @@ export default function AiCoachScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View className="gap-2">
-          <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>AI Coach</Text>
+          <Text className={['text-3xl font-bold', tc.textPrimary].join(' ')}>
+            {t('placeholders.aiCoachTitle')}
+          </Text>
           <Text className={['text-sm', tc.textSecondary].join(' ')}>
-            Missões proativas geradas pela IA para acelerar o seu crescimento.
+            {t('placeholders.aiCoachDesc')}
           </Text>
         </View>
 
@@ -54,11 +62,11 @@ export default function AiCoachScreen() {
 
         <View className="gap-3">
           <Text className={['text-lg font-bold', tc.textPrimary].join(' ')}>
-            Próximas missões sugeridas
+            {t('placeholders.nextMissions')}
           </Text>
           {suggestedMissions.length === 0 ? (
             <Text className={['text-sm', tc.textSecondary].join(' ')}>
-              Todas as missões disponíveis foram concluídas. Novas serão geradas conforme sua operação evoluir.
+              {t('placeholders.allMissionsDone')}
             </Text>
           ) : null}
           {suggestedMissions.map((mission) => (

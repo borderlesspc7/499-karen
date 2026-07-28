@@ -1,9 +1,17 @@
 export type PasswordStrengthLevel = 'empty' | 'weak' | 'fair' | 'good' | 'strong'
 
+export type PasswordFeedbackCode =
+  | 'minLength'
+  | 'uppercase'
+  | 'lowercase'
+  | 'number'
+  | 'special'
+
 export type PasswordStrengthResult = {
   level: PasswordStrengthLevel
   score: number
-  label: string
+  /** Level key for UI (`password.weak` etc.); empty when password is blank. */
+  label: PasswordStrengthLevel | ''
   checks: {
     minLength: boolean
     hasUppercase: boolean
@@ -12,14 +20,23 @@ export type PasswordStrengthResult = {
     hasSpecial: boolean
   }
   isStrongEnough: boolean
-  feedback: string[]
+  /** Codes mapped to `password.*` dictionary keys in the UI. */
+  feedback: PasswordFeedbackCode[]
 }
 
-const MIN_LENGTH = 8
+export const PASSWORD_MIN_LENGTH = 8
+
+const FEEDBACK_FALLBACK_PT: Record<PasswordFeedbackCode, string> = {
+  minLength: `Pelo menos ${PASSWORD_MIN_LENGTH} caracteres`,
+  uppercase: 'Uma letra maiúscula',
+  lowercase: 'Uma letra minúscula',
+  number: 'Um número',
+  special: 'Um caractere especial (!@#$…)',
+}
 
 export function evaluatePasswordStrength(password: string): PasswordStrengthResult {
   const checks = {
-    minLength: password.length >= MIN_LENGTH,
+    minLength: password.length >= PASSWORD_MIN_LENGTH,
     hasUppercase: /[A-ZÀ-Ý]/.test(password),
     hasLowercase: /[a-zà-ÿ]/.test(password),
     hasNumber: /\d/.test(password),
@@ -27,13 +44,13 @@ export function evaluatePasswordStrength(password: string): PasswordStrengthResu
   }
 
   const passedCount = Object.values(checks).filter(Boolean).length
-  const feedback: string[] = []
+  const feedback: PasswordFeedbackCode[] = []
 
-  if (!checks.minLength) feedback.push(`Pelo menos ${MIN_LENGTH} caracteres`)
-  if (!checks.hasUppercase) feedback.push('Uma letra maiúscula')
-  if (!checks.hasLowercase) feedback.push('Uma letra minúscula')
-  if (!checks.hasNumber) feedback.push('Um número')
-  if (!checks.hasSpecial) feedback.push('Um caractere especial (!@#$…)')
+  if (!checks.minLength) feedback.push('minLength')
+  if (!checks.hasUppercase) feedback.push('uppercase')
+  if (!checks.hasLowercase) feedback.push('lowercase')
+  if (!checks.hasNumber) feedback.push('number')
+  if (!checks.hasSpecial) feedback.push('special')
 
   if (!password) {
     return {
@@ -47,23 +64,19 @@ export function evaluatePasswordStrength(password: string): PasswordStrengthResu
   }
 
   let level: PasswordStrengthLevel = 'weak'
-  let label = 'Fraca'
 
   if (passedCount >= 5 && password.length >= 12) {
     level = 'strong'
-    label = 'Forte'
   } else if (passedCount >= 5) {
     level = 'good'
-    label = 'Boa'
   } else if (passedCount >= 3) {
     level = 'fair'
-    label = 'Razoável'
   }
 
   return {
     level,
     score: passedCount,
-    label,
+    label: level,
     checks,
     isStrongEnough: passedCount === 5,
     feedback,
@@ -73,8 +86,9 @@ export function evaluatePasswordStrength(password: string): PasswordStrengthResu
 export function assertPasswordStrongEnough(password: string): void {
   const result = evaluatePasswordStrength(password)
   if (!result.isStrongEnough) {
-    throw new Error(
-      `Senha fraca. Inclua: ${result.feedback.join(', ').toLowerCase()}.`,
-    )
+    const details = result.feedback
+      .map((code) => FEEDBACK_FALLBACK_PT[code].toLowerCase())
+      .join(', ')
+    throw new Error(`Senha fraca. Inclua: ${details}.`)
   }
 }

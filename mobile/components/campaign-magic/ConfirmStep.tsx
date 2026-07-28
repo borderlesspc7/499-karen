@@ -1,10 +1,8 @@
 import { Pressable, Text, View } from 'react-native'
 import { Sparkles, Wand2 } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { CampaignWizardStep } from './CampaignWizardStep'
-import {
-  CAMPAIGN_OBJECTIVES,
-  type CampaignWizardData,
-} from './campaign-wizard-types'
+import { CAMPAIGN_OBJECTIVES, type CampaignWizardData } from './campaign-wizard-types'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
 type ConfirmStepProps = {
@@ -15,28 +13,34 @@ type ConfirmStepProps = {
 
 export function ConfirmStep({ data, onBack, onGenerate }: ConfirmStepProps) {
   const tc = useThemeClasses()
-  const objectiveLabel =
-    CAMPAIGN_OBJECTIVES.find((o) => o.id === data.objective)?.label ?? '—'
+  const { t } = useTranslation()
+  const objectiveKey = CAMPAIGN_OBJECTIVES.find((o) => o.id === data.objective)?.labelKey
+  const objectiveLabel = objectiveKey ? t(objectiveKey) : t('common.emDash')
 
   return (
     <CampaignWizardStep
       stepIndex={3}
       totalSteps={4}
-      title="Pronto para gerar"
-      subtitle="Revise os detalhes antes de a IA criar sua campanha completa."
+      title={t('campaigns.confirmTitle')}
+      subtitle={t('campaigns.confirmSubtitle')}
       showBack
       onBack={onBack}
     >
       <View className={['gap-4 p-5', tc.glassCard].join(' ')}>
-        <SummaryRow label="Objetivo" value={objectiveLabel} tc={tc} />
-        <SummaryRow label="Público" value={data.audience} tc={tc} />
-        <SummaryRow label="Oferta" value={data.offer} tc={tc} />
+        <SummaryRow label={t('campaigns.labelObjective')} value={objectiveLabel} tc={tc} />
+        <SummaryRow label={t('campaigns.labelAudience')} value={data.audience} tc={tc} />
+        <SummaryRow label={t('campaigns.labelOffer')} value={data.offer} tc={tc} />
       </View>
 
-      <View className={['flex-row items-center gap-2 rounded-2xl border border-gold/20 bg-gold/5 p-4', tc.cardSm].join(' ')}>
+      <View
+        className={[
+          'flex-row items-center gap-2 rounded-2xl border border-gold/20 bg-gold/5 p-4',
+          tc.cardSm,
+        ].join(' ')}
+      >
         <Sparkles size={16} color="#C5A059" />
         <Text className={['flex-1 text-xs leading-5', tc.textSecondary].join(' ')}>
-          A IA gerará posts, e-mails, copy de landing page e mensagens para todos os canais conectados.
+          {t('campaigns.aiHint')}
         </Text>
       </View>
 
@@ -52,7 +56,7 @@ export function ConfirmStep({ data, onBack, onGenerate }: ConfirmStepProps) {
         }}
       >
         <Wand2 size={18} color="#0A1128" />
-        <Text className="text-base font-bold text-deepBlue">Gerar Campanha Completa</Text>
+        <Text className="text-base font-bold text-deepBlue">{t('campaigns.generateFull')}</Text>
       </Pressable>
     </CampaignWizardStep>
   )

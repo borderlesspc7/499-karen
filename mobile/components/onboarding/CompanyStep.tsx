@@ -1,5 +1,6 @@
 import { Text, View } from 'react-native'
 import { Building2 } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { SummusModalBadge } from '@/components/ui/modal'
 import { OnboardingField } from './OnboardingField'
 
@@ -18,38 +19,38 @@ export function CompanyStep({
   onChangeServicesDescription,
   variant = 'onboarding',
 }: CompanyStepProps) {
+  const { t } = useTranslation()
   const isEmbedded = variant === 'embedded'
 
   return (
     <>
       {!isEmbedded ? (
         <View className="mb-8 items-center gap-3">
-          <SummusModalBadge label="Passo 1" icon={Building2} tone="blue" />
+          <SummusModalBadge label={t('onboarding.step1')} icon={Building2} tone="blue" />
           <Text className="text-center text-2xl font-bold leading-tight text-white">
-            Conte-nos sobre a sua empresa
+            {t('onboarding.companyTitle')}
           </Text>
           <Text className="max-w-sm text-center text-base leading-6 text-white/55">
-            Essas informações orientam a IA na criação de campanhas, conteúdos e automações alinhados
-            ao seu negócio.
+            {t('onboarding.companySubtitle')}
           </Text>
         </View>
       ) : null}
 
       <View className="gap-5">
         <OnboardingField
-          label="Nome da empresa"
+          label={t('onboarding.companyName')}
           value={companyName}
           onChangeText={onChangeCompanyName}
-          placeholder="Ex: Clínica Harmonia"
+          placeholder={t('onboarding.companyNamePh')}
           variant={variant}
         />
         <OnboardingField
-          label="Produtos ou serviços oferecidos"
+          label={t('onboarding.servicesLabel')}
           value={servicesDescription}
           onChangeText={onChangeServicesDescription}
-          placeholder="Ex: Harmonização facial, botox, preenchimento labial, skinbooster..."
+          placeholder={t('onboarding.servicesPh')}
           multiline
-          hint="Descreva o que você vende hoje. Quanto mais detalhe, melhor a IA personaliza."
+          hint={t('onboarding.servicesHint')}
           variant={variant}
         />
       </View>

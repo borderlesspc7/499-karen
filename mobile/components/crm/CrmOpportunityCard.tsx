@@ -1,6 +1,7 @@
 import { memo } from 'react'
-import type { KanbanCardWithClient } from '@shared/types'
-import { categoryLabels, priorityLabels } from '@shared/data'
+import { useTranslation } from '@shared/contexts'
+import { getCategoryLabel, getPriorityLabel } from '@shared/data'
+import { getLeadSourceLabel, type KanbanCardWithClient } from '@shared/types'
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native'
 
 type CrmOpportunityCardProps = {
@@ -32,6 +33,8 @@ function CrmOpportunityCardComponent({
   isLifted = false,
   className = '',
 }: CrmOpportunityCardProps) {
+  const { t, locale } = useTranslation()
+
   return (
     <Pressable
       onPress={onPress}
@@ -46,26 +49,30 @@ function CrmOpportunityCardComponent({
     >
       <View className="flex-row flex-wrap gap-2">
         <View className="rounded-full bg-violet-100 px-2.5 py-0.5">
-          <Text className="text-xs font-medium text-violet-700">{categoryLabels[card.category]}</Text>
+          <Text className="text-xs font-medium text-violet-700">
+            {getCategoryLabel(t, card.category)}
+          </Text>
         </View>
-        <Text className="text-xs font-medium text-amber-700">{priorityLabels[card.priority]}</Text>
+        <Text className="text-xs font-medium text-amber-700">
+          {getPriorityLabel(t, card.priority)}
+        </Text>
         {card.dealValue > 0 ? (
           <View className="rounded-full bg-emerald-100 px-2.5 py-0.5">
             <Text className="text-xs font-medium text-emerald-700">
-              R$ {card.dealValue.toLocaleString('pt-BR')}
+              R$ {card.dealValue.toLocaleString(locale)}
             </Text>
           </View>
         ) : null}
         {card.source !== 'manual' ? (
           <View className="rounded-full bg-sky-100 px-2.5 py-0.5">
             <Text className="text-xs font-medium text-sky-700">
-              {card.source === 'meta_ads' ? 'Meta Ads' : 'Campanha'}
+              {getLeadSourceLabel(t, card.source)}
             </Text>
           </View>
         ) : null}
         {card.isClientDerived ? (
           <View className="rounded-full bg-slate-200 px-2.5 py-0.5">
-            <Text className="text-xs font-medium text-slate-700">Do cadastro</Text>
+            <Text className="text-xs font-medium text-slate-700">{t('crm.fromRegistry')}</Text>
           </View>
         ) : null}
       </View>

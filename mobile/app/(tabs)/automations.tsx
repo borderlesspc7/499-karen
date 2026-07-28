@@ -11,7 +11,7 @@ import {
 import { Zap } from 'lucide-react-native'
 import { automationTemplates } from '@shared/data'
 import type { Automation } from '@shared/types'
-import { useAuth } from '@shared/contexts'
+import { useAuth, useTranslation } from '@shared/contexts'
 import { ThemedScreen } from '@/components/layout/AppScreen'
 import { DesktopContent } from '@/components/layout/DesktopContent'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
@@ -21,6 +21,7 @@ import { getAutomationRepository } from '@/lib/firestore-automation-repository'
 export default function AutomationsScreen() {
   const { isWebDesktop } = useResponsiveLayout()
   const tc = useThemeClasses()
+  const { t, locale } = useTranslation()
   const { currentUser } = useAuth()
   const [automations, setAutomations] = useState<Automation[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -44,12 +45,12 @@ export default function AutomationsScreen() {
       setError(
         loadError instanceof Error
           ? loadError.message
-          : 'Não foi possível carregar as automações.',
+          : t('automations.loadError'),
       )
     } finally {
       setIsLoading(false)
     }
-  }, [currentUser?.id])
+  }, [currentUser?.id, t])
 
   useEffect(() => {
     void loadAutomations()
@@ -79,7 +80,7 @@ export default function AutomationsScreen() {
       (item) => item.trigger === template.trigger && item.action === template.action,
     )
     if (alreadyExists) {
-      setError('Essa automação já está ativa na sua conta.')
+      setError(t('automations.alreadyActive'))
       return
     }
 
@@ -89,8 +90,8 @@ export default function AutomationsScreen() {
     try {
       await getAutomationRepository().create({
         userId: currentUser.id,
-        title: template.title,
-        description: template.description,
+        title: t(template.titleKey),
+        description: t(template.descriptionKey),
         trigger: template.trigger,
         action: template.action,
         enabled: true,
@@ -100,7 +101,7 @@ export default function AutomationsScreen() {
       setError(
         saveError instanceof Error
           ? saveError.message
-          : 'Não foi possível ativar a automação.',
+          : t('automations.activateError'),
       )
     } finally {
       setIsSaving(false)
@@ -125,14 +126,14 @@ export default function AutomationsScreen() {
             <View className="self-start flex-row items-center gap-2 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5">
               <Zap size={14} color="#7c3aed" />
               <Text className="text-xs font-semibold uppercase tracking-wide text-violet-700">
-                Automações
+                {t('automations.badge')}
               </Text>
             </View>
             <Text className={['text-3xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
-              Fluxos ativos
+              {t('automations.title')}
             </Text>
             <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
-              Automações persistidas no Firestore da sua conta — sem dados demo.
+              {t('automations.subtitle')}
             </Text>
           </View>
 
@@ -149,10 +150,10 @@ export default function AutomationsScreen() {
           ) : automations.length === 0 ? (
             <View className={['rounded-3xl border border-dashed p-6', tc.emptyState].join(' ')}>
               <Text className={['text-base font-medium', tc.textPrimary].join(' ')}>
-                Nenhuma automação ativa
+                {t('automations.emptyTitle')}
               </Text>
               <Text className={['mt-2 text-sm', tc.textSecondary].join(' ')}>
-                Ative um template abaixo para gravar no Firestore.
+                {t('automations.emptyBody')}
               </Text>
             </View>
           ) : (
@@ -174,10 +175,12 @@ export default function AutomationsScreen() {
                         {automation.description}
                       </Text>
                       <Text className={['mt-2 text-xs', tc.textSecondary].join(' ')}>
-                        Disparada {automation.runCount}x
+                        {t('automations.runCount', { count: automation.runCount })}
                         {automation.lastRunAt
-                          ? ` · última em ${new Date(automation.lastRunAt).toLocaleString('pt-BR')}`
-                          : ' · ainda não executada'}
+                          ? ` ${t('automations.lastRun', {
+                              date: new Date(automation.lastRunAt).toLocaleString(locale),
+                            })}`
+                          : ` ${t('automations.neverRun')}`}
                       </Text>
                     </View>
                     <Switch
@@ -191,7 +194,9 @@ export default function AutomationsScreen() {
           )}
 
           <View className="gap-3">
-            <Text className={['text-lg font-bold', tc.textPrimary].join(' ')}>Templates</Text>
+            <Text className={['text-lg font-bold', tc.textPrimary].join(' ')}>
+              {t('automations.templatesTitle')}
+            </Text>
             {automationTemplates.map((template) => (
               <View
                 key={template.id}
@@ -201,10 +206,10 @@ export default function AutomationsScreen() {
                 ].join(' ')}
               >
                 <Text className={['text-base font-semibold', tc.textPrimary].join(' ')}>
-                  {template.title}
+                  {t(template.titleKey)}
                 </Text>
                 <Text className={['mt-1 text-sm', tc.textSecondary].join(' ')}>
-                  {template.description}
+                  {t(template.descriptionKey)}
                 </Text>
                 <Pressable
                   onPress={() => void handleActivateTemplate(template.id)}
@@ -212,7 +217,7 @@ export default function AutomationsScreen() {
                   className="mt-4 self-start rounded-2xl bg-violet-600 px-4 py-2.5 active:opacity-80"
                 >
                   <Text className="text-sm font-semibold text-white">
-                    {isSaving ? 'Ativando...' : 'Ativar no Firestore'}
+                    {isSaving ? t('automations.activating') : t('automations.activate')}
                   </Text>
                 </Pressable>
               </View>

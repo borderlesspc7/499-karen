@@ -1,11 +1,12 @@
 import type { LucideIcon } from 'lucide-react-native'
 import { Bot, Globe, Target, Trophy, Users, Zap } from 'lucide-react-native'
+import type { TranslationKey } from '@shared/i18n'
 import type { UserGamificationState } from '@shared/types/gamification'
 
 export type AchievementDefinition = {
   id: string
-  title: string
-  description: string
+  titleKey: TranslationKey
+  descriptionKey: TranslationKey
   icon: LucideIcon
   isUnlocked: (state: UserGamificationState) => boolean
 }
@@ -13,22 +14,22 @@ export type AchievementDefinition = {
 export const ACHIEVEMENTS: AchievementDefinition[] = [
   {
     id: 'first-site',
-    title: 'Primeiro Site',
-    description: 'Publicou a primeira versão do site',
+    titleKey: 'achievements.firstSiteTitle',
+    descriptionKey: 'achievements.firstSiteDesc',
     icon: Globe,
     isUnlocked: (state) => state.businessHealth.posicionamento >= 50,
   },
   {
     id: 'hundred-leads',
-    title: '100 Leads',
-    description: 'Alcançou 100 leads qualificados',
+    titleKey: 'achievements.hundredLeadsTitle',
+    descriptionKey: 'achievements.hundredLeadsDesc',
     icon: Users,
     isUnlocked: (state) => state.businessHealth.vendas >= 80,
   },
   {
     id: 'first-automation',
-    title: 'Primeira Automação',
-    description: 'Ativou o primeiro fluxo automático',
+    titleKey: 'achievements.firstAutomationTitle',
+    descriptionKey: 'achievements.firstAutomationDesc',
     icon: Zap,
     isUnlocked: (state) =>
       state.businessHealth.automacao >= 45 ||
@@ -36,23 +37,23 @@ export const ACHIEVEMENTS: AchievementDefinition[] = [
   },
   {
     id: 'first-campaign',
-    title: 'Primeira Campanha',
-    description: 'Lançou uma campanha de captação',
+    titleKey: 'achievements.firstCampaignTitle',
+    descriptionKey: 'achievements.firstCampaignDesc',
     icon: Target,
     isUnlocked: (state) =>
       state.recentActivity.some((item) => item.type === 'marketing'),
   },
   {
     id: 'crm-master',
-    title: 'CRM Configurado',
-    description: 'Estruturou o pipeline de vendas',
+    titleKey: 'achievements.crmMasterTitle',
+    descriptionKey: 'achievements.crmMasterDesc',
     icon: Bot,
     isUnlocked: (state) => state.businessHealth.vendas >= 55,
   },
   {
     id: 'growth-builder',
-    title: 'Growth Builder',
-    description: 'Atingiu o nível 10 de evolução',
+    titleKey: 'achievements.growthBuilderTitle',
+    descriptionKey: 'achievements.growthBuilderDesc',
     icon: Trophy,
     isUnlocked: (state) => state.level >= 10,
   },

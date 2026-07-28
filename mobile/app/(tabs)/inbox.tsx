@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import { ThemedScreen } from '@/components/layout/AppScreen'
 import { InboxChatView, InboxConversationList } from '@/components/inbox'
 import { useInboxConversations } from '@/hooks/useInboxConversations'
@@ -99,14 +100,15 @@ export default function InboxScreen() {
 
 function InboxEmptyState() {
   const tc = useThemeClasses()
+  const { t } = useTranslation()
 
   return (
     <View className={['flex-1 items-center justify-center px-8', tc.chatBg].join(' ')}>
       <Text className={['text-lg font-semibold', tc.textPrimary].join(' ')}>
-        Selecione uma conversa
+        {t('inbox.selectTitle')}
       </Text>
       <Text className={['mt-2 text-center text-sm', tc.textSecondary].join(' ')}>
-        Escolha um contato na lista para visualizar o histórico omnichannel.
+        {t('inbox.selectBody')}
       </Text>
     </View>
   )

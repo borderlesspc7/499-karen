@@ -1,5 +1,6 @@
 import { Alert, FlatList, Pressable, Text, View } from 'react-native'
 import { ArrowRight, Sparkles, TrendingUp } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import type { GrowthFlowLead } from '@/lib/crm-lead-insights'
 import { resolveHealthColor } from '@/lib/crm-lead-insights'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -8,10 +9,6 @@ type GrowthFlowListProps = {
   leads: GrowthFlowLead[]
   onLeadPress?: (lead: GrowthFlowLead) => void
   onExecuteLead?: (lead: GrowthFlowLead) => void
-}
-
-function formatRevenue(amount: number): string {
-  return amount.toLocaleString('pt-BR')
 }
 
 type GrowthFlowItemProps = {
@@ -24,7 +21,9 @@ type GrowthFlowItemProps = {
 
 function GrowthFlowItem({ lead, rank, isLast, onPress, onExecute }: GrowthFlowItemProps) {
   const tc = useThemeClasses()
+  const { t, locale } = useTranslation()
   const healthColor = resolveHealthColor(lead.healthScore)
+  const nextActionLabel = t(lead.nextBestAction)
 
   return (
     <View className="flex-row gap-4">
@@ -61,17 +60,19 @@ function GrowthFlowItem({ lead, rank, isLast, onPress, onExecute }: GrowthFlowIt
             <View className="flex-row items-center gap-1.5">
               <Sparkles size={13} color="#3B82F6" />
               <Text className="text-xs font-bold uppercase tracking-wider text-electricBlue">
-                Próxima melhor ação
+                {t('opportunities.nextBestAction')}
               </Text>
             </View>
             <Text className={['mt-1.5 text-sm font-medium leading-5', tc.textPrimary].join(' ')}>
-              {lead.nextBestAction}
+              {nextActionLabel}
             </Text>
           </View>
 
           <View className="mt-3 self-start rounded-full bg-emerald/10 px-3 py-1.5">
             <Text className="text-sm font-bold text-emerald">
-              Impacto ao fechar: +R$ {formatRevenue(lead.dealImpact)}
+              {t('opportunities.closeImpact', {
+                amount: lead.dealImpact.toLocaleString(locale),
+              })}
             </Text>
           </View>
 
@@ -79,7 +80,7 @@ function GrowthFlowItem({ lead, rank, isLast, onPress, onExecute }: GrowthFlowIt
             onPress={onExecute}
             className="mt-4 flex-row items-center justify-center gap-2 rounded-2xl bg-electricBlue py-3 active:opacity-90"
           >
-            <Text className="text-sm font-bold text-white">Executar Agora</Text>
+            <Text className="text-sm font-bold text-white">{t('opportunities.executeNow')}</Text>
             <ArrowRight size={16} color="#FFFFFF" />
           </Pressable>
         </Pressable>
@@ -90,12 +91,13 @@ function GrowthFlowItem({ lead, rank, isLast, onPress, onExecute }: GrowthFlowIt
 
 export function GrowthFlowList({ leads, onLeadPress, onExecuteLead }: GrowthFlowListProps) {
   const tc = useThemeClasses()
+  const { t } = useTranslation()
 
   if (leads.length === 0) {
     return (
       <View className={['rounded-3xl p-8', tc.emptyState].join(' ')}>
         <Text className={['text-center text-sm', tc.textSecondary].join(' ')}>
-          Nenhuma oportunidade ativa no momento.
+          {t('opportunities.emptyActive')}
         </Text>
       </View>
     )
@@ -118,8 +120,11 @@ export function GrowthFlowList({ leads, onLeadPress, onExecuteLead }: GrowthFlow
           onExecute={() => {
             onExecuteLead?.(item)
             Alert.alert(
-              'Ação em execução',
-              `A IA vai ${item.nextBestAction.toLowerCase()} para ${item.clientName}.`,
+              t('opportunities.actionRunning'),
+              t('opportunities.actionRunningBody', {
+                action: t(item.nextBestAction).toLowerCase(),
+                name: item.clientName,
+              }),
             )
           }}
         />

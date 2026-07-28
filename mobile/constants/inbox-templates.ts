@@ -1,6 +1,8 @@
-export const INBOX_QUICK_TEMPLATES = [
-  'Olá! Como posso ajudar?',
-  'Vou verificar e já retorno.',
-  'Podemos agendar uma call esta semana?',
-  'Enviei a proposta por e-mail.',
-] as const
+import type { TranslationKey } from '@shared/i18n'
+
+export const INBOX_QUICK_TEMPLATE_KEYS = [
+  'inbox.tplGreeting',
+  'inbox.tplChecking',
+  'inbox.tplSchedule',
+  'inbox.tplProposal',
+] as const satisfies readonly TranslationKey[]

@@ -1,5 +1,7 @@
 import { memo, type ReactNode } from 'react'
 import type { KanbanCardWithClient, KanbanColumn } from '@shared/types'
+import { useTranslation } from '@shared/contexts'
+import { getKanbanColumnTitle } from '@shared/data'
 import { FlatList, Text, View } from 'react-native'
 import { CrmOpportunityCard } from './CrmOpportunityCard'
 
@@ -26,6 +28,8 @@ function CrmColumnComponent({
   renderCard,
   minHeightClassName = 'min-h-[420px]',
 }: CrmColumnProps) {
+  const { t } = useTranslation()
+
   return (
     <View
       className={[
@@ -35,7 +39,9 @@ function CrmColumnComponent({
     >
       <View className="flex-row items-center gap-3 border-b border-slate-100 px-4 py-4">
         <View className="h-2.5 w-2.5 rounded-full bg-violet-500" />
-        <Text className="text-base font-semibold text-slate-900">{group.column.title}</Text>
+        <Text className="text-base font-semibold text-slate-900">
+          {getKanbanColumnTitle(t, group.column.id, group.column.title)}
+        </Text>
         <View className="rounded-full bg-slate-100 px-2.5 py-0.5">
           <Text className="text-xs font-medium text-slate-600">{group.cards.length}</Text>
         </View>
@@ -44,7 +50,7 @@ function CrmColumnComponent({
       <View className={['gap-3 p-4', minHeightClassName].join(' ')}>
         {group.cards.length === 0 ? (
           <Text className="py-8 text-center text-sm text-slate-400">
-            {isOver ? 'Solte aqui' : 'Nenhuma oportunidade nesta etapa.'}
+            {isOver ? t('crm.dropHere') : t('crm.dropEmpty')}
           </Text>
         ) : (
           <FlatList

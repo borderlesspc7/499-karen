@@ -1,4 +1,5 @@
 import { Text, View } from 'react-native'
+import { useTranslation } from '@shared/contexts'
 import { COGNITIVE_PIPELINE } from '@/constants/cognitive-engines'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
@@ -8,18 +9,19 @@ type CognitivePipelineProps = {
 
 export function CognitivePipeline({ compact = false }: CognitivePipelineProps) {
   const tc = useThemeClasses()
+  const { t } = useTranslation()
 
   return (
     <View className={['p-5', tc.cardLg].join(' ')} style={tc.cardShadow}>
       <Text className={['text-xs font-bold uppercase tracking-wider text-gold'].join(' ')}>
-        Pipeline Meridian
+        {t('workforce.pipelineBadge')}
       </Text>
       <Text className={['mt-1 text-base font-bold', tc.textPrimary].join(' ')}>
-        Um único cérebro
+        {t('workforce.pipelineTitle')}
       </Text>
       {!compact ? (
         <Text className={['mt-1 text-sm leading-5', tc.textSecondary].join(' ')}>
-          Não existem módulos separados. Todo processamento passa por este pipeline.
+          {t('workforce.pipelineSubtitle')}
         </Text>
       ) : null}
 
@@ -36,7 +38,7 @@ export function CognitivePipeline({ compact = false }: CognitivePipelineProps) {
               </View>
               <View className={isLast ? 'pb-0' : 'pb-3'}>
                 <Text className={['text-sm font-semibold', tc.textPrimary].join(' ')}>
-                  {stage.label}
+                  {t(stage.labelKey)}
                 </Text>
               </View>
             </View>

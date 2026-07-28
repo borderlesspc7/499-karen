@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, Text, View } from 'react-native'
 import { Bot, CheckCircle2, Eye, Sparkles } from 'lucide-react-native'
+import { useTranslation } from '@shared/contexts'
 import { AnimatedPressable } from '@/components/ui/AnimatedPressable'
 import { SummusSheetModal, SummusSuccessContent } from '@/components/ui/modal'
 
@@ -29,15 +30,21 @@ export function ExecutionModal({
   aiSuggestion,
   impact,
   previewDetail,
-  contextLabel = 'Meridian',
-  loadingMessage = 'A Meridian está reconstruindo contexto e calculando a decisão…',
-  approveLabel = 'Aprovar e Executar',
-  successMessage = 'Executado com sucesso! A acompanhar os resultados.',
+  contextLabel,
+  loadingMessage,
+  approveLabel,
+  successMessage,
   onClose,
   onApprove,
 }: ExecutionModalProps) {
+  const { t } = useTranslation()
   const [step, setStep] = useState<ExecutionStep>('loading')
   const [isPreviewExpanded, setIsPreviewExpanded] = useState(false)
+
+  const resolvedContextLabel = contextLabel ?? t('nav.meridian')
+  const resolvedLoadingMessage = loadingMessage ?? t('home.loadingDecision')
+  const resolvedApproveLabel = approveLabel ?? t('home.approveAndExecute')
+  const resolvedSuccessMessage = successMessage ?? t('home.executedSuccess')
 
   useEffect(() => {
     if (!visible) {
@@ -83,7 +90,7 @@ export function ExecutionModal({
     <SummusSheetModal
       visible={visible}
       onClose={handleClose}
-      badge={contextLabel}
+      badge={resolvedContextLabel}
       badgeIcon={Sparkles}
       badgeTone="gold"
       title={step === 'preview' ? title : undefined}
@@ -99,7 +106,7 @@ export function ExecutionModal({
               <ActivityIndicator size="large" color="#3B82F6" />
             </View>
             <Text className="max-w-sm text-center text-lg font-medium leading-7 text-white/90">
-              {loadingMessage}
+              {resolvedLoadingMessage}
             </Text>
           </View>
         ) : null}
@@ -116,7 +123,7 @@ export function ExecutionModal({
                   <View className="h-10 w-10 items-center justify-center rounded-2xl border border-electricBlue/20 bg-electricBlue/15">
                     <Bot size={18} color="#3B82F6" />
                   </View>
-                  <Text className="text-sm font-semibold text-white/70">Proposta da IA</Text>
+                  <Text className="text-sm font-semibold text-white/70">{t('home.proposalFromAi')}</Text>
                 </View>
                 <Text className="text-base leading-7 text-white/90">{aiSuggestion}</Text>
 
@@ -136,7 +143,7 @@ export function ExecutionModal({
               >
                 <Eye size={16} color="#94A3B8" />
                 <Text className="text-sm font-semibold text-white/80">
-                  {isPreviewExpanded ? 'Ocultar Preview' : 'Ver Preview'}
+                  {isPreviewExpanded ? t('home.hidePreview') : t('home.showPreview')}
                 </Text>
               </AnimatedPressable>
 
@@ -151,14 +158,18 @@ export function ExecutionModal({
                   elevation: 6,
                 }}
               >
-                <Text className="text-center text-base font-bold text-white">{approveLabel}</Text>
+                <Text className="text-center text-base font-bold text-white">{resolvedApproveLabel}</Text>
               </AnimatedPressable>
             </View>
           </View>
         ) : null}
 
         {step === 'success' ? (
-          <SummusSuccessContent title="Concluído!" message={successMessage} icon={CheckCircle2} />
+          <SummusSuccessContent
+            title={t('home.done')}
+            message={resolvedSuccessMessage}
+            icon={CheckCircle2}
+          />
         ) : null}
       </View>
     </SummusSheetModal>

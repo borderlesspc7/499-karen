@@ -1,5 +1,7 @@
 import { Pressable, Text, View } from 'react-native'
 import { router } from 'expo-router'
+import { useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import { premiumShadows } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
@@ -8,18 +10,18 @@ type HomeSmartHeaderProps = {
   actionCount?: number
 }
 
-function resolveGreeting(): string {
+function resolveGreeting(t: (key: TranslationKey) => string): string {
   const hour = new Date().getHours()
 
   if (hour < 12) {
-    return 'Bom dia'
+    return t('home.goodMorning')
   }
 
   if (hour < 18) {
-    return 'Boa tarde'
+    return t('home.goodAfternoon')
   }
 
-  return 'Boa noite'
+  return t('home.goodEvening')
 }
 
 function resolveInitials(userName: string): string {
@@ -32,7 +34,8 @@ function resolveInitials(userName: string): string {
 }
 
 export function HomeSmartHeader({ userName }: HomeSmartHeaderProps) {
-  const greeting = resolveGreeting()
+  const { t } = useTranslation()
+  const greeting = resolveGreeting(t)
   const initials = resolveInitials(userName)
   const tc = useThemeClasses()
 
@@ -40,10 +43,10 @@ export function HomeSmartHeader({ userName }: HomeSmartHeaderProps) {
     <View className="flex-row items-start justify-between gap-4">
       <View className="flex-1 gap-2">
         <Text className={['text-3xl font-bold tracking-tight', tc.textPrimary].join(' ')}>
-          {greeting}, {userName}.
+          {t('home.greetingName', { greeting, name: userName })}
         </Text>
         <Text className={['text-base leading-6', tc.textSecondary].join(' ')}>
-          Veja o panorama do negócio e escolha a próxima ação com clareza.
+          {t('home.smartSubtitle')}
         </Text>
       </View>
 
@@ -55,7 +58,7 @@ export function HomeSmartHeader({ userName }: HomeSmartHeaderProps) {
         ].join(' ')}
         style={premiumShadows.card}
         accessibilityRole="button"
-        accessibilityLabel="Abrir área do usuário"
+        accessibilityLabel={t('profile.openProfileA11y')}
       >
         <Text className={['text-sm font-bold', tc.textPrimary].join(' ')}>{initials}</Text>
       </Pressable>

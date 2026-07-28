@@ -19,7 +19,8 @@ import {
   SUBSCRIPTION_PLANS,
   formatPlanPriceBrl,
 } from '@shared/constants/subscription-plans'
-import { useAuth, useSubscription } from '@shared/contexts'
+import { useAuth, useSubscription, useTranslation } from '@shared/contexts'
+import type { TranslationKey } from '@shared/i18n'
 import type { SubscriptionBillingInterval } from '@shared/types/subscription'
 import { requiresEmailVerification } from '@shared/utils/auth-guards'
 import { SummusLogo } from '@/components/ui/SummusLogo'
@@ -27,6 +28,14 @@ import { summusBrand } from '@/constants/summus-brand'
 import { premiumColors } from '@/constants/premium-theme'
 import { platformEntering } from '@/lib/platform-animation'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
+
+const ELITE_HIGHLIGHT_KEYS: TranslationKey[] = [
+  'plans.highlightMotors',
+  'plans.highlightCampaigns',
+  'plans.highlightChannels',
+  'plans.highlightCrm',
+  'plans.highlightSupport',
+]
 
 /**
  * Paywall pós-cadastro / pré-onboarding.
@@ -40,6 +49,7 @@ export default function PlansScreen() {
     createCheckoutSession,
     confirmMockCheckout,
   } = useSubscription()
+  const { t, locale } = useTranslation()
   const { isWebDesktop } = useResponsiveLayout()
 
   const plan = SUBSCRIPTION_PLANS[0]
@@ -50,10 +60,14 @@ export default function PlansScreen() {
   const priceLabel = useMemo(() => {
     if (!plan) return ''
     if (billingInterval === 'year') {
-      return `${formatPlanPriceBrl(plan.priceYearlyCents)} / ano`
+      return t('plans.perYear', {
+        price: formatPlanPriceBrl(plan.priceYearlyCents, locale),
+      })
     }
-    return `${formatPlanPriceBrl(plan.priceMonthlyCents)} / mês`
-  }, [billingInterval, plan])
+    return t('plans.perMonth', {
+      price: formatPlanPriceBrl(plan.priceMonthlyCents, locale),
+    })
+  }, [billingInterval, locale, plan, t])
 
   if (isAuthLoading || isSubscriptionLoading) {
     return (
@@ -103,7 +117,7 @@ export default function PlansScreen() {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : 'Não foi possível liberar o acesso. Tente novamente.',
+          : t('plans.errorGeneric'),
       )
     } finally {
       setIsProcessing(false)
@@ -129,14 +143,14 @@ export default function PlansScreen() {
             <View className="flex-row items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-3 py-1.5">
               <Lock size={12} color={premiumColors.gold} />
               <Text className="text-[11px] font-bold uppercase tracking-wider text-gold">
-                Escolha seu plano
+                {t('plans.badge')}
               </Text>
             </View>
             <Text className="text-center text-3xl font-bold text-white">
-              Ative o Summus Edge
+              {t('plans.title')}
             </Text>
             <Text className="text-center text-base leading-6 text-white/70">
-              Escolha o plano e toque em fazer pagamento para entrar no app.
+              {t('plans.subtitle')}
             </Text>
           </Animated.View>
 
@@ -161,7 +175,7 @@ export default function PlansScreen() {
                       isActive ? 'text-navy' : 'text-white/70',
                     ].join(' ')}
                   >
-                    {interval === 'month' ? 'Mensal' : 'Anual'}
+                    {interval === 'month' ? t('plans.monthly') : t('plans.yearly')}
                   </Text>
                 </Pressable>
               )
@@ -177,10 +191,10 @@ export default function PlansScreen() {
                 <View className="flex-row items-center gap-2">
                   <Sparkles size={16} color={premiumColors.gold} />
                   <Text className="text-sm font-bold uppercase tracking-wider text-gold">
-                    Plano {plan.name}
+                    {t('plans.planLabel', { name: plan.name })}
                   </Text>
                 </View>
-                <Text className="text-xs font-medium text-white/60">Recomendado</Text>
+                <Text className="text-xs font-medium text-white/60">{t('plans.recommended')}</Text>
               </View>
               <Text className="mt-2 text-2xl font-bold text-white">{plan.productName}</Text>
               <Text className="mt-1 text-sm text-white/65">{plan.tagline}</Text>
@@ -188,13 +202,13 @@ export default function PlansScreen() {
             </View>
 
             <View className="gap-3 px-5 py-5">
-              <Text className="text-sm leading-5 text-white/75">{plan.description}</Text>
-              {plan.highlights.map((item) => (
-                <View key={item} className="flex-row items-start gap-3">
+              <Text className="text-sm leading-5 text-white/75">{t('plans.eliteDescription')}</Text>
+              {ELITE_HIGHLIGHT_KEYS.map((key) => (
+                <View key={key} className="flex-row items-start gap-3">
                   <View className="mt-0.5 h-5 w-5 items-center justify-center rounded-full bg-emerald-500/20">
                     <Check size={12} color="#34d399" />
                   </View>
-                  <Text className="flex-1 text-sm leading-5 text-white/85">{item}</Text>
+                  <Text className="flex-1 text-sm leading-5 text-white/85">{t(key)}</Text>
                 </View>
               ))}
             </View>
@@ -210,7 +224,7 @@ export default function PlansScreen() {
             ) : (
               <>
                 <CreditCard size={18} color="#04122C" />
-                <Text className="text-base font-bold text-navy">Fazer pagamento</Text>
+                <Text className="text-base font-bold text-navy">{t('plans.payCta')}</Text>
               </>
             )}
           </Pressable>
@@ -221,11 +235,11 @@ export default function PlansScreen() {
 
           <View className="gap-2">
             <Text className="text-center text-xs leading-4 text-white/45">
-              Por enquanto o pagamento libera o acesso na hora (modo demonstração).
+              {t('plans.demoNotice')}
             </Text>
             <Pressable onPress={() => signOutUser()} className="py-2">
               <Text className="text-center text-sm font-medium text-white/55">
-                Sair e usar outra conta
+                {t('plans.signOutOther')}
               </Text>
             </Pressable>
           </View>
