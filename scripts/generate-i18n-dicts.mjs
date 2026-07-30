@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Generates shared/i18n/dictionaries/{pt-BR,en-US}.ts from a flat catalog.
+ * es-ES.ts is maintained by hand as the source of truth for Spanish.
  * Run: node scripts/generate-i18n-dicts.mjs
  */
 import fs from 'node:fs'
@@ -53,9 +54,10 @@ addMap('common', {
 
 addMap('language', {
   title: ['Idioma', 'Language'],
-  description: ['Escolha o idioma da interface. Você pode mudar quando quiser.', 'Pick the language for the interface. You can change it anytime.'],
+  description: ['Escolha o idioma da interface. Você pode mudar quando quiser.', 'Choose the interface language. You can change it anytime.'],
   portuguese: ['Português', 'Português'],
   english: ['English', 'English'],
+  spanish: ['Español', 'Español'],
 })
 
 addMap('theme', {

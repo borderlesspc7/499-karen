@@ -1,5 +1,8 @@
 import { HttpsError, onCall } from 'firebase-functions/v2/https'
 import { defineSecret } from 'firebase-functions/params'
+import { ENFORCE_APP_CHECK } from './app-check'
+import { error, warn } from './logger'
+import { assertRateLimit, RATE_LIMIT_PRESETS } from './rate-limit'
 
 export const openaiApiKey = defineSecret('OPENAI_API_KEY')
 
@@ -50,6 +53,11 @@ async function callOpenAiJson(input: {
 
   if (!response.ok) {
     const body = await response.text()
+    error('AI provider request failed', undefined, {
+      provider: 'openai',
+      status: response.status,
+      responseBody: body.slice(0, 200),
+    })
     throw new HttpsError('internal', `OpenAI error: ${response.status} ${body.slice(0, 200)}`)
   }
 
@@ -69,10 +77,12 @@ async function callOpenAiJson(input: {
   }
 }
 
-function requireAuth(request: { auth?: { uid: string } | null }) {
+function requireAuth(request: { auth?: { uid: string } | null }): string {
   if (!request.auth?.uid) {
+    warn('Unauthenticated AI generation attempt')
     throw new HttpsError('unauthenticated', 'Autenticação obrigatória.')
   }
+  return request.auth.uid
 }
 
 function requireApiKey() {
@@ -86,8 +96,15 @@ function requireApiKey() {
   return apiKey
 }
 
-export const generateCampaignContent = onCall({ secrets: [openaiApiKey] }, async (request) => {
-  requireAuth(request)
+export const generateCampaignContent = onCall({
+  secrets: [openaiApiKey],
+  enforceAppCheck: ENFORCE_APP_CHECK,
+}, async (request) => {
+  const userId = requireAuth(request)
+  assertRateLimit({
+    key: `ai:${userId}`,
+    ...RATE_LIMIT_PRESETS.ai,
+  })
   const apiKey = requireApiKey()
   const data = request.data as CampaignRequest
 
@@ -127,8 +144,15 @@ export const generateCampaignContent = onCall({ secrets: [openaiApiKey] }, async
   }
 })
 
-export const generateLeadInsight = onCall({ secrets: [openaiApiKey] }, async (request) => {
-  requireAuth(request)
+export const generateLeadInsight = onCall({
+  secrets: [openaiApiKey],
+  enforceAppCheck: ENFORCE_APP_CHECK,
+}, async (request) => {
+  const userId = requireAuth(request)
+  assertRateLimit({
+    key: `ai:${userId}`,
+    ...RATE_LIMIT_PRESETS.ai,
+  })
   const apiKey = requireApiKey()
   const data = request.data as LeadInsightRequest
 
@@ -155,8 +179,15 @@ export const generateLeadInsight = onCall({ secrets: [openaiApiKey] }, async (re
   }
 })
 
-export const generateSmartReplies = onCall({ secrets: [openaiApiKey] }, async (request) => {
-  requireAuth(request)
+export const generateSmartReplies = onCall({
+  secrets: [openaiApiKey],
+  enforceAppCheck: ENFORCE_APP_CHECK,
+}, async (request) => {
+  const userId = requireAuth(request)
+  assertRateLimit({
+    key: `ai:${userId}`,
+    ...RATE_LIMIT_PRESETS.ai,
+  })
   const apiKey = requireApiKey()
   const data = request.data as SmartRepliesRequest
 

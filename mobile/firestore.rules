@@ -49,6 +49,7 @@ service cloud.firestore {
             && request.resource.data.subscription.status == 'active'
           )
         );
+      // preferredLocale e settings de UI são graváveis pelo dono.
       allow update: if isOwner(userId) && subscriptionWriteAllowed();
       allow delete: if isOwner(userId);
 
@@ -64,31 +65,36 @@ service cloud.firestore {
 
     match /campaigns/{campaignId} {
       allow read: if ownsResource();
-      allow create: if createsOwnResource();
+      allow create: if createsOwnResource()
+        && request.resource.data.keys().hasAll(['userId']);
       allow update, delete: if ownsResource() && keepsOwner();
     }
 
     match /clients/{clientId} {
       allow read: if ownsResource();
-      allow create: if createsOwnResource();
+      allow create: if createsOwnResource()
+        && request.resource.data.keys().hasAll(['userId']);
       allow update, delete: if ownsResource() && keepsOwner();
     }
 
     match /opportunities/{opportunityId} {
       allow read: if ownsResource();
-      allow create: if createsOwnResource();
+      allow create: if createsOwnResource()
+        && request.resource.data.keys().hasAll(['userId']);
       allow update, delete: if ownsResource() && keepsOwner();
     }
 
     match /kanban_columns/{columnId} {
       allow read: if ownsResource();
-      allow create: if createsOwnResource();
+      allow create: if createsOwnResource()
+        && request.resource.data.keys().hasAll(['userId']);
       allow update, delete: if ownsResource() && keepsOwner();
     }
 
     match /automations/{automationId} {
       allow read: if ownsResource();
-      allow create: if createsOwnResource();
+      allow create: if createsOwnResource()
+        && request.resource.data.keys().hasAll(['userId']);
       allow update, delete: if ownsResource() && keepsOwner();
     }
 
@@ -115,7 +121,8 @@ service cloud.firestore {
     match /conversations/{conversationId} {
       allow read: if ownsResource();
 
-      allow create: if createsOwnResource();
+      allow create: if createsOwnResource()
+        && request.resource.data.keys().hasAll(['userId', 'id']);
 
       allow update: if ownsResource()
         && keepsOwner()
@@ -129,8 +136,14 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/conversations/$(conversationId)).data.userId
             == request.auth.uid;
 
+        // Escrita apenas via Admin SDK (Cloud Functions).
         allow write: if false;
       }
+    }
+
+    // Default deny — paths não listados acima são bloqueados.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

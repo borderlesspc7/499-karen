@@ -1,6 +1,7 @@
 import { createHmac } from 'crypto'
 import { onRequest } from 'firebase-functions/v2/https'
 import { metaAppSecret, metaWebhookVerifyToken } from './config'
+import { error as logError, warn } from './logger'
 import {
   findUserIdByPageId,
   findUserIdByPhoneNumberId,
@@ -35,6 +36,10 @@ export const metaWebhook = onRequest(
         return
       }
 
+      warn('Meta webhook verification challenge failed', {
+        mode,
+        hasToken: typeof token === 'string' && token.length > 0,
+      })
       response.status(403).send('Forbidden')
       return
     }
@@ -43,6 +48,10 @@ export const metaWebhook = onRequest(
     const signature = request.get('X-Hub-Signature-256')
 
     if (!verifyMetaSignature(rawBody, signature, metaAppSecret.value())) {
+      warn('Meta webhook signature verification failed', {
+        hasSignature: Boolean(signature),
+        contentLength: rawBody.length,
+      })
       response.status(401).send('Invalid signature')
       return
     }
@@ -83,7 +92,7 @@ export const metaWebhook = onRequest(
         await handleInstagramWebhook(body.entry as Parameters<typeof handleInstagramWebhook>[0])
       }
     } catch (error) {
-      console.error('[metaWebhook] processing error', error)
+      logError('Meta webhook processing failed', error, { objectType: body.object })
     }
 
     response.status(200).send('EVENT_RECEIVED')

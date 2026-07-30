@@ -1,13 +1,16 @@
 import type { AppLocale } from '../types/locale'
 import type { TranslationDictionary, TranslationParams } from './types'
 import { enUS } from './dictionaries/en-US'
+import { esES } from './dictionaries/es-ES'
 import { ptBR } from './dictionaries/pt-BR'
 
 export type { TranslationDictionary, TranslationParams } from './types'
+export { detectDeviceLocale, coerceAppLocale } from './detect-locale'
 
 const DICTIONARIES: Record<AppLocale, TranslationDictionary> = {
   'pt-BR': ptBR,
   'en-US': enUS,
+  'es-ES': esES,
 }
 
 type NestedKeyOf<T> = {

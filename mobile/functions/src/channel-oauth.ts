@@ -1,4 +1,5 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { ENFORCE_APP_CHECK } from './app-check'
 import {
   appDeepLinkScheme,
   getFunctionsBaseUrl,
@@ -9,6 +10,8 @@ import {
   LINKEDIN_SCOPES,
 } from './config'
 import { buildOAuthState, db, saveChannelConnection, type MessagingChannel } from './utils'
+import { audit, warn } from './logger'
+import { assertRateLimit, RATE_LIMIT_PRESETS } from './rate-limit'
 
 const META_CHANNELS = new Set<MessagingChannel>(['whatsapp', 'instagram', 'facebook'])
 
@@ -16,23 +19,31 @@ export const startChannelOAuth = onCall(
   {
     secrets: [metaAppSecret],
     cors: true,
+    enforceAppCheck: ENFORCE_APP_CHECK,
   },
   async (request) => {
     if (!request.auth?.uid) {
+      warn('Unauthenticated channel OAuth attempt')
       throw new HttpsError('unauthenticated', 'Usuário não autenticado.')
     }
+
+    const userId = request.auth.uid
+    assertRateLimit({
+      key: `oauth:${userId}`,
+      ...RATE_LIMIT_PRESETS.oauth,
+    })
 
     const channel = request.data?.channel as MessagingChannel
     if (!channel || !['whatsapp', 'instagram', 'facebook', 'linkedin'].includes(channel)) {
       throw new HttpsError('invalid-argument', 'Canal inválido.')
     }
 
-    const userId = request.auth.uid
     const state = buildOAuthState(userId, channel, metaAppSecret.value())
     const redirectUri = `${getFunctionsBaseUrl()}/oauthCallback`
     const deepLinkScheme = appDeepLinkScheme.value()
 
     await saveChannelConnection(userId, channel, { status: 'pending' })
+    audit({ action: 'channel_oauth_started', userId, meta: { channel } })
 
     if (META_CHANNELS.has(channel)) {
       const authUrl = new URL('https://www.facebook.com/v21.0/dialog/oauth')
@@ -64,6 +75,7 @@ export const startChannelOAuth = onCall(
 
 export const getChannelConnections = onCall({ cors: true }, async (request) => {
   if (!request.auth?.uid) {
+    warn('Unauthenticated channel connections read attempt')
     throw new HttpsError('unauthenticated', 'Usuário não autenticado.')
   }
 
@@ -89,6 +101,7 @@ export const getChannelConnections = onCall({ cors: true }, async (request) => {
 
 export const disconnectChannel = onCall({ cors: true }, async (request) => {
   if (!request.auth?.uid) {
+    warn('Unauthenticated channel disconnect attempt')
     throw new HttpsError('unauthenticated', 'Usuário não autenticado.')
   }
 

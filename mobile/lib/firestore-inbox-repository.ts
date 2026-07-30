@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  endBefore,
   getDocs,
   limit,
   limitToLast,
@@ -21,6 +22,7 @@ type ConversationDocument = Omit<InboxConversation, 'messages'>
 export type ListMessagesOptions = ListQueryOptions & {
   /** Quando true, retorna as últimas N mensagens (ordem cronológica ascendente). */
   latest?: boolean
+  endBeforeCreatedAt?: string
 }
 
 export type FirestoreInboxRepository = {
@@ -62,6 +64,7 @@ export function createFirestoreInboxRepository(db: Firestore): FirestoreInboxRep
 
     async listMessages(conversationId, options = {}) {
       const pageSize = options.limit ?? FIRESTORE_PAGE_LIMITS.messages
+      const endBeforeCreatedAt = options.endBeforeCreatedAt
       const messagesRef = collection(
         db,
         firestoreCollections.conversations,
@@ -69,10 +72,15 @@ export function createFirestoreInboxRepository(db: Firestore): FirestoreInboxRep
         'messages',
       )
 
-      const constraints: QueryConstraint[] =
-        options.latest === false
-          ? [orderBy('createdAt', 'asc'), limit(pageSize)]
-          : [orderBy('createdAt', 'asc'), limitToLast(pageSize)]
+      const constraints: QueryConstraint[] = [orderBy('createdAt', 'asc')]
+
+      if (endBeforeCreatedAt) {
+        constraints.push(endBefore(endBeforeCreatedAt), limitToLast(pageSize))
+      } else if (options.latest === false) {
+        constraints.push(limit(pageSize))
+      } else {
+        constraints.push(limitToLast(pageSize))
+      }
 
       try {
         const snapshot = await getDocs(query(messagesRef, ...constraints))
@@ -80,9 +88,19 @@ export function createFirestoreInboxRepository(db: Firestore): FirestoreInboxRep
       } catch {
         // Fallback para documentos legados sem createdAt indexável.
         const snapshot = await getDocs(query(messagesRef, limit(pageSize)))
-        return sortMessages(
+        const messages = sortMessages(
           snapshot.docs.map((messageDoc) => messageDoc.data() as InboxMessage),
-        ).slice(-pageSize)
+        )
+        const messagesBeforeCursor = endBeforeCreatedAt
+          ? messages.filter(
+              (message) =>
+                message.createdAt ? message.createdAt < endBeforeCreatedAt : false,
+            )
+          : messages
+
+        return options.latest === false && !endBeforeCreatedAt
+          ? messagesBeforeCursor.slice(0, pageSize)
+          : messagesBeforeCursor.slice(-pageSize)
       }
     },
 

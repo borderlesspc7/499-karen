@@ -17,6 +17,9 @@ import { getApps, initializeApp } from 'firebase-admin/app'
 import { FieldValue, getFirestore } from 'firebase-admin/firestore'
 import { HttpsError, onCall, onRequest } from 'firebase-functions/v2/https'
 import { defineSecret } from 'firebase-functions/params'
+import { ENFORCE_APP_CHECK } from './app-check'
+import { audit, warn } from './logger'
+import { assertRateLimit, RATE_LIMIT_PRESETS } from './rate-limit'
 
 const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY')
 const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET')
@@ -85,6 +88,7 @@ type UserSubscriptionDoc = {
 
 function requireAuth(request: { auth?: { uid: string } | null }) {
   if (!request.auth?.uid) {
+    warn('Unauthenticated billing attempt')
     throw new HttpsError('unauthenticated', 'Autenticação obrigatória.')
   }
   return request.auth.uid
@@ -186,9 +190,13 @@ function parseInterval(value: unknown): BillingInterval {
  * Mock: retorna sessionId para confirmação in-app.
  */
 export const createCheckoutSession = onCall(
-  { secrets: [stripeSecretKey], cors: true },
+  { secrets: [stripeSecretKey], cors: true, enforceAppCheck: ENFORCE_APP_CHECK },
   async (request) => {
     const userId = requireAuth(request)
+    assertRateLimit({
+      key: `checkout:${userId}`,
+      ...RATE_LIMIT_PRESETS.checkout,
+    })
     const planId = parsePlanId(request.data?.planId)
     const billingInterval = parseInterval(request.data?.billingInterval)
     const successUrl =
@@ -207,6 +215,11 @@ export const createCheckoutSession = onCall(
       status: 'open',
       mode: isStripeLiveMode() ? 'stripe' : 'mock',
       createdAt: FieldValue.serverTimestamp(),
+    })
+    audit({
+      action: 'checkout_session_created',
+      userId,
+      meta: { sessionId, planId, billingInterval },
     })
 
     if (!isStripeLiveMode()) {
@@ -250,8 +263,15 @@ export const createCheckoutSession = onCall(
  * Simula o webhook `checkout.session.completed` em modo mock.
  * Em produção, este caminho NÃO deve existir — só o webhook assinado.
  */
-export const confirmMockCheckout = onCall({ cors: true }, async (request) => {
+export const confirmMockCheckout = onCall({
+  cors: true,
+  enforceAppCheck: ENFORCE_APP_CHECK,
+}, async (request) => {
   const userId = requireAuth(request)
+  assertRateLimit({
+    key: `checkout:${userId}`,
+    ...RATE_LIMIT_PRESETS.checkout,
+  })
   const sessionId =
     typeof request.data?.sessionId === 'string' ? request.data.sessionId : ''
   const planId = parsePlanId(request.data?.planId)
@@ -270,6 +290,11 @@ export const confirmMockCheckout = onCall({ cors: true }, async (request) => {
   if (sessionDoc.exists) {
     const data = sessionDoc.data()
     if (data?.userId && data.userId !== userId) {
+      audit({
+        action: 'mock_checkout_permission_denied',
+        userId,
+        meta: { sessionId },
+      })
       throw new HttpsError('permission-denied', 'Sessão não pertence a este usuário.')
     }
     if (data?.status === 'complete') {
@@ -311,6 +336,11 @@ export const confirmMockCheckout = onCall({ cors: true }, async (request) => {
     },
     { merge: true },
   )
+  audit({
+    action: 'mock_checkout_confirmed',
+    userId,
+    meta: { sessionId, planId, billingInterval },
+  })
 
   return { ok: true as const, subscription }
 })
@@ -356,6 +386,10 @@ export const stripeWebhook = onRequest(
 
     const signature = req.headers['stripe-signature']
     if (!signature || typeof signature !== 'string') {
+      warn('Stripe webhook verification failed', {
+        reason: 'missing_signature',
+        requestId: req.get('x-cloud-trace-context'),
+      })
       res.status(400).send('Missing Stripe-Signature')
       return
     }

@@ -1,5 +1,8 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https'
+import { ENFORCE_APP_CHECK } from './app-check'
 import { META_GRAPH_BASE } from './config'
+import { audit, error as logError, warn } from './logger'
+import { assertRateLimit, RATE_LIMIT_PRESETS } from './rate-limit'
 import {
   db,
   formatTimestamp,
@@ -13,10 +16,17 @@ type SendMessageInput = {
   text: string
 }
 
-export const sendInboxMessage = onCall({ cors: true }, async (request) => {
+export const sendInboxMessage = onCall({ cors: true, enforceAppCheck: ENFORCE_APP_CHECK }, async (request) => {
   if (!request.auth?.uid) {
+    warn('Unauthenticated inbox send attempt')
     throw new HttpsError('unauthenticated', 'Usuário não autenticado.')
   }
+
+  const userId = request.auth.uid
+  assertRateLimit({
+    key: `sendInboxMessage:${userId}`,
+    ...RATE_LIMIT_PRESETS.sendMessage,
+  })
 
   const { conversationId, text } = request.data as SendMessageInput
   const trimmed = text?.trim()
@@ -25,7 +35,6 @@ export const sendInboxMessage = onCall({ cors: true }, async (request) => {
     throw new HttpsError('invalid-argument', 'Conversa e mensagem são obrigatórias.')
   }
 
-  const userId = request.auth.uid
   const conversationRef = db.collection('conversations').doc(conversationId)
   const conversationDoc = await conversationRef.get()
 
@@ -41,6 +50,11 @@ export const sendInboxMessage = onCall({ cors: true }, async (request) => {
   }
 
   if (conversation.userId !== userId) {
+    audit({
+      action: 'send_message_permission_denied',
+      userId,
+      meta: { conversationId },
+    })
     throw new HttpsError('permission-denied', 'Sem permissão para esta conversa.')
   }
 
@@ -101,6 +115,12 @@ export const sendInboxMessage = onCall({ cors: true }, async (request) => {
     )
 
     const message = error instanceof Error ? error.message : 'Falha ao enviar mensagem.'
+    logError('Outbound message send failed', error, {
+      userId,
+      conversationId,
+      channel,
+      localMessageId,
+    })
     throw new HttpsError('internal', message)
   }
 })
@@ -189,6 +209,7 @@ async function dispatchOutboundMessage(input: {
 
 export const markConversationRead = onCall({ cors: true }, async (request) => {
   if (!request.auth?.uid) {
+    warn('Unauthenticated mark-conversation-read attempt')
     throw new HttpsError('unauthenticated', 'Usuário não autenticado.')
   }
 
@@ -205,6 +226,11 @@ export const markConversationRead = onCall({ cors: true }, async (request) => {
   }
 
   if (conversationDoc.data()?.userId !== request.auth.uid) {
+    audit({
+      action: 'mark_conversation_read_permission_denied',
+      userId: request.auth.uid,
+      meta: { conversationId },
+    })
     throw new HttpsError('permission-denied', 'Sem permissão.')
   }
 

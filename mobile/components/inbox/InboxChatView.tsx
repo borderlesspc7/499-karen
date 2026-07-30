@@ -10,6 +10,8 @@ import {
   Text,
   TextInput,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native'
 import { ArrowLeft, Send, Sparkles } from 'lucide-react-native'
 import { useTranslation } from '@shared/contexts'
@@ -102,15 +104,22 @@ export function InboxChatView({
 }: InboxChatViewProps) {
   const tc = useThemeClasses()
   const { t } = useTranslation()
-  const { messages: remoteMessages, isLoading: isLoadingMessages } = useInboxMessages(
-    conversation.id,
-  )
+  const {
+    messages: remoteMessages,
+    loadOlderMessages,
+    isLoadingOlder,
+    hasMore,
+    isLoading: isLoadingMessages,
+  } = useInboxMessages(conversation.id)
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
   const [optimisticMessages, setOptimisticMessages] = useState<InboxMessage[]>([])
   const listRef = useRef<FlatList<InboxMessage>>(null)
+  const previousNewestMessageIdRef = useRef<string | null>(null)
+  const hasPositionedConversationRef = useRef(false)
 
   const messages = [...remoteMessages, ...optimisticMessages]
+  const newestMessageId = messages[messages.length - 1]?.id ?? null
 
   const defaultTemplates = useMemo(
     () => INBOX_QUICK_TEMPLATE_KEYS.map((key) => t(key)),
@@ -125,17 +134,32 @@ export function InboxChatView({
 
   useEffect(() => {
     setOptimisticMessages([])
+    previousNewestMessageIdRef.current = null
+    hasPositionedConversationRef.current = false
     void markConversationRead(conversation.id).catch(() => undefined)
   }, [conversation.id])
 
   useEffect(() => {
-    if (messages.length === 0) {
+    if (isLoadingMessages || !newestMessageId) {
       return
     }
+
+    const shouldPositionInitially = !hasPositionedConversationRef.current
+    const hasNewMessageAtEnd =
+      previousNewestMessageIdRef.current !== null &&
+      previousNewestMessageIdRef.current !== newestMessageId
+
+    previousNewestMessageIdRef.current = newestMessageId
+    hasPositionedConversationRef.current = true
+
+    if (!shouldPositionInitially && !hasNewMessageAtEnd) {
+      return
+    }
+
     requestAnimationFrame(() => {
-      listRef.current?.scrollToEnd({ animated: true })
+      listRef.current?.scrollToEnd({ animated: !shouldPositionInitially })
     })
-  }, [messages.length])
+  }, [isLoadingMessages, newestMessageId])
 
   const [smartReplies, setSmartReplies] = useState<string[]>([])
 
@@ -177,6 +201,14 @@ export function InboxChatView({
   ])
 
   const canSendExternally = ['whatsapp', 'instagram', 'facebook'].includes(conversation.channel)
+
+  function handleMessagesScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
+    if (event.nativeEvent.contentOffset.y > 120 || isLoadingOlder || !hasMore) {
+      return
+    }
+
+    void loadOlderMessages()
+  }
 
   async function handleSend(text?: string) {
     const trimmed = (text ?? input).trim()
@@ -291,6 +323,16 @@ export function InboxChatView({
           initialNumToRender={16}
           maxToRenderPerBatch={12}
           windowSize={8}
+          maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
+          onScroll={handleMessagesScroll}
+          scrollEventThrottle={100}
+          ListHeaderComponent={
+            isLoadingOlder ? (
+              <View className="items-center py-2">
+                <ActivityIndicator size="small" color="#C5A059" />
+              </View>
+            ) : null
+          }
           renderItem={({ item }) => (
             <MessageBubble
               message={item}

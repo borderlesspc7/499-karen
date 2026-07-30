@@ -5,9 +5,13 @@ import type { AppLocale } from '@shared/types/locale'
 import { premiumColors } from '@/constants/premium-theme'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
 
-const LOCALE_OPTIONS: { id: AppLocale; labelKey: 'language.portuguese' | 'language.english' }[] = [
+const LOCALE_OPTIONS: {
+  id: AppLocale
+  labelKey: 'language.portuguese' | 'language.english' | 'language.spanish'
+}[] = [
   { id: 'pt-BR', labelKey: 'language.portuguese' },
   { id: 'en-US', labelKey: 'language.english' },
+  { id: 'es-ES', labelKey: 'language.spanish' },
 ]
 
 export function LanguageSelector() {
@@ -25,7 +29,7 @@ export function LanguageSelector() {
         </Text>
       </View>
 
-      <View className="flex-row gap-2">
+      <View className="flex-row flex-wrap gap-2">
         {LOCALE_OPTIONS.map((option) => {
           const isActive = locale === option.id
 
@@ -36,7 +40,7 @@ export function LanguageSelector() {
                 void setLocale(option.id)
               }}
               className={[
-                'flex-1 flex-row items-center justify-center gap-2 rounded-card border py-3.5',
+                'min-w-[30%] flex-1 flex-row items-center justify-center gap-2 rounded-card border py-3.5',
                 isActive
                   ? 'border-gold/35 bg-gold/10'
                   : tc.isDark

@@ -2,18 +2,26 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.markConversationRead = exports.sendInboxMessage = void 0;
 const https_1 = require("firebase-functions/v2/https");
+const app_check_1 = require("./app-check");
 const config_1 = require("./config");
+const logger_1 = require("./logger");
+const rate_limit_1 = require("./rate-limit");
 const utils_1 = require("./utils");
-exports.sendInboxMessage = (0, https_1.onCall)({ cors: true }, async (request) => {
+exports.sendInboxMessage = (0, https_1.onCall)({ cors: true, enforceAppCheck: app_check_1.ENFORCE_APP_CHECK }, async (request) => {
     if (!request.auth?.uid) {
+        (0, logger_1.warn)('Unauthenticated inbox send attempt');
         throw new https_1.HttpsError('unauthenticated', 'Usuário não autenticado.');
     }
+    const userId = request.auth.uid;
+    (0, rate_limit_1.assertRateLimit)({
+        key: `sendInboxMessage:${userId}`,
+        ...rate_limit_1.RATE_LIMIT_PRESETS.sendMessage,
+    });
     const { conversationId, text } = request.data;
     const trimmed = text?.trim();
     if (!conversationId || !trimmed) {
         throw new https_1.HttpsError('invalid-argument', 'Conversa e mensagem são obrigatórias.');
     }
-    const userId = request.auth.uid;
     const conversationRef = utils_1.db.collection('conversations').doc(conversationId);
     const conversationDoc = await conversationRef.get();
     if (!conversationDoc.exists) {
@@ -21,6 +29,11 @@ exports.sendInboxMessage = (0, https_1.onCall)({ cors: true }, async (request) =
     }
     const conversation = conversationDoc.data();
     if (conversation.userId !== userId) {
+        (0, logger_1.audit)({
+            action: 'send_message_permission_denied',
+            userId,
+            meta: { conversationId },
+        });
         throw new https_1.HttpsError('permission-denied', 'Sem permissão para esta conversa.');
     }
     const channel = conversation.channel;
@@ -64,6 +77,12 @@ exports.sendInboxMessage = (0, https_1.onCall)({ cors: true }, async (request) =
             deliveryStatus: 'failed',
         }, { merge: true });
         const message = error instanceof Error ? error.message : 'Falha ao enviar mensagem.';
+        (0, logger_1.error)('Outbound message send failed', error, {
+            userId,
+            conversationId,
+            channel,
+            localMessageId,
+        });
         throw new https_1.HttpsError('internal', message);
     }
 });
@@ -124,6 +143,7 @@ async function dispatchOutboundMessage(input) {
 }
 exports.markConversationRead = (0, https_1.onCall)({ cors: true }, async (request) => {
     if (!request.auth?.uid) {
+        (0, logger_1.warn)('Unauthenticated mark-conversation-read attempt');
         throw new https_1.HttpsError('unauthenticated', 'Usuário não autenticado.');
     }
     const conversationId = request.data?.conversationId;
@@ -136,6 +156,11 @@ exports.markConversationRead = (0, https_1.onCall)({ cors: true }, async (reques
         throw new https_1.HttpsError('not-found', 'Conversa não encontrada.');
     }
     if (conversationDoc.data()?.userId !== request.auth.uid) {
+        (0, logger_1.audit)({
+            action: 'mark_conversation_read_permission_denied',
+            userId: request.auth.uid,
+            meta: { conversationId },
+        });
         throw new https_1.HttpsError('permission-denied', 'Sem permissão.');
     }
     await conversationRef.set({ unreadCount: 0 }, { merge: true });

@@ -3,6 +3,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.generateSmartReplies = exports.generateLeadInsight = exports.generateCampaignContent = exports.openaiApiKey = void 0;
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
+const app_check_1 = require("./app-check");
+const logger_1 = require("./logger");
+const rate_limit_1 = require("./rate-limit");
 exports.openaiApiKey = (0, params_1.defineSecret)('OPENAI_API_KEY');
 async function callOpenAiJson(input) {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -23,6 +26,11 @@ async function callOpenAiJson(input) {
     });
     if (!response.ok) {
         const body = await response.text();
+        (0, logger_1.error)('AI provider request failed', undefined, {
+            provider: 'openai',
+            status: response.status,
+            responseBody: body.slice(0, 200),
+        });
         throw new https_1.HttpsError('internal', `OpenAI error: ${response.status} ${body.slice(0, 200)}`);
     }
     const payload = (await response.json());
@@ -39,8 +47,10 @@ async function callOpenAiJson(input) {
 }
 function requireAuth(request) {
     if (!request.auth?.uid) {
+        (0, logger_1.warn)('Unauthenticated AI generation attempt');
         throw new https_1.HttpsError('unauthenticated', 'Autenticação obrigatória.');
     }
+    return request.auth.uid;
 }
 function requireApiKey() {
     const apiKey = exports.openaiApiKey.value();
@@ -49,8 +59,15 @@ function requireApiKey() {
     }
     return apiKey;
 }
-exports.generateCampaignContent = (0, https_1.onCall)({ secrets: [exports.openaiApiKey] }, async (request) => {
-    requireAuth(request);
+exports.generateCampaignContent = (0, https_1.onCall)({
+    secrets: [exports.openaiApiKey],
+    enforceAppCheck: app_check_1.ENFORCE_APP_CHECK,
+}, async (request) => {
+    const userId = requireAuth(request);
+    (0, rate_limit_1.assertRateLimit)({
+        key: `ai:${userId}`,
+        ...rate_limit_1.RATE_LIMIT_PRESETS.ai,
+    });
     const apiKey = requireApiKey();
     const data = request.data;
     if (!data?.objective || !data?.audience || !data?.offer) {
@@ -83,8 +100,15 @@ exports.generateCampaignContent = (0, https_1.onCall)({ secrets: [exports.openai
         provider: 'openai',
     };
 });
-exports.generateLeadInsight = (0, https_1.onCall)({ secrets: [exports.openaiApiKey] }, async (request) => {
-    requireAuth(request);
+exports.generateLeadInsight = (0, https_1.onCall)({
+    secrets: [exports.openaiApiKey],
+    enforceAppCheck: app_check_1.ENFORCE_APP_CHECK,
+}, async (request) => {
+    const userId = requireAuth(request);
+    (0, rate_limit_1.assertRateLimit)({
+        key: `ai:${userId}`,
+        ...rate_limit_1.RATE_LIMIT_PRESETS.ai,
+    });
     const apiKey = requireApiKey();
     const data = request.data;
     if (!data?.leadTitle || !data?.columnTitle) {
@@ -104,8 +128,15 @@ exports.generateLeadInsight = (0, https_1.onCall)({ secrets: [exports.openaiApiK
         provider: 'openai',
     };
 });
-exports.generateSmartReplies = (0, https_1.onCall)({ secrets: [exports.openaiApiKey] }, async (request) => {
-    requireAuth(request);
+exports.generateSmartReplies = (0, https_1.onCall)({
+    secrets: [exports.openaiApiKey],
+    enforceAppCheck: app_check_1.ENFORCE_APP_CHECK,
+}, async (request) => {
+    const userId = requireAuth(request);
+    (0, rate_limit_1.assertRateLimit)({
+        key: `ai:${userId}`,
+        ...rate_limit_1.RATE_LIMIT_PRESETS.ai,
+    });
     const apiKey = requireApiKey();
     const data = request.data;
     if (!data?.contactName || !data?.channel) {

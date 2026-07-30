@@ -12,13 +12,13 @@ import { configureStorage } from '@shared/storage'
 import {
   AuthProvider,
   GamificationProvider,
-  LocaleProvider,
   SubscriptionProvider,
   ThemeProvider,
   useTranslation,
 } from '@shared/contexts'
 import { createAsyncStorageAdapter } from '@/lib/async-storage'
 import { premiumColors } from '@/constants/premium-theme'
+import { AppLocaleProvider } from '@/components/AppLocaleProvider'
 import { FirebaseBootstrap } from '@/components/FirebaseBootstrap'
 import { ThemeSync } from '@/components/ThemeSync'
 
@@ -78,16 +78,16 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <FirebaseBootstrap>
           <ThemeProvider>
-            <LocaleProvider>
-              <ThemeSync />
-              <AuthProvider>
+            <AuthProvider>
+              <AppLocaleProvider>
+                <ThemeSync />
                 <SubscriptionProvider>
                   <GamificationProvider>
                     <RootNavigator />
                   </GamificationProvider>
                 </SubscriptionProvider>
-              </AuthProvider>
-            </LocaleProvider>
+              </AppLocaleProvider>
+            </AuthProvider>
           </ThemeProvider>
         </FirebaseBootstrap>
       </SafeAreaProvider>

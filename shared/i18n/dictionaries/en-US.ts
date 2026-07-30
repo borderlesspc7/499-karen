@@ -29,9 +29,10 @@ export const enUS = {
   },
   language: {
     title: 'Language',
-    description: 'Pick the language for the interface. You can change it anytime.',
+    description: 'Choose the interface language. You can change it anytime.',
     portuguese: 'Português',
     english: 'English',
+    spanish: 'Español',
   },
   theme: {
     title: 'Appearance',

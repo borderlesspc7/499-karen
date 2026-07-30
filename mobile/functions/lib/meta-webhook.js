@@ -4,6 +4,7 @@ exports.metaWebhook = void 0;
 const crypto_1 = require("crypto");
 const https_1 = require("firebase-functions/v2/https");
 const config_1 = require("./config");
+const logger_1 = require("./logger");
 const utils_1 = require("./utils");
 function verifyMetaSignature(rawBody, signatureHeader, appSecret) {
     if (!signatureHeader?.startsWith('sha256=')) {
@@ -26,12 +27,20 @@ exports.metaWebhook = (0, https_1.onRequest)({
             response.status(200).send(challenge);
             return;
         }
+        (0, logger_1.warn)('Meta webhook verification challenge failed', {
+            mode,
+            hasToken: typeof token === 'string' && token.length > 0,
+        });
         response.status(403).send('Forbidden');
         return;
     }
     const rawBody = request.rawBody;
     const signature = request.get('X-Hub-Signature-256');
     if (!verifyMetaSignature(rawBody, signature, config_1.metaAppSecret.value())) {
+        (0, logger_1.warn)('Meta webhook signature verification failed', {
+            hasSignature: Boolean(signature),
+            contentLength: rawBody.length,
+        });
         response.status(401).send('Invalid signature');
         return;
     }
@@ -48,7 +57,7 @@ exports.metaWebhook = (0, https_1.onRequest)({
         }
     }
     catch (error) {
-        console.error('[metaWebhook] processing error', error);
+        (0, logger_1.error)('Meta webhook processing failed', error, { objectType: body.object });
     }
     response.status(200).send('EVENT_RECEIVED');
 });

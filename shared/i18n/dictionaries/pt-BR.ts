@@ -32,6 +32,7 @@ export const ptBR = {
     description: 'Escolha o idioma da interface. Você pode mudar quando quiser.',
     portuguese: 'Português',
     english: 'English',
+    spanish: 'Español',
   },
   theme: {
     title: 'Aparência',

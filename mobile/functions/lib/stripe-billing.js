@@ -20,6 +20,9 @@ const app_1 = require("firebase-admin/app");
 const firestore_1 = require("firebase-admin/firestore");
 const https_1 = require("firebase-functions/v2/https");
 const params_1 = require("firebase-functions/params");
+const app_check_1 = require("./app-check");
+const logger_1 = require("./logger");
+const rate_limit_1 = require("./rate-limit");
 const stripeSecretKey = (0, params_1.defineSecret)('STRIPE_SECRET_KEY');
 const stripeWebhookSecret = (0, params_1.defineSecret)('STRIPE_WEBHOOK_SECRET');
 if (!(0, app_1.getApps)().length) {
@@ -46,6 +49,7 @@ const PLAN_CATALOG = {
 };
 function requireAuth(request) {
     if (!request.auth?.uid) {
+        (0, logger_1.warn)('Unauthenticated billing attempt');
         throw new https_1.HttpsError('unauthenticated', 'Autenticação obrigatória.');
     }
     return request.auth.uid;
@@ -125,8 +129,12 @@ function parseInterval(value) {
  * Cria Stripe Checkout Session (subscription).
  * Mock: retorna sessionId para confirmação in-app.
  */
-exports.createCheckoutSession = (0, https_1.onCall)({ secrets: [stripeSecretKey], cors: true }, async (request) => {
+exports.createCheckoutSession = (0, https_1.onCall)({ secrets: [stripeSecretKey], cors: true, enforceAppCheck: app_check_1.ENFORCE_APP_CHECK }, async (request) => {
     const userId = requireAuth(request);
+    (0, rate_limit_1.assertRateLimit)({
+        key: `checkout:${userId}`,
+        ...rate_limit_1.RATE_LIMIT_PRESETS.checkout,
+    });
     const planId = parsePlanId(request.data?.planId);
     const billingInterval = parseInterval(request.data?.billingInterval);
     const successUrl = typeof request.data?.successUrl === 'string' ? request.data.successUrl : 'https://example.com/success';
@@ -141,6 +149,11 @@ exports.createCheckoutSession = (0, https_1.onCall)({ secrets: [stripeSecretKey]
         status: 'open',
         mode: isStripeLiveMode() ? 'stripe' : 'mock',
         createdAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    (0, logger_1.audit)({
+        action: 'checkout_session_created',
+        userId,
+        meta: { sessionId, planId, billingInterval },
     });
     if (!isStripeLiveMode()) {
         return {
@@ -178,8 +191,15 @@ exports.createCheckoutSession = (0, https_1.onCall)({ secrets: [stripeSecretKey]
  * Simula o webhook `checkout.session.completed` em modo mock.
  * Em produção, este caminho NÃO deve existir — só o webhook assinado.
  */
-exports.confirmMockCheckout = (0, https_1.onCall)({ cors: true }, async (request) => {
+exports.confirmMockCheckout = (0, https_1.onCall)({
+    cors: true,
+    enforceAppCheck: app_check_1.ENFORCE_APP_CHECK,
+}, async (request) => {
     const userId = requireAuth(request);
+    (0, rate_limit_1.assertRateLimit)({
+        key: `checkout:${userId}`,
+        ...rate_limit_1.RATE_LIMIT_PRESETS.checkout,
+    });
     const sessionId = typeof request.data?.sessionId === 'string' ? request.data.sessionId : '';
     const planId = parsePlanId(request.data?.planId);
     const billingInterval = parseInterval(request.data?.billingInterval);
@@ -191,6 +211,11 @@ exports.confirmMockCheckout = (0, https_1.onCall)({ cors: true }, async (request
     if (sessionDoc.exists) {
         const data = sessionDoc.data();
         if (data?.userId && data.userId !== userId) {
+            (0, logger_1.audit)({
+                action: 'mock_checkout_permission_denied',
+                userId,
+                meta: { sessionId },
+            });
             throw new https_1.HttpsError('permission-denied', 'Sessão não pertence a este usuário.');
         }
         if (data?.status === 'complete') {
@@ -226,6 +251,11 @@ exports.confirmMockCheckout = (0, https_1.onCall)({ cors: true }, async (request
         planId,
         billingInterval,
     }, { merge: true });
+    (0, logger_1.audit)({
+        action: 'mock_checkout_confirmed',
+        userId,
+        meta: { sessionId, planId, billingInterval },
+    });
     return { ok: true, subscription };
 });
 /**
@@ -258,6 +288,10 @@ exports.stripeWebhook = (0, https_1.onRequest)({ secrets: [stripeSecretKey, stri
     }
     const signature = req.headers['stripe-signature'];
     if (!signature || typeof signature !== 'string') {
+        (0, logger_1.warn)('Stripe webhook verification failed', {
+            reason: 'missing_signature',
+            requestId: req.get('x-cloud-trace-context'),
+        });
         res.status(400).send('Missing Stripe-Signature');
         return;
     }
