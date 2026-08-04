@@ -113,7 +113,7 @@ URLs de OAuth/webhook Meta **mudam** com `PROJECT_ID`:
 | OAuth callback | `https://us-central1-<PROJECT_ID>.cloudfunctions.net/oauthCallback` |
 | Meta webhook | `https://us-central1-<PROJECT_ID>.cloudfunctions.net/metaWebhook` |
 
-Reconfigurar nos painéis Meta/LinkedIn **por ambiente**.
+Reconfigurar no painel Meta **por ambiente**.
 
 ---
 

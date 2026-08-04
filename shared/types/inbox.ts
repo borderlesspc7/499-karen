@@ -1,4 +1,4 @@
-export type InboxChannel = 'whatsapp' | 'instagram' | 'facebook' | 'linkedin' | 'email' | 'sms'
+export type InboxChannel = 'whatsapp' | 'instagram' | 'facebook' | 'email' | 'sms'
 
 export type InboxPriority = 'hot' | 'warm' | 'cold'
 

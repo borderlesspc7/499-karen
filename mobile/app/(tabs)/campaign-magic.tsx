@@ -49,7 +49,6 @@ const APPROVAL_TABS: { id: ApprovalTab; labelKey: TranslationKey; icon: typeof I
 const PUBLISH_CHANNELS: PublishChannelStatus[] = [
   { id: 'instagram', name: 'Instagram', published: true },
   { id: 'facebook', name: 'Facebook', published: true },
-  { id: 'linkedin', name: 'LinkedIn', published: true },
   { id: 'google', name: 'Google', published: true },
   { id: 'whatsapp', name: 'WhatsApp', published: true },
 ]

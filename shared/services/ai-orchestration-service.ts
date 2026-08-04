@@ -18,7 +18,6 @@ export type CampaignResponse = {
   cta: string
   channelCopy: {
     instagram?: string
-    linkedin?: string
     email?: string
   }
   estimatedLeads?: number

@@ -16,7 +16,7 @@ import { CAMPAIGN_LAUNCHED_PARAM } from '@/constants/campaign-journey'
 import { useAnalyticsData } from '@/hooks/useAnalyticsData'
 import { useResponsiveLayout } from '@/hooks/useResponsiveLayout'
 
-type ExecutionFlow = 'leads' | 'linkedin-article' | 'upsell'
+type ExecutionFlow = 'leads' | 'upsell'
 
 function resolveUserName(email: string | null | undefined, fallback: string): string {
   if (!email) return fallback
@@ -86,49 +86,13 @@ export default function HomeScreen() {
     [t, locale],
   )
 
-  const linkedinExecution = useMemo<
-    Pick<
-      ExecutionModalProps,
-      | 'title'
-      | 'aiSuggestion'
-      | 'impact'
-      | 'previewDetail'
-      | 'loadingMessage'
-      | 'approveLabel'
-      | 'successMessage'
-    >
-  >(
-    () => ({
-      title: t('home.linkedinTitle'),
-      aiSuggestion: t('home.linkedinSuggestion'),
-      impact: t('home.linkedinImpact'),
-      previewDetail: t('home.linkedinPreview'),
-      loadingMessage: t('home.linkedinLoading'),
-      approveLabel: t('home.linkedinApprove'),
-      successMessage: t('home.linkedinSuccess'),
-    }),
-    [t],
-  )
-
   const executionConfig =
-    activeExecutionFlow === 'linkedin-article'
-      ? linkedinExecution
-      : activeExecutionFlow === 'upsell'
-        ? upsellExecution
-        : leadsExecution
+    activeExecutionFlow === 'upsell' ? upsellExecution : leadsExecution
 
   const executionApproveLabel =
-    activeExecutionFlow === 'upsell'
-      ? upsellExecution.approveLabel
-      : activeExecutionFlow === 'linkedin-article'
-        ? linkedinExecution.approveLabel
-        : undefined
+    activeExecutionFlow === 'upsell' ? upsellExecution.approveLabel : undefined
 
   function handleApproveExecution() {
-    if (activeExecutionFlow === 'linkedin-article') {
-      executeAction('publish-linkedin-article')
-      return
-    }
     if (activeExecutionFlow === 'upsell') {
       executeAction('send-proposal')
       return
@@ -148,7 +112,7 @@ export default function HomeScreen() {
         setActiveExecutionFlow('upsell')
         break
       case 'opp-authority':
-        setActiveExecutionFlow('linkedin-article')
+        router.push('/(tabs)/campaign-magic')
         break
       default:
         break

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { FlatList, Pressable, Text, View } from 'react-native'
+import { MessageCircleMore } from 'lucide-react-native'
 import { useTranslation } from '@shared/contexts'
 import type { InboxConversation } from '@shared/types'
 import { useThemeClasses } from '@/hooks/useThemeClasses'
@@ -162,6 +163,27 @@ export function InboxConversationList({
         maxToRenderPerBatch={10}
         windowSize={7}
         removeClippedSubviews
+        contentContainerStyle={conversations.length === 0 ? { flexGrow: 1 } : undefined}
+        ListEmptyComponent={
+          <View className="flex-1 items-center justify-center px-8 pb-24">
+            <View
+              className={[
+                'mb-5 h-16 w-16 items-center justify-center rounded-3xl',
+                tc.isDark ? 'bg-white/[0.06]' : 'bg-violet-50',
+              ].join(' ')}
+            >
+              <MessageCircleMore color={tc.isDark ? '#C4B5FD' : '#7C3AED'} size={30} />
+            </View>
+            <Text className={['text-center text-lg font-semibold', tc.textPrimary].join(' ')}>
+              {t('inbox.emptyTitle')}
+            </Text>
+            <Text
+              className={['mt-2 max-w-xs text-center text-sm leading-5', tc.textSecondary].join(' ')}
+            >
+              {t('inbox.emptyBody')}
+            </Text>
+          </View>
+        }
       />
     </View>
   )

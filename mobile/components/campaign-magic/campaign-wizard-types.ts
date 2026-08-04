@@ -68,7 +68,7 @@ export function buildCampaignPrompt(data: CampaignWizardData, t: TranslateFn): s
 
 export function computeApprovalSummary(pieceCount: number) {
   return {
-    channels: ['Instagram', 'Facebook', 'LinkedIn', 'E-mail'],
+    channels: ['Instagram', 'Facebook', 'E-mail'],
     pieceCount,
     hoursSaved: 17,
     estimatedLeads: 247,

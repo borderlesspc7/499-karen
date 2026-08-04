@@ -6,7 +6,7 @@ const config_1 = require("./config");
 const oauth_connect_1 = require("./oauth-connect");
 const utils_1 = require("./utils");
 exports.oauthCallback = (0, https_1.onRequest)({
-    secrets: [config_1.metaAppSecret, config_1.linkedinClientSecret],
+    secrets: [config_1.metaAppSecret],
     cors: true,
 }, async (request, response) => {
     const code = request.query.code;
@@ -24,14 +24,8 @@ exports.oauthCallback = (0, https_1.onRequest)({
         return;
     }
     try {
-        if (parsed.channel === 'linkedin') {
-            const accessToken = await (0, oauth_connect_1.exchangeLinkedInCode)(code, redirectUri, config_1.linkedinClientSecret.value());
-            await (0, oauth_connect_1.connectLinkedInChannel)(parsed.userId, accessToken);
-        }
-        else {
-            const accessToken = await (0, oauth_connect_1.exchangeMetaCode)(code, redirectUri, config_1.metaAppSecret.value());
-            await (0, oauth_connect_1.connectMetaChannel)(parsed.userId, parsed.channel, accessToken);
-        }
+        const accessToken = await (0, oauth_connect_1.exchangeMetaCode)(code, redirectUri, config_1.metaAppSecret.value());
+        await (0, oauth_connect_1.connectMetaChannel)(parsed.userId, parsed.channel, accessToken);
         response.redirect(`${deepLinkScheme}://integrations?status=connected&channel=${parsed.channel}`);
     }
     catch (connectError) {

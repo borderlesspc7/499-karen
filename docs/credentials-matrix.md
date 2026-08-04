@@ -80,15 +80,13 @@ Variáveis lidas em `mobile/app.config.ts` → `extra.oauth`.
 
 ---
 
-## 3. Integrações omnichannel (Meta + LinkedIn)
+## 3. Integrações omnichannel (Meta)
 
 | Credencial / item | a) Dev | b) Prod | c) App | d) Backend | e) Cliente | f) Borderless | Observação |
 |-------------------|--------|---------|--------|------------|------------|---------------|------------|
 | `META_APP_ID` | Sim | Sim | **Não** | Sim (param) | **Sim** | Opcional* | App Business no Meta for Developers |
 | `META_APP_SECRET` | Sim | Sim | **Nunca** | Sim (secret) | **Sim** | Opcional* | Secret do app Meta |
 | `META_WEBHOOK_VERIFY_TOKEN` | Sim | Sim | **Nunca** | Sim (secret) | Opcional | **Sim** | Borderless gera e configura no webhook |
-| `LINKEDIN_CLIENT_ID` | Se testar LI | Se LI no go-live | **Não** | Sim (param) | **Sim** | Opcional* | LinkedIn Developer Portal |
-| `LINKEDIN_CLIENT_SECRET` | Se testar LI | Se LI no go-live | **Nunca** | Sim (secret) | **Sim** | Opcional* | |
 | Tokens OAuth por usuário (page/WABA) | — | — | **Nunca** | Sim (`integration_secrets`) | Gerados no OAuth do usuário final | Armazenados no backend | Inacessíveis ao cliente via Security Rules |
 
 \*Podemos criar em conta temporária da Borderless e transferir; o ideal é app já na conta da cliente.
@@ -112,10 +110,9 @@ cd mobile
 
 firebase functions:secrets:set META_APP_SECRET
 firebase functions:secrets:set META_WEBHOOK_VERIFY_TOKEN
-firebase functions:secrets:set LINKEDIN_CLIENT_SECRET
 
 # Params (não-secret)
-# META_APP_ID e LINKEDIN_CLIENT_ID via Firebase params / .env das Functions
+# META_APP_ID via Firebase params / .env das Functions
 ```
 
 ---
@@ -167,10 +164,9 @@ Webhook Stripe → Cloud Function `stripeWebhook` (assinatura validada com `STRI
 |---|------|----------------------|
 | 1 | Acesso ao Firebase/GCP de staging **ou** aceite do projeto de staging da Borderless | Console Google Cloud / Firebase |
 | 2 | Meta App (modo desenvolvimento) — App ID + App Secret | [developers.facebook.com](https://developers.facebook.com/) |
-| 3 | LinkedIn Client ID + Secret *(se testar LinkedIn)* | LinkedIn Developer Portal |
-| 4 | OpenAI API Key (projeto/billing de teste) | platform.openai.com |
-| 5 | Stripe `sk_test_…` *(ou manter mock até a key chegar)* | dashboard.stripe.com (test mode) |
-| 6 | Client IDs de login social *(se forem testar social em device/build)* | Google Cloud / Meta / Azure / Apple |
+| 3 | OpenAI API Key (projeto/billing de teste) | platform.openai.com |
+| 4 | Stripe `sk_test_…` *(ou manter mock até a key chegar)* | dashboard.stripe.com (test mode) |
+| 5 | Client IDs de login social *(se forem testar social em device/build)* | Google Cloud / Meta / Azure / Apple |
 
 ### Produção (go-live)
 
@@ -178,10 +174,9 @@ Webhook Stripe → Cloud Function `stripeWebhook` (assinatura validada com `STRI
 |---|------|----------------------|
 | 1 | **Propriedade** da conta Google Cloud / Firebase de produção | Transferência ou projeto criado por vocês |
 | 2 | `META_APP_ID` + `META_APP_SECRET` (app Business de produção) + Página / WABA / Instagram vinculados | Meta for Developers |
-| 3 | `LINKEDIN_CLIENT_ID` + `LINKEDIN_CLIENT_SECRET` *(se LinkedIn no go-live)* | LinkedIn Developer |
-| 4 | `OPENAI_API_KEY` com billing de produção | OpenAI |
-| 5 | `STRIPE_SECRET_KEY` (`sk_live_…`) + acesso para Products/Prices e webhook | Stripe |
-| 6 | Login social de produção: Google Client IDs, Facebook App ID, Microsoft Client ID, Apple Developer | Respectivos consoles |
+| 3 | `OPENAI_API_KEY` com billing de produção | OpenAI |
+| 4 | `STRIPE_SECRET_KEY` (`sk_live_…`) + acesso para Products/Prices e webhook | Stripe |
+| 5 | Login social de produção: Google Client IDs, Facebook App ID, Microsoft Client ID, Apple Developer | Respectivos consoles |
 
 **Canal seguro de envio:** gerenciador de secrets / vault / compartilhamento criptografado — **não** e-mail em texto puro.
 
@@ -236,9 +231,9 @@ Webhook Stripe → Cloud Function `stripeWebhook` (assinatura validada com `STRI
 | Arquivo | Conteúdo |
 |---------|----------|
 | `mobile/.env.example` | Template das variáveis do app |
-| `mobile/CHANNEL_INTEGRATIONS.md` | Meta / LinkedIn / webhooks / deploy |
+| `mobile/CHANNEL_INTEGRATIONS.md` | Meta / webhooks / deploy |
 | `mobile/BUILD_APK.md` | EAS env + build APK |
-| `mobile/functions/src/config.ts` | Params e secrets Meta/LinkedIn |
+| `mobile/functions/src/config.ts` | Params e secrets Meta |
 | `mobile/functions/src/ai-orchestration.ts` | `OPENAI_API_KEY` |
 | `mobile/functions/src/stripe-billing.ts` | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` |
 | `mobile/firestore.rules` | Bloqueio de secrets e billing no cliente |

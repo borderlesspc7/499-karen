@@ -239,9 +239,7 @@ export function InboxChatView({
       } else {
         Alert.alert(
           t('inbox.channelNotConnected'),
-          conversation.channel === 'linkedin'
-            ? t('inbox.linkedinHint')
-            : t('inbox.connectGeneric'),
+          t('inbox.connectGeneric'),
         )
         setOptimisticMessages((current) =>
           current.filter((message) => message.id !== optimisticId),

@@ -2,20 +2,17 @@ import { onRequest } from 'firebase-functions/v2/https'
 import {
   appDeepLinkScheme,
   getFunctionsBaseUrl,
-  linkedinClientSecret,
   metaAppSecret,
 } from './config'
 import {
-  connectLinkedInChannel,
   connectMetaChannel,
-  exchangeLinkedInCode,
   exchangeMetaCode,
 } from './oauth-connect'
 import { parseOAuthState, saveChannelConnection } from './utils'
 
 export const oauthCallback = onRequest(
   {
-    secrets: [metaAppSecret, linkedinClientSecret],
+    secrets: [metaAppSecret],
     cors: true,
   },
   async (request, response) => {
@@ -37,13 +34,8 @@ export const oauthCallback = onRequest(
     }
 
     try {
-      if (parsed.channel === 'linkedin') {
-        const accessToken = await exchangeLinkedInCode(code, redirectUri, linkedinClientSecret.value())
-        await connectLinkedInChannel(parsed.userId, accessToken)
-      } else {
-        const accessToken = await exchangeMetaCode(code, redirectUri, metaAppSecret.value())
-        await connectMetaChannel(parsed.userId, parsed.channel, accessToken)
-      }
+      const accessToken = await exchangeMetaCode(code, redirectUri, metaAppSecret.value())
+      await connectMetaChannel(parsed.userId, parsed.channel, accessToken)
 
       response.redirect(`${deepLinkScheme}://integrations?status=connected&channel=${parsed.channel}`)
     } catch (connectError) {

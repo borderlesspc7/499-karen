@@ -76,7 +76,7 @@ exports.generateCampaignContent = (0, https_1.onCall)({
     const language = data.language ?? 'pt-BR';
     const parsed = (await callOpenAiJson({
         apiKey,
-        system: 'Você é um copywriter B2B. Responda apenas JSON com as chaves: headline, body, cta, channelCopy (instagram, linkedin, email), estimatedLeads (number).',
+        system: 'Você é um copywriter B2B. Responda apenas JSON com as chaves: headline, body, cta, channelCopy (instagram, email), estimatedLeads (number).',
         user: JSON.stringify({
             objective: data.objective,
             audience: data.audience,
@@ -93,7 +93,6 @@ exports.generateCampaignContent = (0, https_1.onCall)({
         cta: String(parsed.cta ?? ''),
         channelCopy: {
             instagram: channelCopy.instagram,
-            linkedin: channelCopy.linkedin,
             email: channelCopy.email,
         },
         estimatedLeads: typeof parsed.estimatedLeads === 'number' ? parsed.estimatedLeads : undefined,

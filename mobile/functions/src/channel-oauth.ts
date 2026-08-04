@@ -3,11 +3,9 @@ import { ENFORCE_APP_CHECK } from './app-check'
 import {
   appDeepLinkScheme,
   getFunctionsBaseUrl,
-  linkedinClientId,
   metaAppId,
   metaAppSecret,
   META_SCOPES,
-  LINKEDIN_SCOPES,
 } from './config'
 import { buildOAuthState, db, saveChannelConnection, type MessagingChannel } from './utils'
 import { audit, warn } from './logger'
@@ -34,7 +32,7 @@ export const startChannelOAuth = onCall(
     })
 
     const channel = request.data?.channel as MessagingChannel
-    if (!channel || !['whatsapp', 'instagram', 'facebook', 'linkedin'].includes(channel)) {
+    if (!channel || !META_CHANNELS.has(channel)) {
       throw new HttpsError('invalid-argument', 'Canal inválido.')
     }
 
@@ -45,29 +43,15 @@ export const startChannelOAuth = onCall(
     await saveChannelConnection(userId, channel, { status: 'pending' })
     audit({ action: 'channel_oauth_started', userId, meta: { channel } })
 
-    if (META_CHANNELS.has(channel)) {
-      const authUrl = new URL('https://www.facebook.com/v21.0/dialog/oauth')
-      authUrl.searchParams.set('client_id', metaAppId.value())
-      authUrl.searchParams.set('redirect_uri', redirectUri)
-      authUrl.searchParams.set('state', state)
-      authUrl.searchParams.set('scope', META_SCOPES[channel].join(','))
-      authUrl.searchParams.set('response_type', 'code')
-
-      return {
-        authUrl: authUrl.toString(),
-        redirectUri: `${deepLinkScheme}://integrations`,
-      }
-    }
-
-    const linkedinAuthUrl = new URL('https://www.linkedin.com/oauth/v2/authorization')
-    linkedinAuthUrl.searchParams.set('response_type', 'code')
-    linkedinAuthUrl.searchParams.set('client_id', linkedinClientId.value())
-    linkedinAuthUrl.searchParams.set('redirect_uri', redirectUri)
-    linkedinAuthUrl.searchParams.set('state', state)
-    linkedinAuthUrl.searchParams.set('scope', LINKEDIN_SCOPES.join(' '))
+    const authUrl = new URL('https://www.facebook.com/v21.0/dialog/oauth')
+    authUrl.searchParams.set('client_id', metaAppId.value())
+    authUrl.searchParams.set('redirect_uri', redirectUri)
+    authUrl.searchParams.set('state', state)
+    authUrl.searchParams.set('scope', META_SCOPES[channel].join(','))
+    authUrl.searchParams.set('response_type', 'code')
 
     return {
-      authUrl: linkedinAuthUrl.toString(),
+      authUrl: authUrl.toString(),
       redirectUri: `${deepLinkScheme}://integrations`,
     }
   },
@@ -89,11 +73,12 @@ export const getChannelConnections = onCall({ cors: true }, async (request) => {
     whatsapp: { channel: 'whatsapp', status: 'disconnected' },
     instagram: { channel: 'instagram', status: 'disconnected' },
     facebook: { channel: 'facebook', status: 'disconnected' },
-    linkedin: { channel: 'linkedin', status: 'disconnected' },
   }
 
   for (const document of snapshot.docs) {
-    connections[document.id] = document.data()
+    if (META_CHANNELS.has(document.id as MessagingChannel)) {
+      connections[document.id] = document.data()
+    }
   }
 
   return { connections }
@@ -106,7 +91,7 @@ export const disconnectChannel = onCall({ cors: true }, async (request) => {
   }
 
   const channel = request.data?.channel as MessagingChannel
-  if (!channel) {
+  if (!channel || !META_CHANNELS.has(channel)) {
     throw new HttpsError('invalid-argument', 'Canal inválido.')
   }
 

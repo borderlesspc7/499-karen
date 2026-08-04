@@ -23,7 +23,7 @@ exports.startChannelOAuth = (0, https_1.onCall)({
         ...rate_limit_1.RATE_LIMIT_PRESETS.oauth,
     });
     const channel = request.data?.channel;
-    if (!channel || !['whatsapp', 'instagram', 'facebook', 'linkedin'].includes(channel)) {
+    if (!channel || !META_CHANNELS.has(channel)) {
         throw new https_1.HttpsError('invalid-argument', 'Canal inválido.');
     }
     const state = (0, utils_1.buildOAuthState)(userId, channel, config_1.metaAppSecret.value());
@@ -31,26 +31,14 @@ exports.startChannelOAuth = (0, https_1.onCall)({
     const deepLinkScheme = config_1.appDeepLinkScheme.value();
     await (0, utils_1.saveChannelConnection)(userId, channel, { status: 'pending' });
     (0, logger_1.audit)({ action: 'channel_oauth_started', userId, meta: { channel } });
-    if (META_CHANNELS.has(channel)) {
-        const authUrl = new URL('https://www.facebook.com/v21.0/dialog/oauth');
-        authUrl.searchParams.set('client_id', config_1.metaAppId.value());
-        authUrl.searchParams.set('redirect_uri', redirectUri);
-        authUrl.searchParams.set('state', state);
-        authUrl.searchParams.set('scope', config_1.META_SCOPES[channel].join(','));
-        authUrl.searchParams.set('response_type', 'code');
-        return {
-            authUrl: authUrl.toString(),
-            redirectUri: `${deepLinkScheme}://integrations`,
-        };
-    }
-    const linkedinAuthUrl = new URL('https://www.linkedin.com/oauth/v2/authorization');
-    linkedinAuthUrl.searchParams.set('response_type', 'code');
-    linkedinAuthUrl.searchParams.set('client_id', config_1.linkedinClientId.value());
-    linkedinAuthUrl.searchParams.set('redirect_uri', redirectUri);
-    linkedinAuthUrl.searchParams.set('state', state);
-    linkedinAuthUrl.searchParams.set('scope', config_1.LINKEDIN_SCOPES.join(' '));
+    const authUrl = new URL('https://www.facebook.com/v21.0/dialog/oauth');
+    authUrl.searchParams.set('client_id', config_1.metaAppId.value());
+    authUrl.searchParams.set('redirect_uri', redirectUri);
+    authUrl.searchParams.set('state', state);
+    authUrl.searchParams.set('scope', config_1.META_SCOPES[channel].join(','));
+    authUrl.searchParams.set('response_type', 'code');
     return {
-        authUrl: linkedinAuthUrl.toString(),
+        authUrl: authUrl.toString(),
         redirectUri: `${deepLinkScheme}://integrations`,
     };
 });
@@ -68,10 +56,11 @@ exports.getChannelConnections = (0, https_1.onCall)({ cors: true }, async (reque
         whatsapp: { channel: 'whatsapp', status: 'disconnected' },
         instagram: { channel: 'instagram', status: 'disconnected' },
         facebook: { channel: 'facebook', status: 'disconnected' },
-        linkedin: { channel: 'linkedin', status: 'disconnected' },
     };
     for (const document of snapshot.docs) {
-        connections[document.id] = document.data();
+        if (META_CHANNELS.has(document.id)) {
+            connections[document.id] = document.data();
+        }
     }
     return { connections };
 });
@@ -81,7 +70,7 @@ exports.disconnectChannel = (0, https_1.onCall)({ cors: true }, async (request) 
         throw new https_1.HttpsError('unauthenticated', 'Usuário não autenticado.');
     }
     const channel = request.data?.channel;
-    if (!channel) {
+    if (!channel || !META_CHANNELS.has(channel)) {
         throw new https_1.HttpsError('invalid-argument', 'Canal inválido.');
     }
     const userId = request.auth.uid;

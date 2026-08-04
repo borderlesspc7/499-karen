@@ -76,7 +76,7 @@ function parseOAuthState(state, secret) {
         if (signature !== expected) {
             return null;
         }
-        if (!['whatsapp', 'instagram', 'facebook', 'linkedin'].includes(channel)) {
+        if (!['whatsapp', 'instagram', 'facebook'].includes(channel)) {
             return null;
         }
         return { userId, channel: channel };

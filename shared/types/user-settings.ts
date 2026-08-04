@@ -1,4 +1,4 @@
-export type IntegrationId = 'instagram' | 'facebook' | 'linkedin' | 'google' | 'whatsapp' | 'email'
+export type IntegrationId = 'instagram' | 'facebook' | 'google' | 'whatsapp' | 'email'
 
 export type UserIntegrations = Record<IntegrationId, boolean>
 
@@ -18,7 +18,6 @@ export type UserSettings = {
 export const DEFAULT_INTEGRATIONS: UserIntegrations = {
   instagram: false,
   facebook: false,
-  linkedin: false,
   google: false,
   whatsapp: false,
   email: false,

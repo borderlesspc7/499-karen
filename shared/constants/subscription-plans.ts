@@ -20,7 +20,7 @@ export const SUBSCRIPTION_PLANS: readonly SubscriptionPlan[] = [
     highlights: [
       'Meridian com Context, Decision e Blind Spot',
       'Campanhas com IA e Inbox unificado',
-      'Canais Instagram, Facebook e LinkedIn',
+      'Canais Instagram, Facebook e WhatsApp',
       'Oportunidades (CRM) e automações',
       'Suporte prioritário',
     ],

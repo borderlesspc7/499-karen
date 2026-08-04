@@ -1,11 +1,11 @@
-# Integrações Omnichannel — WhatsApp, Instagram, Facebook, LinkedIn
+# Integrações Omnichannel — WhatsApp, Instagram e Facebook
 
 O Inbox agrega conversas reais das redes conectadas. O usuário responde pelo app; o envio/recebimento passa pelas Cloud Functions.
 
 ## Arquitetura
 
 ```
-Redes (Meta / LinkedIn)
+Redes Meta
         ↓ webhook / OAuth
 Cloud Functions (mobile/functions)
         ↓ Admin SDK
@@ -27,12 +27,9 @@ cd mobile
 # Secrets (uma vez)
 firebase functions:secrets:set META_APP_SECRET
 firebase functions:secrets:set META_WEBHOOK_VERIFY_TOKEN
-firebase functions:secrets:set LINKEDIN_CLIENT_SECRET
 
 # Params
-firebase functions:config:set \
-  meta.app_id="SEU_META_APP_ID" \
-  linkedin.client_id="SEU_LINKEDIN_CLIENT_ID"
+firebase functions:config:set meta.app_id="SEU_META_APP_ID"
 
 firebase deploy --only functions,firestore:rules,firestore:indexes
 ```
@@ -56,11 +53,6 @@ firebase deploy --only functions,firestore:rules,firestore:indexes
 | WhatsApp | whatsapp_business_management, whatsapp_business_messaging, business_management |
 | Instagram | instagram_manage_messages, instagram_basic, pages_messaging, … |
 | Facebook | pages_messaging, pages_manage_metadata, pages_read_engagement, … |
-
-## LinkedIn
-
-- OAuth conecta a conta (publicação/perfil)
-- **Inbox LinkedIn**: a API pública de mensagens DM não está disponível para apps terceiros genéricos — requer parceria LinkedIn. O app conecta a conta; envio de DM pelo inbox retorna erro explicativo até integração de parceiro.
 
 ## Fluxo no app
 

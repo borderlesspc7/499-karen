@@ -37,7 +37,7 @@ exports.sendInboxMessage = (0, https_1.onCall)({ cors: true, enforceAppCheck: ap
         throw new https_1.HttpsError('permission-denied', 'Sem permissão para esta conversa.');
     }
     const channel = conversation.channel;
-    if (!['whatsapp', 'instagram', 'facebook', 'linkedin'].includes(channel)) {
+    if (!['whatsapp', 'instagram', 'facebook'].includes(channel)) {
         throw new https_1.HttpsError('failed-precondition', 'Canal não suporta envio externo.');
     }
     const secret = await (0, utils_1.getChannelSecret)(userId, channel);
@@ -135,9 +135,6 @@ async function dispatchOutboundMessage(input) {
             throw new Error(payload.error?.message ?? `Erro ao enviar ${channel}.`);
         }
         return payload.message_id ?? (0, utils_1.generateId)();
-    }
-    if (channel === 'linkedin') {
-        throw new Error('LinkedIn não disponibiliza API pública de inbox para apps terceiros. Conexão ativa para publicação; mensagens inbound requerem parceria LinkedIn.');
     }
     throw new Error('Canal não suportado.');
 }

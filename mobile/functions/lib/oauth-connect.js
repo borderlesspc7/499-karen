@@ -1,9 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.exchangeMetaCode = exchangeMetaCode;
-exports.exchangeLinkedInCode = exchangeLinkedInCode;
 exports.connectMetaChannel = connectMetaChannel;
-exports.connectLinkedInChannel = connectLinkedInChannel;
 const config_1 = require("./config");
 const utils_1 = require("./utils");
 async function exchangeMetaCode(code, redirectUri, appSecret) {
@@ -16,25 +14,6 @@ async function exchangeMetaCode(code, redirectUri, appSecret) {
     const payload = (await tokenResponse.json());
     if (!tokenResponse.ok || !payload.access_token) {
         throw new Error(payload.error?.message ?? 'Falha ao obter token Meta.');
-    }
-    return payload.access_token;
-}
-async function exchangeLinkedInCode(code, redirectUri, clientSecret) {
-    const body = new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: redirectUri,
-        client_id: config_1.linkedinClientId.value(),
-        client_secret: clientSecret,
-    });
-    const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: body.toString(),
-    });
-    const payload = (await tokenResponse.json());
-    if (!tokenResponse.ok || !payload.access_token) {
-        throw new Error(payload.error_description ?? 'Falha ao obter token LinkedIn.');
     }
     return payload.access_token;
 }
@@ -125,24 +104,5 @@ async function connectMetaChannel(userId, channel, userAccessToken) {
         connectedAt: new Date().toISOString(),
     });
     await subscribePageToWebhook(page.id, page.access_token);
-}
-async function connectLinkedInChannel(userId, accessToken) {
-    const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    const profile = (await profileResponse.json());
-    if (!profileResponse.ok || !profile.sub) {
-        throw new Error('Falha ao obter perfil LinkedIn.');
-    }
-    await (0, utils_1.saveChannelSecret)(userId, 'linkedin', {
-        accessToken,
-        linkedinMemberId: profile.sub,
-    });
-    await (0, utils_1.saveChannelConnection)(userId, 'linkedin', {
-        status: 'connected',
-        externalAccountId: profile.sub,
-        externalAccountName: profile.name ?? profile.email ?? 'LinkedIn',
-        connectedAt: new Date().toISOString(),
-    });
 }
 //# sourceMappingURL=oauth-connect.js.map

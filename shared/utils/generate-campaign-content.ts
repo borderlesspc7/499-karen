@@ -94,12 +94,6 @@ export function adaptCampaignResponseToGeneratedContent(
         preview: response.headline,
         detail: `${response.body}\n\nCTA: ${response.cta}. ${providerNote}`,
       },
-      {
-        id: 'li-1',
-        channel: 'LinkedIn',
-        preview: response.channelCopy.linkedin?.slice(0, 120) ?? response.headline,
-        detail: `${response.channelCopy.linkedin ?? response.body}\n\n${providerNote}`,
-      },
     ],
     emails: [
       {

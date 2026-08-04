@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   Facebook,
   Instagram,
-  Linkedin,
   MessageCircle,
   Sparkles,
   type LucideIcon,
@@ -52,13 +51,6 @@ const INTEGRATIONS: Integration[] = [
     descriptionKey: 'channels.facebookDesc',
     icon: Facebook,
     accentColor: '#1877F2',
-  },
-  {
-    id: 'linkedin',
-    name: 'LinkedIn',
-    descriptionKey: 'channels.linkedinDesc',
-    icon: Linkedin,
-    accentColor: '#0A66C2',
   },
 ]
 

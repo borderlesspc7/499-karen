@@ -59,7 +59,7 @@ export const sendInboxMessage = onCall({ cors: true, enforceAppCheck: ENFORCE_AP
   }
 
   const channel = conversation.channel
-  if (!['whatsapp', 'instagram', 'facebook', 'linkedin'].includes(channel)) {
+  if (!['whatsapp', 'instagram', 'facebook'].includes(channel)) {
     throw new HttpsError('failed-precondition', 'Canal não suporta envio externo.')
   }
 
@@ -196,12 +196,6 @@ async function dispatchOutboundMessage(input: {
     }
 
     return payload.message_id ?? generateId()
-  }
-
-  if (channel === 'linkedin') {
-    throw new Error(
-      'LinkedIn não disponibiliza API pública de inbox para apps terceiros. Conexão ativa para publicação; mensagens inbound requerem parceria LinkedIn.',
-    )
   }
 
   throw new Error('Canal não suportado.')

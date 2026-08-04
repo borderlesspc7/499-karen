@@ -7,7 +7,7 @@ if (!admin.apps.length) {
 
 export const db = admin.firestore()
 
-export type MessagingChannel = 'whatsapp' | 'instagram' | 'facebook' | 'linkedin'
+export type MessagingChannel = 'whatsapp' | 'instagram' | 'facebook'
 
 export type ChannelSecret = {
   accessToken: string
@@ -18,7 +18,6 @@ export type ChannelSecret = {
   phoneNumberId?: string
   wabaId?: string
   instagramAccountId?: string
-  linkedinMemberId?: string
 }
 
 export function generateId(): string {
@@ -55,7 +54,7 @@ export function parseOAuthState(
       return null
     }
 
-    if (!['whatsapp', 'instagram', 'facebook', 'linkedin'].includes(channel)) {
+    if (!['whatsapp', 'instagram', 'facebook'].includes(channel)) {
       return null
     }
 

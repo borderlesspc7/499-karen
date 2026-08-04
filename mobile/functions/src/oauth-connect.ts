@@ -1,8 +1,4 @@
-import {
-  linkedinClientId,
-  metaAppId,
-  META_GRAPH_BASE,
-} from './config'
+import { metaAppId, META_GRAPH_BASE } from './config'
 import {
   saveChannelConnection,
   saveChannelSecret,
@@ -25,37 +21,6 @@ export async function exchangeMetaCode(
 
   if (!tokenResponse.ok || !payload.access_token) {
     throw new Error(payload.error?.message ?? 'Falha ao obter token Meta.')
-  }
-
-  return payload.access_token
-}
-
-export async function exchangeLinkedInCode(
-  code: string,
-  redirectUri: string,
-  clientSecret: string,
-): Promise<string> {
-  const body = new URLSearchParams({
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: redirectUri,
-    client_id: linkedinClientId.value(),
-    client_secret: clientSecret,
-  })
-
-  const tokenResponse = await fetch('https://www.linkedin.com/oauth/v2/accessToken', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  })
-
-  const payload = (await tokenResponse.json()) as {
-    access_token?: string
-    error_description?: string
-  }
-
-  if (!tokenResponse.ok || !payload.access_token) {
-    throw new Error(payload.error_description ?? 'Falha ao obter token LinkedIn.')
   }
 
   return payload.access_token
@@ -191,29 +156,3 @@ export async function connectMetaChannel(
   await subscribePageToWebhook(page.id, page.access_token)
 }
 
-export async function connectLinkedInChannel(userId: string, accessToken: string): Promise<void> {
-  const profileResponse = await fetch('https://api.linkedin.com/v2/userinfo', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  })
-  const profile = (await profileResponse.json()) as {
-    sub?: string
-    name?: string
-    email?: string
-  }
-
-  if (!profileResponse.ok || !profile.sub) {
-    throw new Error('Falha ao obter perfil LinkedIn.')
-  }
-
-  await saveChannelSecret(userId, 'linkedin', {
-    accessToken,
-    linkedinMemberId: profile.sub,
-  })
-
-  await saveChannelConnection(userId, 'linkedin', {
-    status: 'connected',
-    externalAccountId: profile.sub,
-    externalAccountName: profile.name ?? profile.email ?? 'LinkedIn',
-    connectedAt: new Date().toISOString(),
-  })
-}

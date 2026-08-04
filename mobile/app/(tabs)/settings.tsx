@@ -57,7 +57,6 @@ export default function SettingsScreen() {
   const connected = settings?.integrations ?? {
     instagram: false,
     facebook: false,
-    linkedin: false,
     google: false,
     whatsapp: false,
     email: false,

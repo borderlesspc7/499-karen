@@ -59,7 +59,7 @@ export function useUserSettings() {
       setSettings((current) =>
         current
           ? { ...current, teamMembers }
-          : { integrations: { instagram: false, facebook: false, linkedin: false, google: false, whatsapp: false, email: false }, teamMembers },
+          : { integrations: { instagram: false, facebook: false, google: false, whatsapp: false, email: false }, teamMembers },
       )
     },
     [currentUser?.id],

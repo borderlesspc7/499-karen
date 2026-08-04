@@ -102,7 +102,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         microsoftClientId: process.env.EXPO_PUBLIC_MICROSOFT_CLIENT_ID?.trim() || '',
       },
       eas: {
-        projectId: '64b83486-e3e3-4b1c-9ed4-68c2f5092dc9',
+        projectId: '4b075be2-7d17-4dfa-abb8-40381802bd85',
       },
     },
   }

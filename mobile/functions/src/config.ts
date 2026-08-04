@@ -3,8 +3,6 @@ import { defineString, defineSecret } from 'firebase-functions/params'
 export const metaAppId = defineString('META_APP_ID')
 export const metaAppSecret = defineSecret('META_APP_SECRET')
 export const metaWebhookVerifyToken = defineSecret('META_WEBHOOK_VERIFY_TOKEN')
-export const linkedinClientId = defineString('LINKEDIN_CLIENT_ID')
-export const linkedinClientSecret = defineSecret('LINKEDIN_CLIENT_SECRET')
 export const appDeepLinkScheme = defineString('APP_DEEP_LINK_SCHEME', {
   default: 'summus-edge',
 })
@@ -40,4 +38,3 @@ export const META_SCOPES: Record<string, string[]> = {
   ],
 }
 
-export const LINKEDIN_SCOPES = ['openid', 'profile', 'email', 'w_member_social']
